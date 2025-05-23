@@ -309,9 +309,13 @@ const InvoiceEdit = () => {
       
       try {
         // Format data for saving
+        const invoiceNumber = isEditing && invoiceData ? 
+          invoiceData.number : 
+          generateInvoiceNumber();
+          
         const invoiceData: Invoice = {
           id: isEditing ? id : undefined,
-          number: isEditing ? invoiceData?.number : generateInvoiceNumber(),
+          number: invoiceNumber,
           company_id: selectedCompanyId,
           client_id: selectedClient.id,
           issue_date: format(selectedDate, 'yyyy-MM-dd'),
