@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -51,7 +52,7 @@ export const useInvoiceData = () => {
   const isEditing = !!id;
   const navigate = useNavigate();
   const { user } = useAuth();
-  const toast = useToast();
+  const { toast } = useToast();
   
   // States
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -182,16 +183,6 @@ export const useInvoiceData = () => {
     }
   }, [invoiceLineItems, isLoadingLines]);
 
-  // Generate a new invoice number
-  const generateInvoiceNumber = () => {
-    const now = new Date();
-    const year = now.getFullYear().toString().slice(2);
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    
-    return `INV-${year}${month}-${random}`;
-  };
-
   // Save invoice mutation
   const saveInvoiceMutation = useMutation({
     mutationFn: async ({ navigate, taxConfig, showMySignature, requireClientSignature }: SaveInvoiceParams) => {
@@ -199,33 +190,40 @@ export const useInvoiceData = () => {
         throw new Error("Client and company are required");
       }
       
+      console.log('Starting invoice save process...', {
+        selectedClient: selectedClient.id,
+        selectedCompanyId,
+        lineItemsCount: lineItems.length,
+        isEditing
+      });
+      
       setIsSubmitting(true);
       
       try {
         // Generate invoice code for new invoices
         let invoiceCode = "";
         if (!isEditing) {
+          console.log('Generating new invoice code...');
           const { data: codeData, error: codeError } = await supabase
             .rpc('next_invoice_number', { company_id: selectedCompanyId });
           
-          if (codeError) throw codeError;
+          if (codeError) {
+            console.error('Error generating invoice code:', codeError);
+            throw codeError;
+          }
           invoiceCode = codeData;
+          console.log('Generated invoice code:', invoiceCode);
         } else {
           invoiceCode = invoiceData?.invoice_code || "";
         }
         
-        // Format data for saving
-        const invoiceNumber = isEditing && invoiceData ? 
-          invoiceData.number : 
-          invoiceCode;
-        
         // Calculate totals with tax config
         const calculatedTotals = calcTotals(lineItems, taxConfig);
+        console.log('Calculated totals:', calculatedTotals);
         
         // Prepare invoice payload with tax configuration and signatures
-        const invoicePayload: Invoice = {
-          id: isEditing ? id : undefined,
-          number: invoiceNumber,
+        const invoicePayload = {
+          number: invoiceCode,
           invoice_code: invoiceCode,
           company_id: selectedCompanyId,
           client_id: selectedClient.id,
@@ -246,61 +244,97 @@ export const useInvoiceData = () => {
           require_client_signature: requireClientSignature || false
         };
         
+        console.log('Invoice payload:', invoicePayload);
+        
         let invoiceId: string;
         
         // Insert or update invoice
         if (isEditing) {
+          console.log('Updating existing invoice:', id);
           const { error: updateError } = await supabase
             .from('invoices')
             .update(invoicePayload)
             .eq('id', id);
             
-          if (updateError) throw updateError;
+          if (updateError) {
+            console.error('Error updating invoice:', updateError);
+            throw updateError;
+          }
           invoiceId = id!;
         } else {
+          console.log('Creating new invoice...');
           const { data: newInvoice, error: insertError } = await supabase
             .from('invoices')
             .insert(invoicePayload)
             .select('id')
             .single();
             
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('Error creating invoice:', insertError);
+            throw insertError;
+          }
           invoiceId = newInvoice.id;
+          console.log('Created new invoice with ID:', invoiceId);
         }
         
         // Delete existing line items if editing
         if (isEditing) {
+          console.log('Deleting existing line items...');
           const { error: deleteError } = await supabase
             .from('invoice_lines')
             .delete()
             .eq('invoice_id', invoiceId);
             
-          if (deleteError) throw deleteError;
+          if (deleteError) {
+            console.error('Error deleting line items:', deleteError);
+            throw deleteError;
+          }
         }
         
         // Insert line items with new fields
+        console.log('Inserting line items...');
         const lineItemsToInsert = lineItems.map(item => ({
           invoice_id: invoiceId,
           item_id: item.item_id,
           description: item.description,
           qty: item.qty,
           unit_price: item.unit_price,
-          cgst: item.cgst,
-          sgst: item.sgst,
+          cgst: item.cgst || 0,
+          sgst: item.sgst || 0,
           amount: item.amount,
           discount_amount: item.discount_amount || 0,
           note: item.note || '',
         }));
         
+        console.log('Line items to insert:', lineItemsToInsert);
+        
         const { error: lineItemsError } = await supabase
           .from('invoice_lines')
           .insert(lineItemsToInsert);
           
-        if (lineItemsError) throw lineItemsError;
+        if (lineItemsError) {
+          console.error('Error inserting line items:', lineItemsError);
+          throw lineItemsError;
+        }
+        
+        console.log('Invoice saved successfully!');
+        
+        toast({
+          title: "Invoice saved",
+          description: `Invoice ${invoiceCode} has been saved successfully.`,
+        });
         
         navigate('/invoice-list');
         
-        return { success: true };
+        return { success: true, invoiceId };
+      } catch (error) {
+        console.error('Error saving invoice:', error);
+        toast({
+          variant: "destructive",
+          title: "Error saving invoice",
+          description: "There was an error saving the invoice. Please try again.",
+        });
+        throw error;
       } finally {
         setIsSubmitting(false);
       }

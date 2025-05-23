@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -124,7 +125,19 @@ const InvoiceEdit = () => {
 
   // Handle form submission including tax config and signatures
   const handleSaveInvoice = () => {
+    console.log('Save button clicked');
+    console.log('Can save?', !!selectedClient && lineItems.length > 0);
+    console.log('Selected client:', selectedClient);
+    console.log('Line items:', lineItems);
+    
+    if (!selectedClient || lineItems.length === 0) {
+      console.log('Cannot save: missing client or line items');
+      return;
+    }
+    
     const formValues = form.getValues();
+    console.log('Form values:', formValues);
+    
     saveInvoiceMutation.mutate({
       navigate,
       taxConfig: formValues.taxConfig as TaxConfig,
