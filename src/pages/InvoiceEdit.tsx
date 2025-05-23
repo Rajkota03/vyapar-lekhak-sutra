@@ -1,83 +1,22 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { MoreVertical, Plus, X, ChevronLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 // UI Components
 import DashboardLayout from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
+// Custom Components
+import InvoiceHeader from "@/components/invoice/InvoiceHeader";
+import InvoiceMeta from "@/components/invoice/InvoiceMeta";
+import ClientSection, { Client } from "@/components/invoice/ClientSection";
+import ItemsSection, { LineItem, Item } from "@/components/invoice/ItemsSection";
+import TotalsSection from "@/components/invoice/TotalsSection";
 
 // Types
-type Client = {
-  id: string;
-  name: string;
-  email?: string;
-  gstin?: string;
-};
-
-type Item = {
-  id: string;
-  name: string;
-  code?: string;
-  default_price?: number;
-  default_cgst?: number;
-  default_sgst?: number;
-};
-
-type LineItem = {
-  id?: string;
-  item_id?: string;
-  description: string;
-  qty: number;
-  unit_price: number;
-  cgst?: number;
-  sgst?: number;
-  amount: number;
-};
-
 type Invoice = {
   id?: string;
   number: string;
@@ -103,9 +42,6 @@ const InvoiceEdit = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [clientModalOpen, setClientModalOpen] = useState(false);
-  const [itemPickerOpen, setItemPickerOpen] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -247,46 +183,6 @@ const InvoiceEdit = () => {
   }, 0);
   const grandTotal = subtotal + cgstAmount + sgstAmount;
 
-  // Add a new line item from the selected item
-  const addLineItem = (item: Item) => {
-    const newItem: LineItem = {
-      item_id: item.id,
-      description: item.name,
-      qty: 1,
-      unit_price: item.default_price || 0,
-      cgst: item.default_cgst,
-      sgst: item.default_sgst,
-      amount: item.default_price || 0,
-    };
-    
-    setLineItems([...lineItems, newItem]);
-    setItemPickerOpen(false);
-  };
-
-  // Update line item quantity or price
-  const updateLineItem = (index: number, field: string, value: number) => {
-    const updatedItems = [...lineItems];
-    const item = { ...updatedItems[index] };
-    
-    if (field === 'qty') {
-      item.qty = value;
-      item.amount = item.qty * item.unit_price;
-    } else if (field === 'unit_price') {
-      item.unit_price = value;
-      item.amount = item.qty * item.unit_price;
-    }
-    
-    updatedItems[index] = item;
-    setLineItems(updatedItems);
-  };
-
-  // Remove a line item
-  const removeLineItem = (index: number) => {
-    const updatedItems = [...lineItems];
-    updatedItems.splice(index, 1);
-    setLineItems(updatedItems);
-  };
-
   // Generate a new invoice number
   const generateInvoiceNumber = () => {
     const now = new Date();
@@ -399,121 +295,6 @@ const InvoiceEdit = () => {
     }
   });
 
-  // Filter clients by search term
-  const filteredClients = clients?.filter(client => 
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) || [];
-
-  // Filter items by search term
-  const filteredItems = items?.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.code && item.code.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) || [];
-
-  // Client Selection Modal
-  const ClientModal = () => (
-    <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Select Client</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            placeholder="Search clients..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="mb-4"
-          />
-          {filteredClients.length > 0 ? (
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {filteredClients.map((client) => (
-                <div 
-                  key={client.id} 
-                  className="p-3 border rounded-md hover:bg-accent cursor-pointer"
-                  onClick={() => {
-                    setSelectedClient(client);
-                    setClientModalOpen(false);
-                    setSearchTerm("");
-                  }}
-                >
-                  <div className="font-medium">{client.name}</div>
-                  {client.email && <div className="text-sm text-muted-foreground">{client.email}</div>}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              No clients found
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  // Item Picker Modal
-  const ItemPickerModal = () => (
-    <Dialog open={itemPickerOpen} onOpenChange={setItemPickerOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Item</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            placeholder="Search items..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="mb-4"
-          />
-          {filteredItems && filteredItems.length > 0 ? (
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {filteredItems.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="p-3 border rounded-md hover:bg-accent cursor-pointer"
-                  onClick={() => {
-                    addLineItem(item);
-                    setSearchTerm("");
-                  }}
-                >
-                  <div className="flex justify-between">
-                    <div className="font-medium">{item.name}</div>
-                    {item.default_price && <div>₹{item.default_price.toFixed(2)}</div>}
-                  </div>
-                  {item.code && <div className="text-sm text-muted-foreground">Code: {item.code}</div>}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              No items found
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  // Tax and Settings Sheet
-  const TaxSettingsSheet = () => (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Tax & Settings</SheetTitle>
-        </SheetHeader>
-        <div className="py-4">
-          <p className="text-muted-foreground mb-4">Tax settings will be implemented in a future update.</p>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-
   // Loading state
   if ((isEditing && (isLoadingInvoice || isLoadingLines)) || !selectedCompanyId) {
     return (
@@ -528,200 +309,41 @@ const InvoiceEdit = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen pb-20">
-        {/* Header with back button and save */}
-        <div className="sticky top-0 z-10 bg-white border-b p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate('/invoice-list')}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <h1 className="text-xl font-semibold">
-                {isEditing ? "Edit Invoice" : "New Invoice"}
-              </h1>
-            </div>
-            <div className="flex items-center">
-              <TaxSettingsSheet />
-              <Button
-                onClick={() => saveInvoiceMutation.mutate()}
-                disabled={!selectedClient || lineItems.length === 0 || isSubmitting}
-              >
-                {isSubmitting ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <InvoiceHeader
+          isEditing={isEditing}
+          isSubmitting={isSubmitting}
+          canSave={!!selectedClient && lineItems.length > 0}
+          onSave={() => saveInvoiceMutation.mutate()}
+        />
 
         <div className="p-4 space-y-8">
-          {/* Step 1: Meta */}
-          <div className="space-y-3">
-            <h2 className="font-medium text-lg">Invoice Details</h2>
-            <div className="bg-white rounded-lg border p-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Invoice Date</p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left">
-                      {format(selectedDate, "PPP")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-50 pointer-events-auto">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => date && setSelectedDate(date)}
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </div>
+          <InvoiceMeta 
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+          />
 
-          {/* Step 2: Client */}
-          <div className="space-y-3">
-            <h2 className="font-medium text-lg">Client</h2>
-            <div className="bg-white rounded-lg border p-4">
-              {selectedClient ? (
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{selectedClient.name}</h3>
-                    {selectedClient.email && (
-                      <p className="text-sm text-muted-foreground">{selectedClient.email}</p>
-                    )}
-                    {selectedClient.gstin && (
-                      <p className="text-sm text-muted-foreground">GSTIN: {selectedClient.gstin}</p>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setClientModalOpen(true)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setClientModalOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Add Customer
-                </Button>
-              )}
-            </div>
-          </div>
+          <ClientSection 
+            selectedClient={selectedClient}
+            setSelectedClient={setSelectedClient}
+            clients={clients}
+          />
 
-          {/* Step 3: Items */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <h2 className="font-medium text-lg">Items</h2>
-              <Button
-                variant="outline"
-                size="sm" 
-                onClick={() => setItemPickerOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-1" /> Add Item
-              </Button>
-            </div>
+          <ItemsSection 
+            lineItems={lineItems}
+            setLineItems={setLineItems}
+            items={items}
+          />
 
-            <div className="bg-white rounded-lg border">
-              {lineItems.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[40%]">Description</TableHead>
-                        <TableHead className="text-right">Qty</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lineItems.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="align-top font-medium">{item.description}</TableCell>
-                          <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              value={item.qty}
-                              min={1}
-                              onChange={(e) => updateLineItem(index, 'qty', Number(e.target.value))}
-                              className="w-16 text-right"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              value={item.unit_price}
-                              min={0}
-                              onChange={(e) => updateLineItem(index, 'unit_price', Number(e.target.value))}
-                              className="w-24 text-right"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">₹{item.amount.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeLineItem(index)}
-                            >
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No items added</p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setItemPickerOpen(true)}
-                    className="mt-2"
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Add Item
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Totals */}
           {lineItems.length > 0 && (
-            <div className="bg-white rounded-lg border p-4 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">CGST (9%)</span>
-                <span>₹{cgstAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">SGST (9%)</span>
-                <span>₹{sgstAmount.toFixed(2)}</span>
-              </div>
-              <div className="h-px bg-gray-200 my-2"></div>
-              <div className="flex justify-between font-medium">
-                <span>Grand Total</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
-              </div>
-            </div>
+            <TotalsSection
+              subtotal={subtotal}
+              cgstAmount={cgstAmount}
+              sgstAmount={sgstAmount}
+              grandTotal={grandTotal}
+            />
           )}
         </div>
       </div>
-
-      {/* Modals */}
-      <ClientModal />
-      <ItemPickerModal />
     </DashboardLayout>
   );
 };
