@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -28,12 +27,9 @@ const invoiceFormSchema = z.object({
     igstPct: z.number().default(18)
   })
 });
-
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
-
 const InvoiceEdit = () => {
   const navigate = useNavigate();
-  
   const {
     isEditing,
     isLoading,
@@ -63,14 +59,16 @@ const InvoiceEdit = () => {
       }
     }
   });
-
   const taxConfig = form.watch('taxConfig') as TaxConfig;
 
   // Calculate totals using the utility function with tax configuration
   const totals = calcTotals(lineItems, taxConfig);
 
   // Extract individual total values
-  const { subtotal, total: grandTotal } = totals;
+  const {
+    subtotal,
+    total: grandTotal
+  } = totals;
   const cgstAmount = totals.cgst;
   const sgstAmount = totals.sgst;
   const igstAmount = totals.igst;
@@ -85,63 +83,28 @@ const InvoiceEdit = () => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="flex justify-center items-center h-[50vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="min-h-screen pb-20 bg-gray-50">
         <div className="mx-auto w-full max-w-screen-sm sm:max-w-screen-md px-3 sm:px-6">
-          <InvoiceHeader
-            isEditing={isEditing}
-            isSubmitting={isSubmitting}
-            canSave={!!selectedClient && lineItems.length > 0}
-            onSave={handleSaveInvoice}
-          />
+          <InvoiceHeader isEditing={isEditing} isSubmitting={isSubmitting} canSave={!!selectedClient && lineItems.length > 0} onSave={handleSaveInvoice} />
 
-          <div className="p-4 space-y-4">
-            <InvoiceMeta 
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-            />
+          <div className="p-4 space-y-4 px-0 mx-0">
+            <InvoiceMeta selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
 
-            <ClientSection 
-              selectedClient={selectedClient}
-              setSelectedClient={setSelectedClient}
-              clients={clients}
-              companyId={selectedCompanyId || ""}
-            />
+            <ClientSection selectedClient={selectedClient} setSelectedClient={setSelectedClient} clients={clients} companyId={selectedCompanyId || ""} />
 
-            <ItemsSection 
-              lineItems={lineItems}
-              setLineItems={setLineItems}
-              items={items}
-              selectedCompanyId={selectedCompanyId}
-            />
+            <ItemsSection lineItems={lineItems} setLineItems={setLineItems} items={items} selectedCompanyId={selectedCompanyId} />
 
-            {lineItems.length > 0 && (
-              <TotalsSection
-                subtotal={subtotal}
-                cgstAmount={cgstAmount}
-                sgstAmount={sgstAmount}
-                igstAmount={igstAmount}
-                grandTotal={grandTotal}
-                taxConfig={taxConfig}
-                setValue={form.setValue}
-                watch={form.watch}
-              />
-            )}
+            {lineItems.length > 0 && <TotalsSection subtotal={subtotal} cgstAmount={cgstAmount} sgstAmount={sgstAmount} igstAmount={igstAmount} grandTotal={grandTotal} taxConfig={taxConfig} setValue={form.setValue} watch={form.watch} />}
           </div>
         </div>
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default InvoiceEdit;
