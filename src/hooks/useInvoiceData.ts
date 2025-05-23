@@ -340,8 +340,8 @@ export const useInvoiceData = () => {
           description: `Invoice ${invoiceCode} has been saved successfully.`,
         });
         
-        // Navigate and invalidate queries according to persistence patch
-        navigate('/invoices', { replace: true });
+        // Navigate and invalidate queries according to persistence patch - Fixed the navigate call
+        navigate('/invoices');
         queryClient.invalidateQueries({ queryKey: ['invoices'] });
         
         return { success: true, invoiceId };
