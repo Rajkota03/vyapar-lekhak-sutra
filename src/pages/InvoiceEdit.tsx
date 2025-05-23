@@ -64,7 +64,7 @@ const InvoiceEdit = () => {
     }
   });
 
-  const taxConfig = form.watch('taxConfig');
+  const taxConfig = form.watch('taxConfig') as TaxConfig;
 
   // Calculate totals using the utility function with tax configuration
   const totals = calcTotals(lineItems, taxConfig);
@@ -79,7 +79,7 @@ const InvoiceEdit = () => {
   const handleSaveInvoice = () => {
     saveInvoiceMutation.mutate({
       navigate,
-      taxConfig: form.getValues().taxConfig
+      taxConfig: form.getValues().taxConfig as TaxConfig
     });
   };
 
