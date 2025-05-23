@@ -50,7 +50,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {isEditing ? "Edit Invoice" : "New Invoice"}
+            {isEditing ? "Edit Invoice" : "Invoice"}
           </h1>
         </div>
         <div className="flex items-center">
@@ -58,6 +58,8 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           <Button
             onClick={onSave}
             disabled={!canSave || isSubmitting}
+            variant="ghost"
+            className="font-medium text-blue-500"
           >
             {isSubmitting ? "Saving..." : "Save"}
           </Button>

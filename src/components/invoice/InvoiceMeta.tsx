@@ -8,32 +8,33 @@ import { Button } from "@/components/ui/button";
 interface InvoiceMetaProps {
   selectedDate: Date;
   setSelectedDate: (date: Date) => void;
+  invoiceNumber?: string;
 }
 
-const InvoiceMeta: React.FC<InvoiceMetaProps> = ({ selectedDate, setSelectedDate }) => {
+const InvoiceMeta: React.FC<InvoiceMetaProps> = ({ 
+  selectedDate, 
+  setSelectedDate, 
+  invoiceNumber = "#25-26/60" 
+}) => {
   return (
-    <div className="space-y-3">
-      <h2 className="font-medium text-lg">Invoice Details</h2>
-      <div className="bg-white rounded-lg border p-4">
-        <div>
-          <p className="text-sm text-muted-foreground mb-1">Invoice Date</p>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start text-left">
-                {format(selectedDate, "PPP")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 z-50 pointer-events-auto">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+    <div className="bg-white rounded-lg border p-4 flex justify-between items-center">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" className="text-xl font-bold p-0 h-auto">
+            {format(selectedDate, "dd MMM yyyy")}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0 z-50">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => date && setSelectedDate(date)}
+            className="p-3"
+          />
+        </PopoverContent>
+      </Popover>
+      
+      <div className="text-xl font-bold">{invoiceNumber}</div>
     </div>
   );
 };

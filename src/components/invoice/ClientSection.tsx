@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Plus, X, UserPlus, Edit } from "lucide-react";
+import { Plus, X, UserPlus, Edit, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -45,50 +45,89 @@ const ClientSection: React.FC<ClientSectionProps> = ({
   };
 
   const ClientSearchModal = () => (
-    <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
+    <Dialog open={clientModalOpen} onOpenChange={(open) => {
+      setClientModalOpen(open);
+      if (!open) setSearchTerm("");
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Select Client</DialogTitle>
+          <DialogTitle className="flex items-center">
+            <User className="h-5 w-5 mr-2 text-blue-500" /> Add Customer
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Search clients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <Button
-              variant="outline"
+        <div>
+          <div className="flex flex-col gap-3 mb-4">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-blue-500"
               onClick={() => {
                 setClientModalOpen(false);
                 setNewClientModalOpen(true);
               }}
-              size="icon"
-              title="Add New Client"
             >
-              <UserPlus className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-2" /> Create new customer
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-blue-500"
+              onClick={() => {
+                // This would import from contacts in a real app
+                console.log("Import from contacts");
+              }}
+            >
+              <UserPlus className="h-4 w-4 mr-2" /> Import from your contacts
             </Button>
           </div>
           
-          {filteredClients.length > 0 ? (
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {filteredClients.map((client) => (
-                <div
-                  key={client.id}
-                  className="p-3 border rounded-md hover:bg-accent cursor-pointer"
-                  onClick={() => handleSelectClient(client)}
+          <div className="bg-gray-50 p-2 rounded-lg mb-4">
+            <Input
+              placeholder="Search customer..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white"
+              autoFocus
+            />
+          </div>
+          
+          {clients && clients.length > 0 ? (
+            <>
+              <p className="text-sm font-medium mb-2">Recents</p>
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {filteredClients.length > 0 ? (
+                  filteredClients.map((client) => (
+                    <div
+                      key={client.id}
+                      className="p-3 bg-white border rounded-lg hover:bg-accent cursor-pointer"
+                      onClick={() => handleSelectClient(client)}
+                    >
+                      <div className="font-medium">{client.name}</div>
+                      {client.email && (
+                        <div className="text-sm text-muted-foreground">{client.email}</div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground bg-white p-3 rounded-lg border">
+                    {searchTerm ? "No customers found" : "Start typing to search customers"}
+                  </div>
+                )}
+              </div>
+              <div className="mt-2 flex justify-end">
+                <Button 
+                  variant="link" 
+                  className="text-blue-500"
+                  onClick={() => {
+                    // In a real app, this would navigate to view all clients
+                    console.log("View all clients");
+                  }}
                 >
-                  <div className="font-medium">{client.name}</div>
-                  {client.email && (
-                    <div className="text-sm text-muted-foreground">{client.email}</div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  View all
+                </Button>
+              </div>
+            </>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
-              {searchTerm ? "No clients found" : "Start typing to search clients"}
+              No customers found
             </div>
           )}
         </div>
@@ -98,7 +137,7 @@ const ClientSection: React.FC<ClientSectionProps> = ({
 
   return (
     <div className="space-y-3">
-      <h2 className="font-medium text-lg">Client</h2>
+      <h2 className="font-medium text-lg">BILL TO</h2>
       <div className="bg-white rounded-lg border p-4">
         {selectedClient ? (
           <div className="flex justify-between items-start">
@@ -141,21 +180,13 @@ const ClientSection: React.FC<ClientSectionProps> = ({
             </div>
           </div>
         ) : (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setClientModalOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" /> Select Existing Customer
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setNewClientModalOpen(true)}
-            >
-              <UserPlus className="h-4 w-4 mr-2" /> New
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            className="w-full justify-center text-blue-500"
+            onClick={() => setClientModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add Customer
+          </Button>
         )}
       </div>
       

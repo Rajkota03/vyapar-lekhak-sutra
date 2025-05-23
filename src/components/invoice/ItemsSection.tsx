@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -102,43 +103,90 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
     }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Item</DialogTitle>
+          <DialogTitle className="flex items-center">
+            <Package className="h-5 w-5 mr-2 text-blue-500" /> Add Item
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            placeholder="Search items..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="mb-4"
-            autoFocus
-          />
-          {filteredItems && filteredItems.length > 0 ? (
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {filteredItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3 border rounded-md hover:bg-accent cursor-pointer"
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-blue-500"
+              onClick={() => {
+                // In a real app, this would navigate to a create item form
+                console.log("Create new item");
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Create new item
+            </Button>
+          </div>
+          
+          <div className="bg-gray-50 p-2 rounded-lg mb-4">
+            <Input
+              placeholder="Search item..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white"
+              autoFocus
+            />
+          </div>
+
+          {items && items.length > 0 ? (
+            <>
+              <p className="text-sm font-medium mb-2">Recents</p>
+              <div className="space-y-2 max-h-72 overflow-y-auto rounded-lg">
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-white border rounded-lg hover:bg-accent cursor-pointer"
+                      onClick={() => addLineItem(item)}
+                    >
+                      <div className="flex justify-between">
+                        <div className="font-medium">{item.name}</div>
+                        {item.default_price !== undefined && (
+                          <div className="font-medium">₹{item.default_price.toFixed(2)}</div>
+                        )}
+                      </div>
+                      {item.code && (
+                        <div className="text-sm text-muted-foreground">
+                          {item.code}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground bg-white p-3 rounded-lg border">
+                    {searchTerm ? "No items found" : "Start typing to search items"}
+                  </div>
+                )}
+              </div>
+              <div className="mt-2 flex justify-end">
+                <Button 
+                  variant="link" 
+                  className="text-blue-500"
                   onClick={() => {
-                    addLineItem(item);
+                    // In a real app, this would navigate to view all items
+                    console.log("View all items");
                   }}
                 >
-                  <div className="flex justify-between">
-                    <div className="font-medium">{item.name}</div>
-                    {item.default_price && (
-                      <div>₹{item.default_price.toFixed(2)}</div>
-                    )}
-                  </div>
-                  {item.code && (
-                    <div className="text-sm text-muted-foreground">
-                      Code: {item.code}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  View all
+                </Button>
+              </div>
+            </>
           ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              {searchTerm ? "No items found" : "Start typing to search items"}
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No items found</p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // In a real app, this would navigate to create item screen
+                  console.log("Create new item");
+                }}
+                className="mt-2"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Create New Item
+              </Button>
             </div>
           )}
         </div>
@@ -150,13 +198,11 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <h2 className="font-medium text-lg">Items</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setItemPickerOpen(true)}
-        >
-          <Plus className="h-4 w-4 mr-1" /> Add Item
-        </Button>
+        {lineItems.length > 0 && (
+          <span className="text-sm text-muted-foreground">
+            Tap & hold to re-sort items
+          </span>
+        )}
       </div>
 
       <div className="bg-white rounded-lg border">
@@ -234,6 +280,17 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
           </div>
         )}
       </div>
+
+      {lineItems.length > 0 && (
+        <Button
+          variant="outline"
+          className="w-full flex items-center justify-center border-dashed border-blue-500 text-blue-500"
+          onClick={() => setItemPickerOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" /> Add Item
+        </Button>
+      )}
+      
       <ItemPickerModal />
     </div>
   );

@@ -51,7 +51,7 @@ const InvoiceEdit = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen pb-20 bg-gray-50">
         <InvoiceHeader
           isEditing={isEditing}
           isSubmitting={isSubmitting}
@@ -59,7 +59,7 @@ const InvoiceEdit = () => {
           onSave={() => saveInvoiceMutation.mutate(navigate)}
         />
 
-        <div className="p-4 space-y-8">
+        <div className="p-4 space-y-6">
           <InvoiceMeta 
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
