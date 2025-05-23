@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -193,9 +194,7 @@ export const useInvoiceData = () => {
           invoiceData.number : 
           generateInvoiceNumber();
         
-        // Use the calculated totals from the utility
-        const { subtotal, cgst, sgst, total } = calcTotals(lineItems);
-          
+        // Use the calculated totals from the utility function
         const invoicePayload: Invoice = {
           id: isEditing ? id : undefined,
           number: invoiceNumber,
@@ -203,10 +202,10 @@ export const useInvoiceData = () => {
           client_id: selectedClient.id,
           issue_date: format(selectedDate, 'yyyy-MM-dd'),
           subtotal: Number(subtotal.toFixed(2)),
-          cgst: Number(cgst.toFixed(2)),
-          sgst: Number(sgst.toFixed(2)),
+          cgst: Number(cgstAmount.toFixed(2)),
+          sgst: Number(sgstAmount.toFixed(2)),
           igst: 0,
-          total: Number(total.toFixed(2)),
+          total: Number(grandTotal.toFixed(2)),
           status: 'draft',
         };
         
