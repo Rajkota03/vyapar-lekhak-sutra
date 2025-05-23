@@ -15,16 +15,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/primitives/Card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
 
 type Invoice = {
   id: string;
-  number: string;
   invoice_code: string | null;
   issue_date: string;
-  due_date: string | null;
   total: number;
   status: string | null;
-  client_id: string;
   clients: {
     name: string;
   };
@@ -34,20 +32,25 @@ type FilterStatus = "all" | "sent" | "paid" | "draft";
 
 const Invoices = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
-  // Fetch companies
+  // Fetch user's companies
   const { data: companies } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('companies')
-        .select('*');
+        .select('*')
+        .eq('owner_id', user.id);
         
       if (error) throw error;
       return data || [];
     },
+    enabled: !!user,
   });
 
   // Set first company as selected if not already set
@@ -57,7 +60,7 @@ const Invoices = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch invoices for the selected company
+  // Fetch invoices according to persistence patch
   const { data: invoices, isLoading } = useQuery({
     queryKey: ['invoices', selectedCompanyId, filterStatus],
     queryFn: async () => {
@@ -66,13 +69,15 @@ const Invoices = () => {
       let query = supabase
         .from('invoices')
         .select(`
-          *,
-          clients (
-            name
-          )
+          id,
+          invoice_code,
+          issue_date,
+          total,
+          status,
+          clients ( name )
         `)
         .eq('company_id', selectedCompanyId)
-        .order('created_at', { ascending: false });
+        .order('issue_date', { ascending: false });
         
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
@@ -98,6 +103,30 @@ const Invoices = () => {
         return 'outline';
     }
   };
+
+  // Empty state according to persistence patch
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Please log in to view invoices</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!companies || companies.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">You need to create a company before creating invoices.</p>
+          <Button onClick={() => navigate('/company/new')}>
+            Create Company
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -164,7 +193,7 @@ const Invoices = () => {
                   <div className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-medium">{invoice.invoice_code || invoice.number}</h3>
+                        <h3 className="font-medium">{invoice.invoice_code || 'Draft Invoice'}</h3>
                         <p className="text-sm text-muted-foreground">{invoice.clients?.name}</p>
                       </div>
                       <Badge variant={getStatusBadgeVariant(invoice.status)}>
@@ -181,7 +210,7 @@ const Invoices = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No invoices found</p>
+              <p className="text-muted-foreground">No invoices yet</p>
               <Button 
                 variant="outline" 
                 size="sm"

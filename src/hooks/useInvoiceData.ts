@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,7 @@ export const useInvoiceData = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // States
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -183,16 +184,15 @@ export const useInvoiceData = () => {
     }
   }, [invoiceLineItems, isLoadingLines]);
 
-  // Save invoice mutation
+  // Save invoice mutation - updated according to persistence patch
   const saveInvoiceMutation = useMutation({
     mutationFn: async ({ navigate, taxConfig, showMySignature, requireClientSignature }: SaveInvoiceParams) => {
-      if (!selectedClient || !selectedCompanyId) {
-        throw new Error("Client and company are required");
+      if (!selectedClient || !user) {
+        throw new Error("Client and user authentication are required");
       }
       
       console.log('Starting invoice save process...', {
         selectedClient: selectedClient.id,
-        selectedCompanyId,
         lineItemsCount: lineItems.length,
         isEditing
       });
@@ -200,12 +200,28 @@ export const useInvoiceData = () => {
       setIsSubmitting(true);
       
       try {
+        // Get user's company according to persistence patch
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user) {
+          throw new Error("User not authenticated");
+        }
+        
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('owner_id', userData.user.id)
+          .single();
+          
+        if (companyError || !company) {
+          throw new Error("No company found for user");
+        }
+        
         // Generate invoice code for new invoices
         let invoiceCode = "";
         if (!isEditing) {
           console.log('Generating new invoice code...');
           const { data: codeData, error: codeError } = await supabase
-            .rpc('next_invoice_number', { company_id: selectedCompanyId });
+            .rpc('next_invoice_number', { company_id: company.id });
           
           if (codeError) {
             console.error('Error generating invoice code:', codeError);
@@ -221,19 +237,19 @@ export const useInvoiceData = () => {
         const calculatedTotals = calcTotals(lineItems, taxConfig);
         console.log('Calculated totals:', calculatedTotals);
         
-        // Prepare invoice payload with tax configuration and signatures
+        // Prepare invoice payload according to persistence patch
         const invoicePayload = {
-          number: invoiceCode,
-          invoice_code: invoiceCode,
-          company_id: selectedCompanyId,
+          company_id: company.id,
           client_id: selectedClient.id,
           issue_date: format(selectedDate, 'yyyy-MM-dd'),
+          invoice_code: invoiceCode,
+          number: invoiceCode, // Keep both for compatibility
+          status: 'draft',
           subtotal: Number(calculatedTotals.subtotal.toFixed(2)),
           cgst: taxConfig.useIgst ? 0 : Number(calculatedTotals.cgst?.toFixed(2) || 0),
           sgst: taxConfig.useIgst ? 0 : Number(calculatedTotals.sgst?.toFixed(2) || 0),
           igst: taxConfig.useIgst ? Number(calculatedTotals.igst?.toFixed(2) || 0) : 0,
           total: Number(calculatedTotals.total.toFixed(2)),
-          status: 'draft',
           // Tax configuration
           use_igst: taxConfig.useIgst,
           cgst_pct: taxConfig.cgstPct,
@@ -291,9 +307,9 @@ export const useInvoiceData = () => {
           }
         }
         
-        // Insert line items with new fields
+        // Bulk insert lines according to persistence patch
         console.log('Inserting line items...');
-        const lineItemsToInsert = lineItems.map(item => ({
+        const linesPayload = lineItems.map(item => ({
           invoice_id: invoiceId,
           item_id: item.item_id,
           description: item.description,
@@ -306,11 +322,11 @@ export const useInvoiceData = () => {
           note: item.note || '',
         }));
         
-        console.log('Line items to insert:', lineItemsToInsert);
+        console.log('Line items to insert:', linesPayload);
         
         const { error: lineItemsError } = await supabase
           .from('invoice_lines')
-          .insert(lineItemsToInsert);
+          .insert(linesPayload);
           
         if (lineItemsError) {
           console.error('Error inserting line items:', lineItemsError);
@@ -324,7 +340,9 @@ export const useInvoiceData = () => {
           description: `Invoice ${invoiceCode} has been saved successfully.`,
         });
         
-        navigate('/invoices');
+        // Navigate and invalidate queries according to persistence patch
+        navigate('/invoices', { replace: true });
+        queryClient.invalidateQueries({ queryKey: ['invoices'] });
         
         return { success: true, invoiceId };
       } catch (error) {
