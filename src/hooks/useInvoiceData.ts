@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -81,7 +80,7 @@ export const useInvoiceData = () => {
         console.error('Error fetching companies:', error);
         throw error;
       }
-      console.log('Companies fetched:', data);
+      console.log('Companies fetched:', data?.length || 0, 'companies');
       return data || [];
     },
     enabled: !!user,
@@ -217,7 +216,7 @@ export const useInvoiceData = () => {
     }
   }, [invoiceLineItems, isLoadingLines]);
 
-  // Save invoice mutation with improved error handling
+  // Save invoice mutation with improved error handling and debugging
   const saveInvoiceMutation = useMutation({
     mutationFn: async ({ navigate, taxConfig, showMySignature, requireClientSignature }: SaveInvoiceParams) => {
       if (!selectedClient || !user || !selectedCompanyId) {
@@ -300,6 +299,7 @@ export const useInvoiceData = () => {
             throw updateError;
           }
           invoiceId = id!;
+          console.log('Updated invoice with ID:', invoiceId);
         } else {
           console.log('Creating new invoice...');
           const { data: newInvoice, error: insertError } = await supabase
@@ -356,6 +356,8 @@ export const useInvoiceData = () => {
             console.error('Error inserting line items:', lineItemsError);
             throw lineItemsError;
           }
+          
+          console.log('Line items inserted successfully');
         }
         
         console.log('Invoice saved successfully!');
@@ -367,6 +369,7 @@ export const useInvoiceData = () => {
         
         // Invalidate and refetch queries
         await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        await queryClient.invalidateQueries({ queryKey: ['invoices', selectedCompanyId] });
         await queryClient.invalidateQueries({ queryKey: ['companies'] });
         
         // Navigate to invoices list

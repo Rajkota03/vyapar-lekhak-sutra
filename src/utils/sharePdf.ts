@@ -1,17 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export const handleSharePdf = async (invoiceId: string) => {
-  const { toast } = useToast();
-  
   try {
+    console.log('Generating PDF for invoice:', invoiceId);
+    
     const { data, error } = await supabase.functions.invoke(
       'get_or_generate_pdf',
       { body: { invoice_id: invoiceId } }
     );
     
     if (error) {
+      console.error('Error generating PDF:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -20,7 +22,8 @@ export const handleSharePdf = async (invoiceId: string) => {
       return;
     }
     
-    const url = data.pdf_url;
+    const url = data?.pdf_url;
+    console.log('PDF URL received:', url);
     
     if (!url) {
       toast({

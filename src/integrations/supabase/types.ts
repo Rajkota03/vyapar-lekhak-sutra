@@ -385,7 +385,7 @@ export type Database = {
         }[]
       }
       next_invoice_number: {
-        Args: { company_id: string }
+        Args: { p_company_id: string }
         Returns: string
       }
       sparsevec_out: {

@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/primitives/Card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { handleSharePdf } from "@/utils/sharePdf";
+import { useToast } from "@/hooks/use-toast";
 
 type Invoice = {
   id: string;
@@ -35,6 +36,8 @@ type FilterStatus = "all" | "sent" | "paid" | "draft";
 const Invoices = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
@@ -57,14 +60,14 @@ const Invoices = () => {
         console.error('Error fetching companies:', error);
         throw error;
       }
-      console.log('Companies fetched successfully:', data);
+      console.log('Companies fetched successfully:', data?.length || 0, 'companies');
       return data || [];
     },
     enabled: !!user,
   });
 
   // Set first company as selected if not already set
-  React.useEffect(() => {
+  useEffect(() => {
     if (companies && companies.length > 0 && !selectedCompanyId) {
       console.log('Setting selected company:', companies[0].id);
       setSelectedCompanyId(companies[0].id);
@@ -72,7 +75,7 @@ const Invoices = () => {
   }, [companies, selectedCompanyId]);
 
   // Fetch invoices with improved error handling
-  const { data: invoices, isLoading: isLoadingInvoices, error: invoicesError } = useQuery({
+  const { data: invoices, isLoading: isLoadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ['invoices', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) {
@@ -93,24 +96,37 @@ const Invoices = () => {
           status,
           clients ( name )
         `)
-        .eq('company_id', selectedCompanyId)
-        .order('created_at', { ascending: false });
+        .eq('company_id', selectedCompanyId);
         
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
       }
+      
+      query = query.order('created_at', { ascending: false });
         
-      const { data, error } = await query;
+      const { data: invoicesData, error } = await query;
       if (error) {
         console.error('Error fetching invoices:', error);
         throw error;
       }
       
-      console.log('Invoices fetched successfully:', data);
-      return data as Invoice[] || [];
+      console.log('Invoices fetched successfully:', invoicesData?.length || 0, 'invoices');
+      return invoicesData as Invoice[] || [];
     },
     enabled: !!selectedCompanyId && !!user,
   });
+
+  // Force refresh invoices when component mounts
+  useEffect(() => {
+    if (selectedCompanyId && user) {
+      refetchInvoices();
+    }
+  }, [selectedCompanyId, user, refetchInvoices]);
+
+  // Debug log for invoices data
+  useEffect(() => {
+    console.log('Current invoices data:', invoices);
+  }, [invoices]);
 
   const getStatusBadgeVariant = (status: string | null) => {
     switch (status) {
@@ -183,6 +199,12 @@ const Invoices = () => {
   const handlePdfShare = async (e: React.MouseEvent, invoiceId: string) => {
     e.stopPropagation();
     await handleSharePdf(invoiceId);
+  };
+
+  const handleCreateInvoice = () => {
+    // Clear any cached invoice data
+    queryClient.removeQueries({ queryKey: ['invoice'] });
+    navigate('/invoices/new');
   };
 
   return (
@@ -289,7 +311,7 @@ const Invoices = () => {
                 variant="outline" 
                 size="sm"
                 className="mt-2"
-                onClick={() => navigate('/invoices/new')}
+                onClick={handleCreateInvoice}
               >
                 Create Invoice
               </Button>
@@ -300,7 +322,7 @@ const Invoices = () => {
         {/* Floating Action Button */}
         <Button
           className="fixed bottom-6 right-6 h-12 w-12 rounded-full p-0 shadow-lg"
-          onClick={() => navigate('/invoices/new')}
+          onClick={handleCreateInvoice}
         >
           <Plus size={24} />
         </Button>
