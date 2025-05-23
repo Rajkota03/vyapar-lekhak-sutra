@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -243,7 +244,7 @@ export const useInvoiceData = () => {
         if (!isEditing) {
           console.log('Generating new invoice code...');
           const { data: codeData, error: codeError } = await supabase
-            .rpc('next_invoice_number', { company_id: selectedCompanyId });
+            .rpc('next_invoice_number', { p_company_id: selectedCompanyId });
           
           if (codeError) {
             console.error('Error generating invoice code:', codeError);
