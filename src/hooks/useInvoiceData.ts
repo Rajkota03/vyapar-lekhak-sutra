@@ -324,7 +324,7 @@ export const useInvoiceData = () => {
           description: `Invoice ${invoiceCode} has been saved successfully.`,
         });
         
-        navigate('/invoice-list');
+        navigate('/invoices');
         
         return { success: true, invoiceId };
       } catch (error) {

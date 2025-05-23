@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 type Invoice = {
   id: string;
   number: string;
+  invoice_code: string | null;
   issue_date: string;
   due_date: string | null;
   total: number;
@@ -70,7 +71,8 @@ const Invoices = () => {
             name
           )
         `)
-        .eq('company_id', selectedCompanyId);
+        .eq('company_id', selectedCompanyId)
+        .order('created_at', { ascending: false });
         
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
@@ -162,7 +164,7 @@ const Invoices = () => {
                   <div className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-medium">{invoice.number}</h3>
+                        <h3 className="font-medium">{invoice.invoice_code || invoice.number}</h3>
                         <p className="text-sm text-muted-foreground">{invoice.clients?.name}</p>
                       </div>
                       <Badge variant={getStatusBadgeVariant(invoice.status)}>

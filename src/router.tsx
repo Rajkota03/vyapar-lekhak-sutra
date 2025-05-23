@@ -37,7 +37,7 @@ export const router = createBrowserRouter([
   },
   { 
     path: '/invoice-list', 
-    element: <AuthProvider><ProtectedRoute><InvoiceList /></ProtectedRoute></AuthProvider>
+    element: <AuthProvider><ProtectedRoute><Invoices /></ProtectedRoute></AuthProvider>
   },
   { 
     path: '/invoices/new', 

@@ -49,7 +49,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/invoice-list')}
+            onClick={() => navigate('/invoices')}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
