@@ -48,6 +48,7 @@ const InvoiceEdit: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   
   // Get the invoice data
   const { data: invoice, isLoading: isInvoiceLoading } = useQuery({
@@ -70,12 +71,12 @@ const InvoiceEdit: React.FC = () => {
     enabled: !!id,
   });
   
-  // Get clients for the dropdown
-  const { data: clients } = useQuery({
-    queryKey: ['clients'],
+  // Get companies for the dropdown
+  const { data: companies } = useQuery({
+    queryKey: ['companies'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('clients')
+        .from('companies')
         .select('*');
         
       if (error) {
@@ -84,6 +85,37 @@ const InvoiceEdit: React.FC = () => {
       
       return data;
     },
+  });
+  
+  // Set first company as selected if not already set
+  useEffect(() => {
+    if (companies && companies.length > 0 && !selectedCompany) {
+      if (invoice) {
+        setSelectedCompany(invoice.company_id);
+      } else {
+        setSelectedCompany(companies[0].id);
+      }
+    }
+  }, [companies, invoice, selectedCompany]);
+  
+  // Get clients for the dropdown
+  const { data: clients } = useQuery({
+    queryKey: ['clients', selectedCompany],
+    queryFn: async () => {
+      if (!selectedCompany) return [];
+      
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('company_id', selectedCompany);
+        
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    },
+    enabled: !!selectedCompany,
   });
   
   const form = useForm<FormValues>({
@@ -117,15 +149,28 @@ const InvoiceEdit: React.FC = () => {
         igst: invoice.igst || 0,
         total: invoice.total,
       });
+      
+      // Set the company to the one from the invoice
+      setSelectedCompany(invoice.company_id);
     }
   }, [invoice, form]);
   
   const onSubmit = async (data: FormValues) => {
     try {
+      if (!selectedCompany) {
+        toast({
+          variant: "destructive",
+          title: "No company selected",
+          description: "Please select a company before saving the invoice.",
+        });
+        return;
+      }
+      
       setIsSubmitting(true);
       
       const invoiceData = {
         ...data,
+        company_id: selectedCompany, // Add the company_id
         issue_date: data.issue_date,
         due_date: data.due_date || null,
       };
@@ -194,191 +239,226 @@ const InvoiceEdit: React.FC = () => {
             <CardTitle>Invoice Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Invoice Number</FormLabel>
+            {companies && companies.length > 0 ? (
+              <>
+                {companies.length > 1 && (
+                  <div className="mb-6">
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <Select 
+                        value={selectedCompany || ""}
+                        onValueChange={setSelectedCompany}
+                      >
                         <FormControl>
-                          <Input {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select company" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="client_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Client</FormLabel>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select client" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {clients?.map((client) => (
-                              <SelectItem key={client.id} value={client.id}>
-                                {client.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="issue_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Issue Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="due_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Due Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="subtotal"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subtotal</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="cgst"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CGST (%)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="sgst"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SGST (%)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="igst"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>IGST (%)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="total"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Total Amount</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                        <SelectContent>
+                          {companies.map((company) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  </div>
+                )}
                 
-                <div className="flex justify-end space-x-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate("/invoices")}
-                    type="button"
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save Invoice"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Invoice Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="client_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Client</FormLabel>
+                            <Select 
+                              value={field.value} 
+                              onValueChange={field.onChange}
+                              disabled={!clients || clients.length === 0}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select client" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {clients?.map((client) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    {client.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="issue_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Issue Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="due_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Due Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select 
+                              value={field.value} 
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="paid">Paid</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="subtotal"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subtotal</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="cgst"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CGST (%)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="sgst"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>SGST (%)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="igst"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>IGST (%)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="total"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Total Amount</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => navigate("/invoices")}
+                        type="button"
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting || !selectedCompany || !clients || clients.length === 0}>
+                        {isSubmitting ? "Saving..." : "Save Invoice"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <p className="mb-2">You need to create a company first</p>
+                <Button onClick={() => navigate("/company/new")}>Create Company</Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
