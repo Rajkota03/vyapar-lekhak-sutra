@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { calcTotals } from "@/utils/invoiceMath";
-import { LineItem } from "@/components/invoice/ItemsSection";
+import { LineItem, Item } from "@/components/invoice/ItemsSection";
 
 export type Client = {
   id: string;
@@ -16,27 +16,7 @@ export type Client = {
   phone?: string;
 };
 
-export type LineItem = {
-  id?: string;
-  item_id?: string;
-  description: string;
-  qty: number;
-  unit_price: number;
-  cgst?: number;
-  sgst?: number;
-  amount: number;
-};
-
-export type Item = {
-  id: string;
-  name: string;
-  code?: string;
-  default_price?: number;
-  default_cgst?: number;
-  default_sgst?: number;
-};
-
-type Invoice = {
+export type Invoice = {
   id?: string;
   number: string;
   company_id: string;
