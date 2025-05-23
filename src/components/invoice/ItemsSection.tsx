@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ItemPicker from "./ItemPicker";
 
 export type Item = {
   id: string;
@@ -20,6 +21,7 @@ export type Item = {
   default_price?: number;
   default_cgst?: number;
   default_sgst?: number;
+  photo_url?: string;
 };
 
 export type LineItem = {
@@ -37,22 +39,16 @@ interface ItemsSectionProps {
   lineItems: LineItem[];
   setLineItems: React.Dispatch<React.SetStateAction<LineItem[]>>;
   items?: Item[];
+  selectedCompanyId: string | null;
 }
 
 const ItemsSection: React.FC<ItemsSectionProps> = ({
   lineItems,
   setLineItems,
   items = [],
+  selectedCompanyId,
 }) => {
   const [itemPickerOpen, setItemPickerOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Filter items by search term
-  const filteredItems = items?.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.code && item.code.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) || [];
 
   // Add a new line item from the selected item
   const addLineItem = (item: Item) => {
@@ -68,7 +64,6 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
     setLineItems([...lineItems, newItem]);
     setItemPickerOpen(false);
-    setSearchTerm("");
   };
 
   // Update line item quantity or price
@@ -97,10 +92,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
   // Item Picker Modal
   const ItemPickerModal = () => (
-    <Dialog open={itemPickerOpen} onOpenChange={(open) => {
-      setItemPickerOpen(open);
-      if (!open) setSearchTerm("");
-    }}>
+    <Dialog open={itemPickerOpen} onOpenChange={setItemPickerOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center">
@@ -108,87 +100,11 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
           </DialogTitle>
         </DialogHeader>
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start text-blue-500"
-              onClick={() => {
-                // In a real app, this would navigate to a create item form
-                console.log("Create new item");
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" /> Create new item
-            </Button>
-          </div>
-          
-          <div className="bg-gray-50 p-2 rounded-lg mb-4">
-            <Input
-              placeholder="Search item..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-white"
-              autoFocus
-            />
-          </div>
-
-          {items && items.length > 0 ? (
-            <>
-              <p className="text-sm font-medium mb-2">Recents</p>
-              <div className="space-y-2 max-h-72 overflow-y-auto rounded-lg">
-                {filteredItems.length > 0 ? (
-                  filteredItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-3 bg-white border rounded-lg hover:bg-accent cursor-pointer"
-                      onClick={() => addLineItem(item)}
-                    >
-                      <div className="flex justify-between">
-                        <div className="font-medium">{item.name}</div>
-                        {item.default_price !== undefined && (
-                          <div className="font-medium">₹{item.default_price.toFixed(2)}</div>
-                        )}
-                      </div>
-                      {item.code && (
-                        <div className="text-sm text-muted-foreground">
-                          {item.code}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground bg-white p-3 rounded-lg border">
-                    {searchTerm ? "No items found" : "Start typing to search items"}
-                  </div>
-                )}
-              </div>
-              <div className="mt-2 flex justify-end">
-                <Button 
-                  variant="link" 
-                  className="text-blue-500"
-                  onClick={() => {
-                    // In a real app, this would navigate to view all items
-                    console.log("View all items");
-                  }}
-                >
-                  View all
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No items found</p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  // In a real app, this would navigate to create item screen
-                  console.log("Create new item");
-                }}
-                className="mt-2"
-              >
-                <Plus className="h-4 w-4 mr-2" /> Create New Item
-              </Button>
-            </div>
-          )}
+          <ItemPicker 
+            companyId={selectedCompanyId} 
+            onItemSelect={addLineItem} 
+            onClose={() => setItemPickerOpen(false)} 
+          />
         </div>
       </DialogContent>
     </Dialog>

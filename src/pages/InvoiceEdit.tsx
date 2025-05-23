@@ -76,6 +76,7 @@ const InvoiceEdit = () => {
             lineItems={lineItems}
             setLineItems={setLineItems}
             items={items}
+            selectedCompanyId={selectedCompanyId}
           />
 
           {lineItems.length > 0 && (
