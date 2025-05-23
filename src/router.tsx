@@ -6,6 +6,7 @@ import {
 import Dashboard from '@/pages/Dashboard';
 import InvoiceList from '@/pages/InvoiceList'; 
 import InvoiceEdit from '@/pages/InvoiceEdit';
+import Invoices from '@/pages/Invoices';
 import ItemList from '@/pages/ItemList';
 import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
   },
   { 
     path: '/invoices', 
+    element: <AuthProvider><ProtectedRoute><Invoices /></ProtectedRoute></AuthProvider>
+  },
+  { 
+    path: '/invoice-list', 
     element: <AuthProvider><ProtectedRoute><InvoiceList /></ProtectedRoute></AuthProvider>
   },
   { 
