@@ -80,6 +80,60 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_lines: {
+        Row: {
+          amount: number
+          cgst: number | null
+          created_at: string | null
+          description: string
+          id: string
+          invoice_id: string
+          item_id: string | null
+          qty: number
+          sgst: number | null
+          unit_price: number
+        }
+        Insert: {
+          amount: number
+          cgst?: number | null
+          created_at?: string | null
+          description: string
+          id?: string
+          invoice_id: string
+          item_id?: string | null
+          qty?: number
+          sgst?: number | null
+          unit_price: number
+        }
+        Update: {
+          amount?: number
+          cgst?: number | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          invoice_id?: string
+          item_id?: string | null
+          qty?: number
+          sgst?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           cgst: number | null
@@ -147,6 +201,50 @@ export type Database = {
         ]
       }
       items: {
+        Row: {
+          code: string | null
+          company_id: string
+          created_at: string | null
+          default_cgst: number | null
+          default_price: number | null
+          default_sgst: number | null
+          id: string
+          name: string
+          photo_url: string | null
+        }
+        Insert: {
+          code?: string | null
+          company_id: string
+          created_at?: string | null
+          default_cgst?: number | null
+          default_price?: number | null
+          default_sgst?: number | null
+          id?: string
+          name: string
+          photo_url?: string | null
+        }
+        Update: {
+          code?: string | null
+          company_id?: string
+          created_at?: string | null
+          default_cgst?: number | null
+          default_price?: number | null
+          default_sgst?: number | null
+          id?: string
+          name?: string
+          photo_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      old_items: {
         Row: {
           amount: number
           created_at: string | null

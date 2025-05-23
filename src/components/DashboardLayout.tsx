@@ -3,7 +3,7 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Users, FileText, Settings, Menu, X } from "lucide-react";
+import { Home, Users, FileText, Settings, Menu, X, Package } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,6 +18,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Clients", href: "/clients", icon: Users },
+    { name: "Items", href: "/items", icon: Package },
     { name: "Invoices", href: "/invoices", icon: FileText },
     { name: "Settings", href: "/settings", icon: Settings },
   ];

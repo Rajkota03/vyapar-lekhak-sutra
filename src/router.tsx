@@ -6,6 +6,7 @@ import {
 import Dashboard from '@/pages/Dashboard';
 import InvoiceList from '@/pages/InvoiceList'; 
 import InvoiceEdit from '@/pages/InvoiceEdit';
+import ItemList from '@/pages/ItemList';
 import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
 import CreateCompany from '@/pages/CreateCompany';
@@ -42,8 +43,11 @@ export const router = createBrowserRouter([
     element: <AuthProvider><ProtectedRoute><InvoiceEdit /></ProtectedRoute></AuthProvider>
   },
   { 
+    path: '/items', 
+    element: <AuthProvider><ProtectedRoute><ItemList /></ProtectedRoute></AuthProvider>
+  },
+  { 
     path: '*', 
     element: <AuthProvider><NotFound /></AuthProvider> 
   },
 ]);
-
