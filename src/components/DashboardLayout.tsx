@@ -2,7 +2,7 @@
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, Users, FileText, Settings, Menu, X } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -12,6 +12,7 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const navigation = [
@@ -44,7 +45,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
             <nav className="mt-8 flex-1 px-2 space-y-1">
               {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
+                const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
                 return (
                   <Link
                     key={item.name}
@@ -82,7 +83,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           <div className="fixed inset-y-0 left-0 flex flex-col w-full max-w-xs bg-white pt-16">
             <nav className="mt-4 px-4 space-y-1 flex-1">
               {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
+                const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
                 return (
                   <Link
                     key={item.name}
