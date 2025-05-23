@@ -95,7 +95,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
   // Item Picker Modal
   const ItemPickerModal = () => (
     <Dialog open={itemPickerOpen} onOpenChange={setItemPickerOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-md shadow-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <Package className="h-5 w-5 mr-2 text-blue-500" /> Add Item
@@ -115,7 +115,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
-        <h2 className="font-medium text-lg">Items</h2>
+        <h2 className="text-lg font-semibold">Items</h2>
         {lineItems.length > 0 && (
           <span className="text-sm text-muted-foreground">
             Tap & hold to re-sort items
@@ -123,17 +123,17 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
         )}
       </div>
 
-      <div className="bg-white rounded-lg border">
+      <div className="rounded-md bg-white shadow-sm border">
         {lineItems.length > 0 ? (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40%]">Description</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[40%] text-xs uppercase text-gray-500 py-2">Description</TableHead>
+                  <TableHead className="text-right text-xs uppercase text-gray-500 py-2">Qty</TableHead>
+                  <TableHead className="text-right text-xs uppercase text-gray-500 py-2">Price</TableHead>
+                  <TableHead className="text-right text-xs uppercase text-gray-500 py-2">Amount</TableHead>
+                  <TableHead className="w-[50px] text-xs uppercase text-gray-500 py-2"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -150,7 +150,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
                         onChange={(e) =>
                           updateLineItem(index, "qty", Number(e.target.value))
                         }
-                        className="w-16 text-right"
+                        className="w-16 h-9 text-right text-sm"
                       />
                     </TableCell>
                     <TableCell className="text-right">
@@ -165,7 +165,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
                             Number(e.target.value)
                           )
                         }
-                        className="w-24 text-right"
+                        className="w-16 h-9 text-right text-sm"
                       />
                     </TableCell>
                     <TableCell className="text-right">
@@ -191,7 +191,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
             <Button
               variant="outline"
               onClick={() => setItemPickerOpen(true)}
-              className="mt-2"
+              className="mt-2 h-10 rounded-md text-sm font-medium"
             >
               <Plus className="h-4 w-4 mr-2" /> Add Item
             </Button>
@@ -202,7 +202,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
       {lineItems.length > 0 && (
         <Button
           variant="outline"
-          className="w-full flex items-center justify-center border-dashed border-blue-500 text-blue-500"
+          className="w-full flex items-center justify-center border-dashed border-blue-500 text-blue-500 h-10 rounded-md text-sm font-medium"
           onClick={() => setItemPickerOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" /> Add Item

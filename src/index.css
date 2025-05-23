@@ -88,6 +88,13 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  
+  /* Base font size adjustment for tablet and larger screens */
+  @screen sm {
+    html {
+      font-size: 15px;
+    }
+  }
 }
 
 @layer base {

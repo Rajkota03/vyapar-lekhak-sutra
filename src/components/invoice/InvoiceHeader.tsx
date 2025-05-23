@@ -27,11 +27,11 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           <MoreVertical className="h-4 w-4" />
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="rounded-t-lg">
         <SheetHeader>
           <SheetTitle>Tax & Settings</SheetTitle>
         </SheetHeader>
-        <div className="py-4">
+        <div className="py-4 overflow-y-auto max-h-[calc(100vh-120px)] px-4 pb-24">
           <p className="text-muted-foreground mb-4">Tax settings will be implemented in a future update.</p>
         </div>
       </SheetContent>
@@ -59,7 +59,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             onClick={onSave}
             disabled={!canSave || isSubmitting}
             variant="ghost"
-            className="font-medium text-blue-500"
+            className="font-medium text-blue-500 h-10 px-4 rounded-md text-sm font-medium"
           >
             {isSubmitting ? "Saving..." : "Save"}
           </Button>

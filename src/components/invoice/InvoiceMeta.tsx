@@ -17,14 +17,14 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   invoiceNumber = "#25-26/60" 
 }) => {
   return (
-    <div className="bg-white rounded-lg border p-4 flex justify-between items-center">
+    <div className="rounded-md bg-white shadow-sm border p-4 flex justify-between items-center">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" className="text-xl font-bold p-0 h-auto">
+          <Button variant="ghost" className="text-xl font-semibold p-0 h-auto">
             {format(selectedDate, "dd MMM yyyy")}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 z-50">
+        <PopoverContent className="w-auto p-0 z-50 rounded-md shadow-sm">
           <Calendar
             mode="single"
             selected={selectedDate}
@@ -34,7 +34,7 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
         </PopoverContent>
       </Popover>
       
-      <div className="text-xl font-bold">{invoiceNumber}</div>
+      <div className="text-xl font-semibold">{invoiceNumber}</div>
     </div>
   );
 };

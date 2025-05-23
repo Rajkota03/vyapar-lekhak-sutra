@@ -43,32 +43,32 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
-        <h2 className="font-medium text-lg">Total</h2>
+        <h2 className="text-lg font-semibold">Total</h2>
         <Button variant="ghost" size="icon" onClick={() => setShowTaxSettings(true)}>
-          <Settings className="h-5 w-5 text-blue-500" />
+          <Settings size={18} className="text-gray-400 hover:text-gray-600" />
         </Button>
       </div>
       
-      <div className="bg-white rounded-lg border p-4 space-y-3">
+      <div className="rounded-md bg-white shadow-sm border p-4 space-y-3">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal</span>
-          <span>{formatCurrency(subtotal)}</span>
+          <span className="text-gray-500 text-sm">Subtotal</span>
+          <span className="text-right font-medium">{formatCurrency(subtotal)}</span>
         </div>
         
         {taxConfig.useIgst ? (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">IGST ({taxConfig.igstPct}%)</span>
-            <span>{formatCurrency(igstAmount || 0)}</span>
+            <span className="text-gray-500 text-sm">IGST ({taxConfig.igstPct}%)</span>
+            <span className="text-right font-medium">{formatCurrency(igstAmount || 0)}</span>
           </div>
         ) : (
           <>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">CGST ({taxConfig.cgstPct}%)</span>
-              <span>{formatCurrency(cgstAmount || 0)}</span>
+              <span className="text-gray-500 text-sm">CGST ({taxConfig.cgstPct}%)</span>
+              <span className="text-right font-medium">{formatCurrency(cgstAmount || 0)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">SGST ({taxConfig.sgstPct}%)</span>
-              <span>{formatCurrency(sgstAmount || 0)}</span>
+              <span className="text-gray-500 text-sm">SGST ({taxConfig.sgstPct}%)</span>
+              <span className="text-right font-medium">{formatCurrency(sgstAmount || 0)}</span>
             </div>
           </>
         )}
@@ -76,19 +76,19 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
         <div className="h-px bg-gray-200 my-2"></div>
         <div className="flex justify-between font-medium">
           <span>Grand Total</span>
-          <span>{formatCurrency(grandTotal)}</span>
+          <span className="text-right font-medium">{formatCurrency(grandTotal)}</span>
         </div>
       </div>
       
-      <div className="bg-white rounded-lg border p-4">
+      <div className="rounded-md bg-white shadow-sm border p-4">
         <div className="flex justify-between items-center">
           <span className="font-medium">Amount Due</span>
-          <span className="font-medium">{formatCurrency(grandTotal)}</span>
+          <span className="text-right font-medium">{formatCurrency(grandTotal)}</span>
         </div>
       </div>
       
       <Sheet open={showTaxSettings} onOpenChange={setShowTaxSettings}>
-        <SheetContent>
+        <SheetContent className="rounded-t-lg">
           <SheetHeader>
             <SheetTitle>Tax & Discount</SheetTitle>
           </SheetHeader>

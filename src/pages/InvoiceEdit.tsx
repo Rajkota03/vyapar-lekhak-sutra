@@ -97,45 +97,47 @@ const InvoiceEdit = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen pb-20 bg-gray-50">
-        <InvoiceHeader
-          isEditing={isEditing}
-          isSubmitting={isSubmitting}
-          canSave={!!selectedClient && lineItems.length > 0}
-          onSave={handleSaveInvoice}
-        />
-
-        <div className="p-4 space-y-6">
-          <InvoiceMeta 
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
+        <div className="mx-auto w-full max-w-screen-sm sm:max-w-screen-md px-3 sm:px-6">
+          <InvoiceHeader
+            isEditing={isEditing}
+            isSubmitting={isSubmitting}
+            canSave={!!selectedClient && lineItems.length > 0}
+            onSave={handleSaveInvoice}
           />
 
-          <ClientSection 
-            selectedClient={selectedClient}
-            setSelectedClient={setSelectedClient}
-            clients={clients}
-            companyId={selectedCompanyId || ""}
-          />
-
-          <ItemsSection 
-            lineItems={lineItems}
-            setLineItems={setLineItems}
-            items={items}
-            selectedCompanyId={selectedCompanyId}
-          />
-
-          {lineItems.length > 0 && (
-            <TotalsSection
-              subtotal={subtotal}
-              cgstAmount={cgstAmount}
-              sgstAmount={sgstAmount}
-              igstAmount={igstAmount}
-              grandTotal={grandTotal}
-              taxConfig={taxConfig}
-              setValue={form.setValue}
-              watch={form.watch}
+          <div className="p-4 space-y-4">
+            <InvoiceMeta 
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
             />
-          )}
+
+            <ClientSection 
+              selectedClient={selectedClient}
+              setSelectedClient={setSelectedClient}
+              clients={clients}
+              companyId={selectedCompanyId || ""}
+            />
+
+            <ItemsSection 
+              lineItems={lineItems}
+              setLineItems={setLineItems}
+              items={items}
+              selectedCompanyId={selectedCompanyId}
+            />
+
+            {lineItems.length > 0 && (
+              <TotalsSection
+                subtotal={subtotal}
+                cgstAmount={cgstAmount}
+                sgstAmount={sgstAmount}
+                igstAmount={igstAmount}
+                grandTotal={grandTotal}
+                taxConfig={taxConfig}
+                setValue={form.setValue}
+                watch={form.watch}
+              />
+            )}
+          </div>
         </div>
       </div>
     </DashboardLayout>
