@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/primitives/Input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { TaxConfig } from "@/utils/invoiceMath";
@@ -23,7 +23,7 @@ const TaxDiscountSheet: React.FC<TaxDiscountSheetProps> = ({
   const useIgst = watch('taxConfig.useIgst');
   
   return (
-    <div className="overflow-y-auto max-h-[calc(100vh-120px)] px-4 pb-24">
+    <div className="fixed inset-x-0 bottom-0 rounded-t-lg bg-white shadow-lg max-h-[80vh] overflow-y-auto px-4 pb-24 pt-4">
       <div className="py-4 space-y-4">
         <div className="bg-gray-50 p-4 rounded-md">
           <div className="flex items-center justify-between mb-4">
@@ -41,7 +41,7 @@ const TaxDiscountSheet: React.FC<TaxDiscountSheetProps> = ({
                 <Input 
                   id="igst-percentage"
                   type="number"
-                  className="w-20 text-right h-10 rounded-md text-sm"
+                  className="w-20 text-right h-9 rounded-md text-sm"
                   value={watch('taxConfig.igstPct')}
                   onChange={(e) => setValue('taxConfig.igstPct', Number(e.target.value))}
                 />
@@ -54,7 +54,7 @@ const TaxDiscountSheet: React.FC<TaxDiscountSheetProps> = ({
                 <Input 
                   id="cgst-label" 
                   defaultValue="CGST" 
-                  className="mb-2 h-10 rounded-md text-sm" 
+                  className="mb-2 h-9 rounded-md text-sm" 
                 />
               </div>
               
@@ -63,7 +63,7 @@ const TaxDiscountSheet: React.FC<TaxDiscountSheetProps> = ({
                 <Input 
                   id="cgst-percentage"
                   type="number"
-                  className="w-20 text-right h-10 rounded-md text-sm"
+                  className="w-20 text-right h-9 rounded-md text-sm"
                   value={watch('taxConfig.cgstPct')}
                   onChange={(e) => setValue('taxConfig.cgstPct', Number(e.target.value))}
                 />
@@ -74,7 +74,7 @@ const TaxDiscountSheet: React.FC<TaxDiscountSheetProps> = ({
                 <Input 
                   id="sgst-label" 
                   defaultValue="SGST" 
-                  className="mb-2 h-10 rounded-md text-sm" 
+                  className="mb-2 h-9 rounded-md text-sm" 
                 />
               </div>
               
@@ -83,7 +83,7 @@ const TaxDiscountSheet: React.FC<TaxDiscountSheetProps> = ({
                 <Input 
                   id="sgst-percentage"
                   type="number" 
-                  className="w-20 text-right h-10 rounded-md text-sm"
+                  className="w-20 text-right h-9 rounded-md text-sm"
                   value={watch('taxConfig.sgstPct')}
                   onChange={(e) => setValue('taxConfig.sgstPct', Number(e.target.value))}
                 />
@@ -103,7 +103,7 @@ const TaxDiscountSheet: React.FC<TaxDiscountSheetProps> = ({
           
           <div className="mt-4">
             <Label htmlFor="discount" className="text-sm text-gray-500 mb-1">Discount ₹</Label>
-            <Input id="discount" defaultValue="0" type="number" className="w-20 text-right h-10 rounded-md text-sm" />
+            <Input id="discount" defaultValue="0" type="number" className="w-20 text-right h-9 rounded-md text-sm" />
           </div>
           
           <div className="flex items-center justify-between mt-4">

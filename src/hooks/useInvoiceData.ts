@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { toast } from "@/hooks/use-toast";
-import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
-import { LineItem } from "@/components/invoice/ItemsSection";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { LineItem } from "@/components/invoice/types/InvoiceTypes";
+import { TaxConfig } from "@/utils/invoiceMath";
 
 export type Client = {
   id: string;
@@ -44,7 +43,9 @@ interface SaveInvoiceParams {
 export const useInvoiceData = () => {
   const { id } = useParams();
   const isEditing = !!id;
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const toast = useToast();
   
   // States
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -273,11 +274,6 @@ export const useInvoiceData = () => {
           
         if (lineItemsError) throw lineItemsError;
         
-        queryClient.invalidateQueries({ queryKey: ['invoices'] });
-        toast({ 
-          title: "Success", 
-          description: `Invoice ${isEditing ? 'updated' : 'created'} successfully` 
-        });
         navigate('/invoice-list');
         
         return { success: true };

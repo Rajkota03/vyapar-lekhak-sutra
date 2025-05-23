@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -18,6 +19,16 @@ export default {
 			}
 		},
 		extend: {
+			fontSize: {
+				base: ['14px', '22px'],   // mobile default
+				sm:   ['15px', '24px'],   // ≥640px
+			},
+			maxWidth: {
+				container: '640px',       // hard cap for cards on desktop
+			},
+			spacing: {
+				4.5: '1.125rem',          // for tighter p- utilities
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

@@ -1,11 +1,12 @@
 
 import React, { useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import TaxDiscountSheet from "./TaxDiscountSheet";
 import { TaxConfig } from "@/utils/invoiceMath";
 import { UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { Card } from "../ui/primitives/Card";
 
 interface TotalsSectionProps {
   subtotal: number;
@@ -45,11 +46,11 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Total</h2>
         <Button variant="ghost" size="icon" onClick={() => setShowTaxSettings(true)}>
-          <Settings size={18} className="text-gray-400 hover:text-gray-600" />
+          <Settings2 size={18} className="text-gray-400 hover:text-gray-600" />
         </Button>
       </div>
       
-      <div className="rounded-md bg-white shadow-sm border p-4 space-y-3">
+      <Card className="p-4 space-y-3 mb-3">
         <div className="flex justify-between">
           <span className="text-gray-500 text-sm">Subtotal</span>
           <span className="text-right font-medium">{formatCurrency(subtotal)}</span>
@@ -78,14 +79,14 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
           <span>Grand Total</span>
           <span className="text-right font-medium">{formatCurrency(grandTotal)}</span>
         </div>
-      </div>
+      </Card>
       
-      <div className="rounded-md bg-white shadow-sm border p-4">
+      <Card className="p-4 mb-3">
         <div className="flex justify-between items-center">
           <span className="font-medium">Amount Due</span>
           <span className="text-right font-medium">{formatCurrency(grandTotal)}</span>
         </div>
-      </div>
+      </Card>
       
       <Sheet open={showTaxSettings} onOpenChange={setShowTaxSettings}>
         <SheetContent className="rounded-t-lg">

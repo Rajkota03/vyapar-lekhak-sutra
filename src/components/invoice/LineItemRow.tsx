@@ -2,7 +2,7 @@
 import React from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/primitives/Input";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { LineItem } from "./types/InvoiceTypes";
 
@@ -20,11 +20,11 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
   removeLineItem,
 }) => {
   return (
-    <TableRow>
-      <TableCell className="align-top font-medium">
+    <TableRow className="border-b last:border-none text-sm">
+      <TableCell className="py-1 pr-2 font-medium">
         {item.description}
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="py-1 pr-2 w-14">
         <Input
           type="number"
           value={item.qty}
@@ -35,7 +35,7 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
           className="w-16 h-9 text-right text-sm"
         />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="py-1 pr-2 w-24">
         <Input
           type="number"
           value={item.unit_price}
@@ -50,7 +50,7 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
           className="w-16 h-9 text-right text-sm"
         />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="py-1 text-right w-24">
         ₹{item.amount.toFixed(2)}
       </TableCell>
       <TableCell>

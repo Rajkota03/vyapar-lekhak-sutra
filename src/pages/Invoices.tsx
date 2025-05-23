@@ -13,10 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/primitives/Card";
 import { Badge } from "@/components/ui/badge";
 
 type Invoice = {
@@ -105,7 +102,7 @@ const Invoices = () => {
       <div className="relative min-h-screen pb-20">
         <div className="sticky top-0 z-10 bg-white p-4 border-b">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Invoices</h1>
+            <h1 className="text-xl font-semibold">Invoices</h1>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8 gap-1">
@@ -159,10 +156,10 @@ const Invoices = () => {
               {invoices.map((invoice) => (
                 <Card 
                   key={invoice.id} 
-                  className="overflow-hidden hover:shadow-md transition-shadow"
+                  className="mb-3 overflow-hidden hover:shadow-md transition-shadow p-0"
                   onClick={() => navigate(`/invoices/${invoice.id}`)}
                 >
-                  <CardContent className="p-4">
+                  <div className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-medium">{invoice.number}</h3>
@@ -176,7 +173,7 @@ const Invoices = () => {
                       <span>{invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}</span>
                       <span className="font-medium">₹{invoice.total.toFixed(2)}</span>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -197,7 +194,7 @@ const Invoices = () => {
 
         {/* Floating Action Button */}
         <Button
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full p-0 shadow-lg"
+          className="fixed bottom-6 right-6 h-12 w-12 rounded-full p-0 shadow-lg"
           onClick={() => navigate('/invoices/new')}
         >
           <Plus size={24} />
