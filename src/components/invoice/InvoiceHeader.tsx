@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical } from "lucide-react";
+import { ChevronLeft, MoreVertical, Eye } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +10,8 @@ interface InvoiceHeaderProps {
   isSubmitting: boolean;
   canSave: boolean;
   onSave: () => void;
+  onPreview?: () => void;
+  invoiceId?: string;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -17,6 +19,8 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   isSubmitting,
   canSave,
   onSave,
+  onPreview,
+  invoiceId,
 }) => {
   const navigate = useNavigate();
 
@@ -53,8 +57,18 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             {isEditing ? "Edit Invoice" : "Invoice"}
           </h1>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <TaxSettingsSheet />
+          {invoiceId && onPreview && (
+            <Button
+              onClick={onPreview}
+              variant="ghost"
+              className="font-medium text-blue-500 h-8 px-3 rounded text-xs font-medium"
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              Preview
+            </Button>
+          )}
           <Button
             onClick={onSave}
             disabled={!canSave || isSubmitting}

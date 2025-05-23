@@ -20,6 +20,7 @@ export type Client = {
 export type Invoice = {
   id?: string;
   number: string;
+  invoice_code?: string;
   company_id: string;
   client_id: string;
   issue_date: string;
@@ -201,10 +202,22 @@ export const useInvoiceData = () => {
       setIsSubmitting(true);
       
       try {
+        // Generate invoice code for new invoices
+        let invoiceCode = "";
+        if (!isEditing) {
+          const { data: codeData, error: codeError } = await supabase
+            .rpc('next_invoice_number', { company_id: selectedCompanyId });
+          
+          if (codeError) throw codeError;
+          invoiceCode = codeData;
+        } else {
+          invoiceCode = invoiceData?.invoice_code || "";
+        }
+        
         // Format data for saving
         const invoiceNumber = isEditing && invoiceData ? 
           invoiceData.number : 
-          generateInvoiceNumber();
+          invoiceCode;
         
         // Calculate totals with tax config
         const calculatedTotals = calcTotals(lineItems, taxConfig);
@@ -213,6 +226,7 @@ export const useInvoiceData = () => {
         const invoicePayload: Invoice = {
           id: isEditing ? id : undefined,
           number: invoiceNumber,
+          invoice_code: invoiceCode,
           company_id: selectedCompanyId,
           client_id: selectedClient.id,
           issue_date: format(selectedDate, 'yyyy-MM-dd'),

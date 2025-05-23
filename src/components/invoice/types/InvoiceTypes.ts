@@ -1,4 +1,3 @@
-
 export interface LineItem {
   id?: string;
   item_id?: string;
@@ -29,4 +28,26 @@ export interface Item {
   default_cgst?: number;
   default_sgst?: number;
   photo_url?: string;
+}
+
+export interface Invoice {
+  id?: string;
+  number: string;
+  invoice_code?: string;
+  company_id: string;
+  client_id: string;
+  issue_date: string;
+  due_date?: string;
+  subtotal: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  total: number;
+  status: string;
+  use_igst?: boolean;
+  cgst_pct?: number;
+  sgst_pct?: number;
+  igst_pct?: number;
+  show_my_signature?: boolean;
+  require_client_signature?: boolean;
 }

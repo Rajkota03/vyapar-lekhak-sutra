@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,10 +15,12 @@ import ClientSection from "@/components/invoice/ClientSection";
 import ItemsSection from "@/components/invoice/ItemsSection";
 import TotalsSection from "@/components/invoice/TotalsSection";
 import SignatureSection from "@/components/invoice/SignatureSection";
+import PreviewModal from "@/components/invoice/PreviewModal";
 
 // Custom Hook
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define form schema
 const invoiceFormSchema = z.object({
@@ -36,6 +37,9 @@ type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
 const InvoiceEdit = () => {
   const navigate = useNavigate();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  
   const {
     isEditing,
     isLoading,
@@ -94,6 +98,30 @@ const InvoiceEdit = () => {
     existingInvoice.number : 
     generateInvoiceNumber();
 
+  // Generate invoice code for display
+  const invoiceCode = existingInvoice?.invoice_code || "Will be generated on save";
+
+  // Handle preview
+  const handlePreview = async () => {
+    if (!existingInvoice?.id) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate_invoice_pdf', {
+        body: { 
+          invoice_id: existingInvoice.id, 
+          preview: true 
+        }
+      });
+      
+      if (error) throw error;
+      
+      setPdfUrl(data.pdf_url);
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error('Error generating preview:', error);
+    }
+  };
+
   // Handle form submission including tax config and signatures
   const handleSaveInvoice = () => {
     const formValues = form.getValues();
@@ -117,15 +145,27 @@ const InvoiceEdit = () => {
   return <DashboardLayout>
       <div className="min-h-screen pb-20 bg-gray-50">
         <div className="mx-auto w-full max-w-screen-sm sm:max-w-screen-md px-3 sm:px-6">
-          <InvoiceHeader isEditing={isEditing} isSubmitting={isSubmitting} canSave={!!selectedClient && lineItems.length > 0} onSave={handleSaveInvoice} />
+          <InvoiceHeader 
+            isEditing={isEditing} 
+            isSubmitting={isSubmitting} 
+            canSave={!!selectedClient && lineItems.length > 0} 
+            onSave={handleSaveInvoice}
+            onPreview={isEditing ? handlePreview : undefined}
+            invoiceId={existingInvoice?.id}
+          />
 
           <div className="p-4 space-y-4 px-0 mx-0">
             <InvoiceMeta selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
 
-            {/* Smaller header with date and invoice number */}
+            {/* Smaller header with date and invoice code */}
             <div className="flex justify-between items-center text-xs sm:text-sm font-medium text-gray-700 mt-2 mb-3">
               <span>{format(selectedDate, 'dd MMM yyyy')}</span>
-              <span>#{invoiceNumber}</span>
+              <div className="text-right">
+                <div>#{existingInvoice?.number || invoiceCode}</div>
+                {existingInvoice?.invoice_code && (
+                  <span className="text-xs text-gray-500">#{existingInvoice.invoice_code}</span>
+                )}
+              </div>
             </div>
 
             <ClientSection selectedClient={selectedClient} setSelectedClient={setSelectedClient} clients={clients} companyId={selectedCompanyId || ""} />
@@ -143,6 +183,12 @@ const InvoiceEdit = () => {
           </div>
         </div>
       </div>
+
+      <PreviewModal
+        isOpen={previewOpen}
+        onOpenChange={setPreviewOpen}
+        pdfUrl={pdfUrl}
+      />
     </DashboardLayout>;
 };
 

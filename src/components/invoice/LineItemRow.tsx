@@ -2,9 +2,9 @@
 import React from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/primitives/Input";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { LineItem } from "./types/InvoiceTypes";
+import { formatNumber } from "@/utils/formatNumber";
 
 interface LineItemRowProps {
   item: LineItem;
@@ -29,31 +29,11 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
       <TableCell className="py-1 pr-2 font-medium text-xs">
         {item.description}
       </TableCell>
-      <TableCell className="py-1 pr-2">
-        <Input
-          type="number"
-          value={item.qty}
-          min={1}
-          onChange={(e) => {
-            e.stopPropagation();
-            updateLineItem(index, "qty", Number(e.target.value));
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className="w-14 h-8 text-right text-xs"
-        />
+      <TableCell className="py-1 pr-2 w-14 text-center text-xs">
+        {item.qty}
       </TableCell>
-      <TableCell className="py-1 pr-2">
-        <Input
-          type="number"
-          value={item.unit_price}
-          min={0}
-          onChange={(e) => {
-            e.stopPropagation();
-            updateLineItem(index, "unit_price", Number(e.target.value));
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className="w-20 h-8 text-right text-xs"
-        />
+      <TableCell className="py-1 pr-2 w-24 text-right text-xs">
+        ₹{formatNumber(item.unit_price)}
       </TableCell>
       <TableCell className="py-1 text-right">
         ₹{item.amount.toFixed(2)}

@@ -151,6 +151,7 @@ export type Database = {
           id: string
           igst: number | null
           igst_pct: number | null
+          invoice_code: string | null
           issue_date: string
           number: string
           pdf_url: string | null
@@ -173,6 +174,7 @@ export type Database = {
           id?: string
           igst?: number | null
           igst_pct?: number | null
+          invoice_code?: string | null
           issue_date: string
           number: string
           pdf_url?: string | null
@@ -195,6 +197,7 @@ export type Database = {
           id?: string
           igst?: number | null
           igst_pct?: number | null
+          invoice_code?: string | null
           issue_date?: string
           number?: string
           pdf_url?: string | null
@@ -380,6 +383,10 @@ export type Database = {
           chunk_text: string
           similarity: number
         }[]
+      }
+      next_invoice_number: {
+        Args: { company_id: string }
+        Returns: string
       }
       sparsevec_out: {
         Args: { "": unknown }
