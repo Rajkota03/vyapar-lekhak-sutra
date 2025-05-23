@@ -66,18 +66,28 @@ export const useInvoiceData = () => {
   const { data: companies } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
+      if (!user) return [];
+      
+      console.log('Fetching companies for user:', user.id);
       const { data, error } = await supabase
         .from('companies')
-        .select('*');
+        .select('*')
+        .eq('owner_id', user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching companies:', error);
+        throw error;
+      }
+      console.log('Companies fetched:', data);
       return data || [];
     },
+    enabled: !!user,
   });
 
   // Set first company as selected if not already set
   useEffect(() => {
     if (companies && companies.length > 0 && !selectedCompanyId) {
+      console.log('Setting selected company:', companies[0].id);
       setSelectedCompanyId(companies[0].id);
     }
   }, [companies, selectedCompanyId]);
@@ -88,6 +98,7 @@ export const useInvoiceData = () => {
     queryFn: async () => {
       if (!id) return null;
       
+      console.log('Fetching invoice data for ID:', id);
       const { data, error } = await supabase
         .from('invoices')
         .select(`
@@ -97,7 +108,11 @@ export const useInvoiceData = () => {
         .eq('id', id)
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching invoice:', error);
+        throw error;
+      }
+      console.log('Invoice data fetched:', data);
       return data;
     },
     enabled: !!id,
@@ -109,6 +124,7 @@ export const useInvoiceData = () => {
     queryFn: async () => {
       if (!id) return [];
       
+      console.log('Fetching invoice line items for ID:', id);
       const { data, error } = await supabase
         .from('invoice_lines')
         .select(`
@@ -117,7 +133,11 @@ export const useInvoiceData = () => {
         `)
         .eq('invoice_id', id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching invoice line items:', error);
+        throw error;
+      }
+      console.log('Invoice line items fetched:', data);
       return data || [];
     },
     enabled: !!id,
@@ -129,12 +149,17 @@ export const useInvoiceData = () => {
     queryFn: async () => {
       if (!selectedCompanyId) return [];
       
+      console.log('Fetching clients for company:', selectedCompanyId);
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .eq('company_id', selectedCompanyId);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching clients:', error);
+        throw error;
+      }
+      console.log('Clients fetched:', data);
       return data || [];
     },
     enabled: !!selectedCompanyId,
@@ -146,12 +171,17 @@ export const useInvoiceData = () => {
     queryFn: async () => {
       if (!selectedCompanyId) return [];
       
+      console.log('Fetching items for company:', selectedCompanyId);
       const { data, error } = await supabase
         .from('items')
         .select('*')
         .eq('company_id', selectedCompanyId);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching items:', error);
+        throw error;
+      }
+      console.log('Items fetched:', data);
       return data || [];
     },
     enabled: !!selectedCompanyId,
@@ -184,44 +214,29 @@ export const useInvoiceData = () => {
     }
   }, [invoiceLineItems, isLoadingLines]);
 
-  // Save invoice mutation - updated according to persistence patch
+  // Save invoice mutation
   const saveInvoiceMutation = useMutation({
     mutationFn: async ({ navigate, taxConfig, showMySignature, requireClientSignature }: SaveInvoiceParams) => {
-      if (!selectedClient || !user) {
-        throw new Error("Client and user authentication are required");
+      if (!selectedClient || !user || !selectedCompanyId) {
+        throw new Error("Client, user authentication, and company selection are required");
       }
       
       console.log('Starting invoice save process...', {
         selectedClient: selectedClient.id,
         lineItemsCount: lineItems.length,
-        isEditing
+        isEditing,
+        selectedCompanyId
       });
       
       setIsSubmitting(true);
       
       try {
-        // Get user's company according to persistence patch
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError || !userData.user) {
-          throw new Error("User not authenticated");
-        }
-        
-        const { data: company, error: companyError } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('owner_id', userData.user.id)
-          .single();
-          
-        if (companyError || !company) {
-          throw new Error("No company found for user");
-        }
-        
         // Generate invoice code for new invoices
         let invoiceCode = "";
         if (!isEditing) {
           console.log('Generating new invoice code...');
           const { data: codeData, error: codeError } = await supabase
-            .rpc('next_invoice_number', { company_id: company.id });
+            .rpc('next_invoice_number', { company_id: selectedCompanyId });
           
           if (codeError) {
             console.error('Error generating invoice code:', codeError);
@@ -237,13 +252,13 @@ export const useInvoiceData = () => {
         const calculatedTotals = calcTotals(lineItems, taxConfig);
         console.log('Calculated totals:', calculatedTotals);
         
-        // Prepare invoice payload according to persistence patch
+        // Prepare invoice payload
         const invoicePayload = {
-          company_id: company.id,
+          company_id: selectedCompanyId,
           client_id: selectedClient.id,
           issue_date: format(selectedDate, 'yyyy-MM-dd'),
           invoice_code: invoiceCode,
-          number: invoiceCode, // Keep both for compatibility
+          number: invoiceCode,
           status: 'draft',
           subtotal: Number(calculatedTotals.subtotal.toFixed(2)),
           cgst: taxConfig.useIgst ? 0 : Number(calculatedTotals.cgst?.toFixed(2) || 0),
@@ -307,7 +322,7 @@ export const useInvoiceData = () => {
           }
         }
         
-        // Bulk insert lines according to persistence patch
+        // Bulk insert lines
         console.log('Inserting line items...');
         const linesPayload = lineItems.map(item => ({
           invoice_id: invoiceId,
@@ -340,7 +355,7 @@ export const useInvoiceData = () => {
           description: `Invoice ${invoiceCode} has been saved successfully.`,
         });
         
-        // Navigate and invalidate queries according to persistence patch - Fixed the navigate call
+        // Navigate and invalidate queries
         navigate('/invoices');
         queryClient.invalidateQueries({ queryKey: ['invoices'] });
         

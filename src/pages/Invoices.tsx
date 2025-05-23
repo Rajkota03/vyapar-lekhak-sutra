@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -42,12 +43,17 @@ const Invoices = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      console.log('Fetching companies for user:', user.id);
       const { data, error } = await supabase
         .from('companies')
         .select('*')
         .eq('owner_id', user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching companies:', error);
+        throw error;
+      }
+      console.log('Companies fetched:', data);
       return data || [];
     },
     enabled: !!user,
@@ -56,15 +62,18 @@ const Invoices = () => {
   // Set first company as selected if not already set
   React.useEffect(() => {
     if (companies && companies.length > 0 && !selectedCompanyId) {
+      console.log('Setting selected company:', companies[0].id);
       setSelectedCompanyId(companies[0].id);
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch invoices according to persistence patch
+  // Fetch invoices
   const { data: invoices, isLoading } = useQuery({
     queryKey: ['invoices', selectedCompanyId, filterStatus],
     queryFn: async () => {
       if (!selectedCompanyId) return [];
+      
+      console.log('Fetching invoices for company:', selectedCompanyId, 'with status filter:', filterStatus);
       
       let query = supabase
         .from('invoices')
@@ -84,8 +93,12 @@ const Invoices = () => {
       }
         
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching invoices:', error);
+        throw error;
+      }
       
+      console.log('Invoices fetched:', data);
       return data as Invoice[] || [];
     },
     enabled: !!selectedCompanyId,
@@ -104,7 +117,7 @@ const Invoices = () => {
     }
   };
 
-  // Empty state according to persistence patch
+  // Empty state
   if (!user) {
     return (
       <DashboardLayout>
