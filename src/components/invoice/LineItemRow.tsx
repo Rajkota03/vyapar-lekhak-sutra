@@ -20,11 +20,11 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
   removeLineItem,
 }) => {
   return (
-    <TableRow className="border-b last:border-none text-sm">
-      <TableCell className="py-1 pr-2 font-medium">
+    <TableRow className="border-b last:border-none">
+      <TableCell className="py-1 pr-2 font-medium text-xs">
         {item.description}
       </TableCell>
-      <TableCell className="py-1 pr-2 w-14">
+      <TableCell className="py-1 pr-2">
         <Input
           type="number"
           value={item.qty}
@@ -32,10 +32,10 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
           onChange={(e) =>
             updateLineItem(index, "qty", Number(e.target.value))
           }
-          className="w-16 h-9 text-right text-sm"
+          className="w-14 h-8 text-right text-xs"
         />
       </TableCell>
-      <TableCell className="py-1 pr-2 w-24">
+      <TableCell className="py-1 pr-2">
         <Input
           type="number"
           value={item.unit_price}
@@ -47,10 +47,10 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
               Number(e.target.value)
             )
           }
-          className="w-16 h-9 text-right text-sm"
+          className="w-20 h-8 text-right text-xs"
         />
       </TableCell>
-      <TableCell className="py-1 text-right w-24">
+      <TableCell className="py-1 text-right">
         ₹{item.amount.toFixed(2)}
       </TableCell>
       <TableCell>

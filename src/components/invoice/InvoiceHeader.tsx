@@ -39,7 +39,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   );
 
   return (
-    <div className="sticky top-0 z-10 bg-white border-b p-4">
+    <div className="sticky top-0 z-10 bg-white border-b p-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button 
@@ -47,9 +47,9 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             size="icon" 
             onClick={() => navigate('/invoice-list')}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-lg font-semibold">
             {isEditing ? "Edit Invoice" : "Invoice"}
           </h1>
         </div>
@@ -59,7 +59,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             onClick={onSave}
             disabled={!canSave || isSubmitting}
             variant="ghost"
-            className="font-medium text-blue-500 h-10 px-4 rounded-md text-sm font-medium"
+            className="font-medium text-blue-500 h-8 px-3 rounded text-xs font-medium"
           >
             {isSubmitting ? "Saving..." : "Save"}
           </Button>

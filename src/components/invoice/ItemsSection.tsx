@@ -65,9 +65,9 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Items</h2>
+        <h2 className="text-base font-semibold">Items</h2>
         {lineItems.length > 0 && (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-[10px] text-gray-400 sm:hidden">
             Tap & hold to re-sort items
           </span>
         )}
@@ -88,7 +88,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
       {lineItems.length > 0 && (
         <Button
           variant="outline"
-          className="w-full flex items-center justify-center border-dashed border-blue-500 text-blue-500 h-10 rounded-md text-sm font-medium"
+          className="w-full flex items-center justify-center border-dashed border-blue-500 text-blue-500 h-8 rounded text-xs font-medium"
           onClick={() => setItemPickerOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" /> Add Item

@@ -44,47 +44,47 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Total</h2>
+        <h2 className="text-base font-semibold">Total</h2>
         <Button variant="ghost" size="icon" onClick={() => setShowTaxSettings(true)}>
           <Settings2 size={18} className="text-gray-400 hover:text-gray-600" />
         </Button>
       </div>
       
-      <Card className="p-4 space-y-3 mb-3">
+      <Card className="p-3 space-y-3 mb-3">
         <div className="flex justify-between">
-          <span className="text-gray-500 text-sm">Subtotal</span>
-          <span className="text-right font-medium">{formatCurrency(subtotal)}</span>
+          <span className="text-gray-500 text-xs">Subtotal</span>
+          <span className="text-right text-sm font-medium">{formatCurrency(subtotal)}</span>
         </div>
         
         {taxConfig.useIgst ? (
           <div className="flex justify-between">
-            <span className="text-gray-500 text-sm">IGST ({taxConfig.igstPct}%)</span>
-            <span className="text-right font-medium">{formatCurrency(igstAmount || 0)}</span>
+            <span className="text-gray-500 text-xs">IGST ({taxConfig.igstPct}%)</span>
+            <span className="text-right text-sm font-medium">{formatCurrency(igstAmount || 0)}</span>
           </div>
         ) : (
           <>
             <div className="flex justify-between">
-              <span className="text-gray-500 text-sm">CGST ({taxConfig.cgstPct}%)</span>
-              <span className="text-right font-medium">{formatCurrency(cgstAmount || 0)}</span>
+              <span className="text-gray-500 text-xs">CGST ({taxConfig.cgstPct}%)</span>
+              <span className="text-right text-sm font-medium">{formatCurrency(cgstAmount || 0)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500 text-sm">SGST ({taxConfig.sgstPct}%)</span>
-              <span className="text-right font-medium">{formatCurrency(sgstAmount || 0)}</span>
+              <span className="text-gray-500 text-xs">SGST ({taxConfig.sgstPct}%)</span>
+              <span className="text-right text-sm font-medium">{formatCurrency(sgstAmount || 0)}</span>
             </div>
           </>
         )}
         
         <div className="h-px bg-gray-200 my-2"></div>
-        <div className="flex justify-between font-medium">
-          <span>Grand Total</span>
-          <span className="text-right font-medium">{formatCurrency(grandTotal)}</span>
+        <div className="flex justify-between">
+          <span className="text-gray-500 text-xs">Grand Total</span>
+          <span className="text-right text-base font-semibold">{formatCurrency(grandTotal)}</span>
         </div>
       </Card>
       
-      <Card className="p-4 mb-3">
+      <Card className="p-3 mb-3">
         <div className="flex justify-between items-center">
-          <span className="font-medium">Amount Due</span>
-          <span className="text-right font-medium">{formatCurrency(grandTotal)}</span>
+          <span className="text-xs font-medium">Amount Due</span>
+          <span className="text-right text-base font-semibold">{formatCurrency(grandTotal)}</span>
         </div>
       </Card>
       

@@ -29,11 +29,11 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[40%] py-1 text-xs uppercase text-gray-500">Description</TableHead>
-            <TableHead className="text-right py-1 text-xs uppercase text-gray-500">Qty</TableHead>
-            <TableHead className="text-right py-1 text-xs uppercase text-gray-500">Price</TableHead>
-            <TableHead className="text-right py-1 text-xs uppercase text-gray-500">Amount</TableHead>
-            <TableHead className="w-[50px] py-1 text-xs uppercase text-gray-500"></TableHead>
+            <TableHead className="w-[40%] py-1 text-[10px] uppercase tracking-wider text-gray-500">Description</TableHead>
+            <TableHead className="text-right py-1 text-[10px] uppercase tracking-wider text-gray-500">Qty</TableHead>
+            <TableHead className="text-right py-1 text-[10px] uppercase tracking-wider text-gray-500">Price</TableHead>
+            <TableHead className="text-right py-1 text-[10px] uppercase tracking-wider text-gray-500">Amount</TableHead>
+            <TableHead className="w-[50px] py-1 text-[10px] uppercase tracking-wider text-gray-500"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
