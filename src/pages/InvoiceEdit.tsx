@@ -166,13 +166,31 @@ const InvoiceEdit: React.FC = () => {
         return;
       }
       
+      // Ensure client_id is not empty
+      if (!data.client_id) {
+        toast({
+          variant: "destructive", 
+          title: "Client required",
+          description: "Please select a client before saving the invoice."
+        });
+        return;
+      }
+      
       setIsSubmitting(true);
       
+      // Create a properly typed invoice data object with all required fields
       const invoiceData = {
-        ...data,
-        company_id: selectedCompany, // Add the company_id
+        company_id: selectedCompany,
+        client_id: data.client_id,
+        number: data.number,
         issue_date: data.issue_date,
         due_date: data.due_date || null,
+        status: data.status || "draft",
+        subtotal: data.subtotal || 0,
+        cgst: data.cgst || 0,
+        sgst: data.sgst || 0,
+        igst: data.igst || 0,
+        total: data.total || 0
       };
       
       if (id) {
