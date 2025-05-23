@@ -22,6 +22,7 @@ export type Item = {
   default_cgst?: number;
   default_sgst?: number;
   photo_url?: string;
+  company_id: string; // Add this field to match the Supabase schema
 };
 
 export type LineItem = {

@@ -47,8 +47,8 @@ const ItemModal: React.FC<ItemModalProps> = ({
     mutationFn: async (formData: FormData) => {
       setIsSubmitting(true);
       try {
-        // Prepare the item data
-        const itemData: Partial<Item> = {
+        // Prepare the item data with explicit company_id
+        const itemData = {
           name,
           code: code || null,
           default_price: defaultPrice ? parseFloat(defaultPrice) : null,
