@@ -7,7 +7,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ItemModal from "./ItemModal";
-import { Item } from "./ItemsSection";
+import { Item } from "./types/InvoiceTypes";
 
 interface ItemPickerProps {
   companyId: string | null;

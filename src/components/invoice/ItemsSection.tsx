@@ -1,41 +1,11 @@
 
 import React, { useState } from "react";
-import { Plus, X, Package } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import ItemPicker from "./ItemPicker";
-import { calcTotals } from "@/utils/invoiceMath";
-
-export type Item = {
-  id: string;
-  name: string;
-  code?: string;
-  default_price?: number;
-  default_cgst?: number;
-  default_sgst?: number;
-  photo_url?: string;
-  company_id: string;
-};
-
-export type LineItem = {
-  id?: string;
-  item_id?: string;
-  description: string;
-  qty: number;
-  unit_price: number;
-  cgst: number;  // Changed from optional to required
-  sgst: number;  // Changed from optional to required
-  amount: number;
-};
+import NoItemsView from "./NoItemsView";
+import ItemsTable from "./ItemsTable";
+import ItemPickerDialog from "./ItemPickerDialog";
+import { Item, LineItem } from "./types/InvoiceTypes";
 
 interface ItemsSectionProps {
   lineItems: LineItem[];
@@ -92,26 +62,6 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
     setLineItems(updatedItems);
   };
 
-  // Item Picker Modal
-  const ItemPickerModal = () => (
-    <Dialog open={itemPickerOpen} onOpenChange={setItemPickerOpen}>
-      <DialogContent className="sm:max-w-md rounded-md shadow-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <Package className="h-5 w-5 mr-2 text-blue-500" /> Add Item
-          </DialogTitle>
-        </DialogHeader>
-        <div>
-          <ItemPicker 
-            companyId={selectedCompanyId} 
-            onItemSelect={addLineItem} 
-            onClose={() => setItemPickerOpen(false)} 
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
@@ -125,77 +75,13 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
       <div className="rounded-md bg-white shadow-sm border">
         {lineItems.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[40%] text-xs uppercase text-gray-500 py-2">Description</TableHead>
-                  <TableHead className="text-right text-xs uppercase text-gray-500 py-2">Qty</TableHead>
-                  <TableHead className="text-right text-xs uppercase text-gray-500 py-2">Price</TableHead>
-                  <TableHead className="text-right text-xs uppercase text-gray-500 py-2">Amount</TableHead>
-                  <TableHead className="w-[50px] text-xs uppercase text-gray-500 py-2"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lineItems.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="align-top font-medium">
-                      {item.description}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        value={item.qty}
-                        min={1}
-                        onChange={(e) =>
-                          updateLineItem(index, "qty", Number(e.target.value))
-                        }
-                        className="w-16 h-9 text-right text-sm"
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        value={item.unit_price}
-                        min={0}
-                        onChange={(e) =>
-                          updateLineItem(
-                            index,
-                            "unit_price",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-16 h-9 text-right text-sm"
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      ₹{item.amount.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeLineItem(index)}
-                      >
-                        <X className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <ItemsTable 
+            lineItems={lineItems}
+            updateLineItem={updateLineItem}
+            removeLineItem={removeLineItem}
+          />
         ) : (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No items added</p>
-            <Button
-              variant="outline"
-              onClick={() => setItemPickerOpen(true)}
-              className="mt-2 h-10 rounded-md text-sm font-medium"
-            >
-              <Plus className="h-4 w-4 mr-2" /> Add Item
-            </Button>
-          </div>
+          <NoItemsView onAddItem={() => setItemPickerOpen(true)} />
         )}
       </div>
 
@@ -209,7 +95,12 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
         </Button>
       )}
       
-      <ItemPickerModal />
+      <ItemPickerDialog 
+        isOpen={itemPickerOpen}
+        onOpenChange={setItemPickerOpen}
+        onItemSelect={addLineItem}
+        selectedCompanyId={selectedCompanyId}
+      />
     </div>
   );
 };

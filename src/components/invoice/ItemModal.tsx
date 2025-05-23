@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { Package } from "lucide-react";
-import { Item } from "./ItemsSection";
+import { Item } from "./types/InvoiceTypes";
 
 interface ItemModalProps {
   isOpen: boolean;
