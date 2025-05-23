@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CreateCompany from "./pages/CreateCompany";
+import InvoiceList from "./pages/InvoiceList";
+import InvoiceEdit from "./pages/InvoiceEdit";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -37,6 +39,30 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CreateCompany />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/invoices" 
+              element={
+                <ProtectedRoute>
+                  <InvoiceList />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/invoices/new" 
+              element={
+                <ProtectedRoute>
+                  <InvoiceEdit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/invoices/:id" 
+              element={
+                <ProtectedRoute>
+                  <InvoiceEdit />
                 </ProtectedRoute>
               } 
             />
