@@ -9,7 +9,181 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          billing_address: string | null
+          company_id: string
+          created_at: string | null
+          email: string | null
+          gstin: string | null
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          billing_address?: string | null
+          company_id: string
+          created_at?: string | null
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          billing_address?: string | null
+          company_id?: string
+          created_at?: string | null
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          gstin: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          gstin?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          gstin?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          cgst: number | null
+          client_id: string
+          company_id: string
+          created_at: string | null
+          due_date: string | null
+          id: string
+          igst: number | null
+          issue_date: string
+          number: string
+          pdf_url: string | null
+          sgst: number | null
+          status: string | null
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          cgst?: number | null
+          client_id: string
+          company_id: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          igst?: number | null
+          issue_date: string
+          number: string
+          pdf_url?: string | null
+          sgst?: number | null
+          status?: string | null
+          subtotal?: number
+          total?: number
+        }
+        Update: {
+          cgst?: number | null
+          client_id?: string
+          company_id?: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          igst?: number | null
+          issue_date?: string
+          number?: string
+          pdf_url?: string | null
+          sgst?: number | null
+          status?: string | null
+          subtotal?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          invoice_id: string
+          qty: number
+          unit_price: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          description: string
+          id?: string
+          invoice_id: string
+          qty?: number
+          unit_price?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          invoice_id?: string
+          qty?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
