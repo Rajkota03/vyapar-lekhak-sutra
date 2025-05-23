@@ -3,9 +3,11 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, Users, FileText, Settings, Menu, X, Package } from "lucide-react";
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children
 }) => {
@@ -15,36 +17,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const navigation = [{
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: Home
-  }, {
-    name: "Clients",
-    href: "/clients",
-    icon: Users
-  }, {
-    name: "Items",
-    href: "/items",
-    icon: Package
-  }, {
-    name: "Invoices",
-    href: "/invoices",
-    icon: FileText
-  }, {
-    name: "Settings",
-    href: "/settings",
-    icon: Settings
-  }];
+
+  const navigation = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: Home
+    },
+    {
+      name: "Clients",
+      href: "/clients",
+      icon: Users
+    },
+    {
+      name: "Items",
+      href: "/items",
+      icon: Package
+    },
+    {
+      name: "Invoices",
+      href: "/invoices",
+      icon: FileText
+    },
+    {
+      name: "Settings",
+      href: "/settings",
+      icon: Settings
+    }
+  ];
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-  return <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
+
+  return <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       {/* Mobile menu toggle */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white p-4 shadow-md flex justify-between items-center">
-        <h2 className="text-lg font-bold">Vyapar Lekhak</h2>
+        <h2 className="text-[1.125rem] font-bold">Vyapar Lekhak</h2>
         <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
-          {mobileMenuOpen ? <X /> : <Menu />}
+          {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
         </Button>
       </div>
 
@@ -53,7 +64,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <div className="flex-1 flex flex-col min-h-0 bg-white shadow-lg">
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center justify-center flex-shrink-0 px-4">
-              <h1 className="text-xl font-bold">Vyapar Lekhak</h1>
+              <h1 className="text-[1.375rem] font-bold">Vyapar Lekhak</h1>
             </div>
             <nav className="mt-8 flex-1 px-2 space-y-1">
               {navigation.map(item => {
@@ -97,9 +108,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main content area */}
       <div className="md:pl-64 flex flex-col flex-1">
         <main className="flex-1 pt-16 md:pt-0">
-          <div className="py-6 px-4 sm:px-6 md:px-8 bg-neutral-500">{children}</div>
+          <div className="py-6 px-4 sm:px-6 md:px-8">{children}</div>
         </main>
       </div>
     </div>;
 };
+
 export default DashboardLayout;

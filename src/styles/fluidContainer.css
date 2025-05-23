@@ -1,0 +1,11 @@
+
+@layer utilities {
+  .fluid-container {
+    width: 100%;
+    max-width: clamp(360px, 92vw, 880px);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0.75rem;  /* 12px */
+    padding-right: 0.75rem; /* 12px */
+  }
+}

@@ -1,4 +1,6 @@
+
 @tailwind base;
+@import './styles/fluidContainer.css';
 @tailwind components;
 @tailwind utilities;
 
@@ -89,6 +91,16 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   
+  /* Base font size adjustment for responsive typography */
+  html {
+    font-size: 15px;
+  }
+  @media (max-width: 480px) {
+    html { 
+      font-size: 14px; 
+    }
+  }
+
   /* Base font size adjustment for tablet and larger screens */
   @screen sm {
     html {
@@ -103,6 +115,6 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gray-100 text-foreground;
   }
 }

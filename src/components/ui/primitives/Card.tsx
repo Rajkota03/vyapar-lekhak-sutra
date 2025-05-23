@@ -10,10 +10,10 @@ interface CardProps {
 
 export const Card: React.FC<CardProps> = ({ title, children, className = "", onClick }) => (
   <section 
-    className={`bg-white rounded-md shadow-sm p-3 sm:p-4 mb-3 ${className}`}
+    className={`bg-white rounded-md shadow-sm p-3 sm:p-4 mb-3 w-full ${className}`}
     onClick={onClick}
   >
-    {title && <h2 className="text-base font-semibold mb-3">{title}</h2>}
+    {title && <h2 className="text-[1.125rem] font-semibold mb-3">{title}</h2>}
     {children}
   </section>
 );
