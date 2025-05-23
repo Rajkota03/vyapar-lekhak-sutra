@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,6 +67,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
     setLineItems([...lineItems, newItem]);
     setItemPickerOpen(false);
+    setSearchTerm("");
   };
 
   // Update line item quantity or price
@@ -96,7 +96,10 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
   // Item Picker Modal
   const ItemPickerModal = () => (
-    <Dialog open={itemPickerOpen} onOpenChange={setItemPickerOpen}>
+    <Dialog open={itemPickerOpen} onOpenChange={(open) => {
+      setItemPickerOpen(open);
+      if (!open) setSearchTerm("");
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add Item</DialogTitle>
@@ -107,6 +110,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="mb-4"
+            autoFocus
           />
           {filteredItems && filteredItems.length > 0 ? (
             <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -116,7 +120,6 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
                   className="p-3 border rounded-md hover:bg-accent cursor-pointer"
                   onClick={() => {
                     addLineItem(item);
-                    setSearchTerm("");
                   }}
                 >
                   <div className="flex justify-between">
@@ -135,7 +138,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
             </div>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
-              No items found
+              {searchTerm ? "No items found" : "Start typing to search items"}
             </div>
           )}
         </div>
