@@ -21,12 +21,13 @@ import { handleSharePdf } from "@/utils/sharePdf";
 type Invoice = {
   id: string;
   invoice_code: string | null;
+  number: string;
   issue_date: string;
   total: number;
   status: string | null;
   clients: {
     name: string;
-  };
+  } | null;
 };
 
 type FilterStatus = "all" | "sent" | "paid" | "draft";
@@ -38,10 +39,13 @@ const Invoices = () => {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
   // Fetch user's companies
-  const { data: companies } = useQuery({
-    queryKey: ['companies'],
+  const { data: companies, isLoading: isLoadingCompanies, error: companiesError } = useQuery({
+    queryKey: ['companies', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) {
+        console.log('No user available for fetching companies');
+        return [];
+      }
       
       console.log('Fetching companies for user:', user.id);
       const { data, error } = await supabase
@@ -53,7 +57,7 @@ const Invoices = () => {
         console.error('Error fetching companies:', error);
         throw error;
       }
-      console.log('Companies fetched:', data);
+      console.log('Companies fetched successfully:', data);
       return data || [];
     },
     enabled: !!user,
@@ -67,11 +71,14 @@ const Invoices = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch invoices
-  const { data: invoices, isLoading } = useQuery({
-    queryKey: ['invoices', selectedCompanyId, filterStatus],
+  // Fetch invoices with improved error handling
+  const { data: invoices, isLoading: isLoadingInvoices, error: invoicesError } = useQuery({
+    queryKey: ['invoices', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
-      if (!selectedCompanyId) return [];
+      if (!selectedCompanyId || !user) {
+        console.log('No company selected or user not available for fetching invoices');
+        return [];
+      }
       
       console.log('Fetching invoices for company:', selectedCompanyId, 'with status filter:', filterStatus);
       
@@ -80,13 +87,14 @@ const Invoices = () => {
         .select(`
           id,
           invoice_code,
+          number,
           issue_date,
           total,
           status,
           clients ( name )
         `)
         .eq('company_id', selectedCompanyId)
-        .order('issue_date', { ascending: false });
+        .order('created_at', { ascending: false });
         
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
@@ -98,10 +106,10 @@ const Invoices = () => {
         throw error;
       }
       
-      console.log('Invoices fetched:', data);
+      console.log('Invoices fetched successfully:', data);
       return data as Invoice[] || [];
     },
-    enabled: !!selectedCompanyId,
+    enabled: !!selectedCompanyId && !!user,
   });
 
   const getStatusBadgeVariant = (status: string | null) => {
@@ -117,7 +125,33 @@ const Invoices = () => {
     }
   };
 
-  // Empty state
+  // Loading state
+  if (isLoadingCompanies) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Error states
+  if (companiesError || invoicesError) {
+    console.error('Error loading data:', { companiesError, invoicesError });
+    return (
+      <DashboardLayout>
+        <div className="text-center py-8">
+          <p className="text-red-500 mb-4">Error loading data. Please try refreshing the page.</p>
+          <Button onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Authentication check
   if (!user) {
     return (
       <DashboardLayout>
@@ -128,6 +162,7 @@ const Invoices = () => {
     );
   }
 
+  // No companies state
   if (!companies || companies.length === 0) {
     return (
       <DashboardLayout>
@@ -200,7 +235,7 @@ const Invoices = () => {
         </div>
 
         <div className="p-4">
-          {isLoading ? (
+          {isLoadingInvoices ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
@@ -215,8 +250,12 @@ const Invoices = () => {
                   <div className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-medium">{invoice.invoice_code || 'Draft Invoice'}</h3>
-                        <p className="text-sm text-muted-foreground">{invoice.clients?.name}</p>
+                        <h3 className="font-medium">
+                          {invoice.invoice_code || invoice.number || 'Draft Invoice'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {invoice.clients?.name || 'No client'}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={getStatusBadgeVariant(invoice.status)}>
@@ -234,7 +273,9 @@ const Invoices = () => {
                       </div>
                     </div>
                     <div className="flex justify-between mt-3 text-sm">
-                      <span>{invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}</span>
+                      <span>
+                        {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+                      </span>
                       <span className="font-medium">₹{invoice.total.toFixed(2)}</span>
                     </div>
                   </div>

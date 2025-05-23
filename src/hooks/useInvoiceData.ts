@@ -63,10 +63,13 @@ export const useInvoiceData = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Queries
-  const { data: companies } = useQuery({
-    queryKey: ['companies'],
+  const { data: companies, error: companiesError } = useQuery({
+    queryKey: ['companies', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) {
+        console.log('No user available for fetching companies');
+        return [];
+      }
       
       console.log('Fetching companies for user:', user.id);
       const { data, error } = await supabase
@@ -214,18 +217,23 @@ export const useInvoiceData = () => {
     }
   }, [invoiceLineItems, isLoadingLines]);
 
-  // Save invoice mutation
+  // Save invoice mutation with improved error handling
   const saveInvoiceMutation = useMutation({
     mutationFn: async ({ navigate, taxConfig, showMySignature, requireClientSignature }: SaveInvoiceParams) => {
       if (!selectedClient || !user || !selectedCompanyId) {
-        throw new Error("Client, user authentication, and company selection are required");
+        const missingItems = [];
+        if (!selectedClient) missingItems.push("client");
+        if (!user) missingItems.push("user authentication");
+        if (!selectedCompanyId) missingItems.push("company selection");
+        throw new Error(`Missing required fields: ${missingItems.join(", ")}`);
       }
       
       console.log('Starting invoice save process...', {
         selectedClient: selectedClient.id,
         lineItemsCount: lineItems.length,
         isEditing,
-        selectedCompanyId
+        selectedCompanyId,
+        user: user.id
       });
       
       setIsSubmitting(true);
@@ -323,29 +331,31 @@ export const useInvoiceData = () => {
         }
         
         // Bulk insert lines
-        console.log('Inserting line items...');
-        const linesPayload = lineItems.map(item => ({
-          invoice_id: invoiceId,
-          item_id: item.item_id,
-          description: item.description,
-          qty: item.qty,
-          unit_price: item.unit_price,
-          cgst: item.cgst || 0,
-          sgst: item.sgst || 0,
-          amount: item.amount,
-          discount_amount: item.discount_amount || 0,
-          note: item.note || '',
-        }));
-        
-        console.log('Line items to insert:', linesPayload);
-        
-        const { error: lineItemsError } = await supabase
-          .from('invoice_lines')
-          .insert(linesPayload);
+        if (lineItems.length > 0) {
+          console.log('Inserting line items...');
+          const linesPayload = lineItems.map(item => ({
+            invoice_id: invoiceId,
+            item_id: item.item_id,
+            description: item.description,
+            qty: item.qty,
+            unit_price: item.unit_price,
+            cgst: item.cgst || 0,
+            sgst: item.sgst || 0,
+            amount: item.amount,
+            discount_amount: item.discount_amount || 0,
+            note: item.note || '',
+          }));
           
-        if (lineItemsError) {
-          console.error('Error inserting line items:', lineItemsError);
-          throw lineItemsError;
+          console.log('Line items to insert:', linesPayload);
+          
+          const { error: lineItemsError } = await supabase
+            .from('invoice_lines')
+            .insert(linesPayload);
+            
+          if (lineItemsError) {
+            console.error('Error inserting line items:', lineItemsError);
+            throw lineItemsError;
+          }
         }
         
         console.log('Invoice saved successfully!');
@@ -355,17 +365,21 @@ export const useInvoiceData = () => {
           description: `Invoice ${invoiceCode} has been saved successfully.`,
         });
         
-        // Navigate and invalidate queries
+        // Invalidate and refetch queries
+        await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        await queryClient.invalidateQueries({ queryKey: ['companies'] });
+        
+        // Navigate to invoices list
         navigate('/invoices');
-        queryClient.invalidateQueries({ queryKey: ['invoices'] });
         
         return { success: true, invoiceId };
       } catch (error) {
         console.error('Error saving invoice:', error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         toast({
           variant: "destructive",
           title: "Error saving invoice",
-          description: "There was an error saving the invoice. Please try again.",
+          description: `Failed to save invoice: ${errorMessage}`,
         });
         throw error;
       } finally {
@@ -389,5 +403,6 @@ export const useInvoiceData = () => {
     isSubmitting,
     selectedCompanyId,
     existingInvoice: invoiceData,
+    companiesError,
   };
 };
