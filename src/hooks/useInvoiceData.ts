@@ -11,6 +11,8 @@ export type Client = {
   name: string;
   email?: string;
   gstin?: string;
+  billing_address?: string;
+  phone?: string;
 };
 
 export type LineItem = {
@@ -318,5 +320,6 @@ export const useInvoiceData = () => {
     grandTotal,
     saveInvoiceMutation,
     isSubmitting,
+    selectedCompanyId,
   };
 };

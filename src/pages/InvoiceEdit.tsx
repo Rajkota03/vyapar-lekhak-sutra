@@ -35,6 +35,7 @@ const InvoiceEdit = () => {
     grandTotal,
     saveInvoiceMutation,
     isSubmitting,
+    selectedCompanyId,
   } = useInvoiceData();
 
   // Loading state
@@ -68,6 +69,7 @@ const InvoiceEdit = () => {
             selectedClient={selectedClient}
             setSelectedClient={setSelectedClient}
             clients={clients}
+            companyId={selectedCompanyId || ""}
           />
 
           <ItemsSection 
