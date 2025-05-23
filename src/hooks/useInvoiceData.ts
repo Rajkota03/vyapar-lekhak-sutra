@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { LineItem } from "@/components/invoice/types/InvoiceTypes";
-import { TaxConfig } from "@/utils/invoiceMath";
+import { TaxConfig, calcTotals } from "@/utils/invoiceMath";
+import { format } from "date-fns";
 
 export type Client = {
   id: string;
