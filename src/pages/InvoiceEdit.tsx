@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -313,7 +312,7 @@ const InvoiceEdit = () => {
           invoiceData.number : 
           generateInvoiceNumber();
           
-        const invoiceData: Invoice = {
+        const invoicePayload: Invoice = {
           id: isEditing ? id : undefined,
           number: invoiceNumber,
           company_id: selectedCompanyId,
@@ -333,7 +332,7 @@ const InvoiceEdit = () => {
         if (isEditing) {
           const { error: updateError } = await supabase
             .from('invoices')
-            .update(invoiceData)
+            .update(invoicePayload)
             .eq('id', id);
             
           if (updateError) throw updateError;
@@ -341,7 +340,7 @@ const InvoiceEdit = () => {
         } else {
           const { data: newInvoice, error: insertError } = await supabase
             .from('invoices')
-            .insert(invoiceData)
+            .insert(invoicePayload)
             .select('id')
             .single();
             
