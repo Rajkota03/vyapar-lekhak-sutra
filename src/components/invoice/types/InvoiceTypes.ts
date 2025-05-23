@@ -17,6 +17,7 @@ export interface LineItem {
     default_price?: number;
     default_cgst?: number;
     default_sgst?: number;
+    photo_url?: string;
   };
 }
 
@@ -27,4 +28,5 @@ export interface Item {
   default_price?: number;
   default_cgst?: number;
   default_sgst?: number;
+  photo_url?: string;
 }

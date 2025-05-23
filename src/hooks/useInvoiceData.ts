@@ -34,6 +34,8 @@ export type Invoice = {
   cgst_pct?: number;
   sgst_pct?: number;
   igst_pct?: number;
+  show_my_signature?: boolean;
+  require_client_signature?: boolean;
 };
 
 interface SaveInvoiceParams {
