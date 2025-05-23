@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
-import { calcTotals } from "@/utils/invoiceMath";
+import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
 import { LineItem } from "@/components/invoice/ItemsSection";
 
 export type Client = {
@@ -30,7 +30,16 @@ export type Invoice = {
   igst: number;
   total: number;
   status: string;
+  use_igst?: boolean;
+  cgst_pct?: number;
+  sgst_pct?: number;
+  igst_pct?: number;
 };
+
+interface SaveInvoiceParams {
+  navigate: (path: string) => void;
+  taxConfig: TaxConfig;
+}
 
 export const useInvoiceData = () => {
   const { id } = useParams();
@@ -166,9 +175,6 @@ export const useInvoiceData = () => {
     }
   }, [invoiceLineItems, isLoadingLines]);
 
-  // Calculate totals using the utility function
-  const { subtotal, cgst: cgstAmount, sgst: sgstAmount, total: grandTotal } = calcTotals(lineItems);
-
   // Generate a new invoice number
   const generateInvoiceNumber = () => {
     const now = new Date();
@@ -181,7 +187,7 @@ export const useInvoiceData = () => {
 
   // Save invoice mutation
   const saveInvoiceMutation = useMutation({
-    mutationFn: async (navigate: (path: string) => void) => {
+    mutationFn: async ({ navigate, taxConfig }: SaveInvoiceParams) => {
       if (!selectedClient || !selectedCompanyId) {
         throw new Error("Client and company are required");
       }
@@ -194,19 +200,27 @@ export const useInvoiceData = () => {
           invoiceData.number : 
           generateInvoiceNumber();
         
-        // Directly use the calculated totals
+        // Calculate totals with tax config
+        const calculatedTotals = calcTotals(lineItems, taxConfig);
+        
+        // Prepare invoice payload with tax configuration
         const invoicePayload: Invoice = {
           id: isEditing ? id : undefined,
           number: invoiceNumber,
           company_id: selectedCompanyId,
           client_id: selectedClient.id,
           issue_date: format(selectedDate, 'yyyy-MM-dd'),
-          subtotal: Number(subtotal.toFixed(2)),
-          cgst: Number(cgstAmount.toFixed(2)),
-          sgst: Number(sgstAmount.toFixed(2)),
-          igst: 0,
-          total: Number(grandTotal.toFixed(2)),
+          subtotal: Number(calculatedTotals.subtotal.toFixed(2)),
+          cgst: taxConfig.useIgst ? 0 : Number(calculatedTotals.cgst?.toFixed(2) || 0),
+          sgst: taxConfig.useIgst ? 0 : Number(calculatedTotals.sgst?.toFixed(2) || 0),
+          igst: taxConfig.useIgst ? Number(calculatedTotals.igst?.toFixed(2) || 0) : 0,
+          total: Number(calculatedTotals.total.toFixed(2)),
           status: 'draft',
+          // Tax configuration
+          use_igst: taxConfig.useIgst,
+          cgst_pct: taxConfig.cgstPct,
+          sgst_pct: taxConfig.sgstPct,
+          igst_pct: taxConfig.igstPct
         };
         
         let invoiceId: string;
@@ -284,12 +298,9 @@ export const useInvoiceData = () => {
     setLineItems,
     clients,
     items,
-    subtotal,
-    cgstAmount,
-    sgstAmount,
-    grandTotal,
     saveInvoiceMutation,
     isSubmitting,
     selectedCompanyId,
+    existingInvoice: invoiceData,
   };
 };

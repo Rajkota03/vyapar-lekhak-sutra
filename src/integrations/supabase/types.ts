@@ -137,51 +137,63 @@ export type Database = {
       invoices: {
         Row: {
           cgst: number | null
+          cgst_pct: number | null
           client_id: string
           company_id: string
           created_at: string | null
           due_date: string | null
           id: string
           igst: number | null
+          igst_pct: number | null
           issue_date: string
           number: string
           pdf_url: string | null
           sgst: number | null
+          sgst_pct: number | null
           status: string | null
           subtotal: number
           total: number
+          use_igst: boolean | null
         }
         Insert: {
           cgst?: number | null
+          cgst_pct?: number | null
           client_id: string
           company_id: string
           created_at?: string | null
           due_date?: string | null
           id?: string
           igst?: number | null
+          igst_pct?: number | null
           issue_date: string
           number: string
           pdf_url?: string | null
           sgst?: number | null
+          sgst_pct?: number | null
           status?: string | null
           subtotal?: number
           total?: number
+          use_igst?: boolean | null
         }
         Update: {
           cgst?: number | null
+          cgst_pct?: number | null
           client_id?: string
           company_id?: string
           created_at?: string | null
           due_date?: string | null
           id?: string
           igst?: number | null
+          igst_pct?: number | null
           issue_date?: string
           number?: string
           pdf_url?: string | null
           sgst?: number | null
+          sgst_pct?: number | null
           status?: string | null
           subtotal?: number
           total?: number
+          use_igst?: boolean | null
         }
         Relationships: [
           {

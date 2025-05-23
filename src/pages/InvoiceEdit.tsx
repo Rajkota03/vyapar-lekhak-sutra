@@ -1,6 +1,9 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // UI Components
 import DashboardLayout from "@/components/DashboardLayout";
@@ -14,7 +17,19 @@ import TotalsSection from "@/components/invoice/TotalsSection";
 
 // Custom Hook
 import { useInvoiceData } from "@/hooks/useInvoiceData";
-import { calcTotals } from "@/utils/invoiceMath";
+import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
+
+// Define form schema
+const invoiceFormSchema = z.object({
+  taxConfig: z.object({
+    useIgst: z.boolean().default(false),
+    cgstPct: z.number().default(9),
+    sgstPct: z.number().default(9),
+    igstPct: z.number().default(18)
+  })
+});
+
+type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
 const InvoiceEdit = () => {
   const navigate = useNavigate();
@@ -33,10 +48,40 @@ const InvoiceEdit = () => {
     saveInvoiceMutation,
     isSubmitting,
     selectedCompanyId,
+    existingInvoice
   } = useInvoiceData();
 
-  // Calculate totals using the utility function
-  const { subtotal, cgst: cgstAmount, sgst: sgstAmount, total: grandTotal } = calcTotals(lineItems);
+  // Initialize form with defaults or existing invoice data
+  const form = useForm<InvoiceFormValues>({
+    resolver: zodResolver(invoiceFormSchema),
+    defaultValues: {
+      taxConfig: {
+        useIgst: existingInvoice?.use_igst || false,
+        cgstPct: existingInvoice?.cgst_pct || 9,
+        sgstPct: existingInvoice?.sgst_pct || 9,
+        igstPct: existingInvoice?.igst_pct || 18
+      }
+    }
+  });
+
+  const taxConfig = form.watch('taxConfig');
+
+  // Calculate totals using the utility function with tax configuration
+  const totals = calcTotals(lineItems, taxConfig);
+
+  // Extract individual total values
+  const { subtotal, total: grandTotal } = totals;
+  const cgstAmount = totals.cgst;
+  const sgstAmount = totals.sgst;
+  const igstAmount = totals.igst;
+
+  // Handle form submission including tax config
+  const handleSaveInvoice = () => {
+    saveInvoiceMutation.mutate({
+      navigate,
+      taxConfig: form.getValues().taxConfig
+    });
+  };
 
   // Loading state
   if (isLoading) {
@@ -56,7 +101,7 @@ const InvoiceEdit = () => {
           isEditing={isEditing}
           isSubmitting={isSubmitting}
           canSave={!!selectedClient && lineItems.length > 0}
-          onSave={() => saveInvoiceMutation.mutate(navigate)}
+          onSave={handleSaveInvoice}
         />
 
         <div className="p-4 space-y-6">
@@ -84,7 +129,11 @@ const InvoiceEdit = () => {
               subtotal={subtotal}
               cgstAmount={cgstAmount}
               sgstAmount={sgstAmount}
+              igstAmount={igstAmount}
               grandTotal={grandTotal}
+              taxConfig={taxConfig}
+              setValue={form.setValue}
+              watch={form.watch}
             />
           )}
         </div>
