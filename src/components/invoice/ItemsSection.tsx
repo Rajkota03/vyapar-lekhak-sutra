@@ -32,8 +32,8 @@ export type LineItem = {
   description: string;
   qty: number;
   unit_price: number;
-  cgst?: number;
-  sgst?: number;
+  cgst: number;  // Changed from optional to required
+  sgst: number;  // Changed from optional to required
   amount: number;
 };
 
@@ -59,8 +59,8 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
       description: item.name,
       qty: 1,
       unit_price: item.default_price || 0,
-      cgst: item.default_cgst,
-      sgst: item.default_sgst,
+      cgst: item.default_cgst ?? 9, // Default to 9 if undefined
+      sgst: item.default_sgst ?? 9, // Default to 9 if undefined
       amount: item.default_price || 0,
     };
 

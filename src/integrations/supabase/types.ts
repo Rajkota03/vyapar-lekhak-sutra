@@ -83,38 +83,38 @@ export type Database = {
       invoice_lines: {
         Row: {
           amount: number
-          cgst: number | null
+          cgst: number
           created_at: string | null
           description: string
           id: string
           invoice_id: string
           item_id: string | null
           qty: number
-          sgst: number | null
+          sgst: number
           unit_price: number
         }
         Insert: {
           amount: number
-          cgst?: number | null
+          cgst?: number
           created_at?: string | null
           description: string
           id?: string
           invoice_id: string
           item_id?: string | null
           qty?: number
-          sgst?: number | null
+          sgst?: number
           unit_price: number
         }
         Update: {
           amount?: number
-          cgst?: number | null
+          cgst?: number
           created_at?: string | null
           description?: string
           id?: string
           invoice_id?: string
           item_id?: string | null
           qty?: number
-          sgst?: number | null
+          sgst?: number
           unit_price?: number
         }
         Relationships: [

@@ -22,6 +22,16 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
 }) => {
   const [showTaxSettings, setShowTaxSettings] = useState(false);
 
+  // Format currency for Indian Rupees
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('en-IN', { 
+      style: 'currency', 
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
   const TaxSettingsSheet = () => (
     <Sheet open={showTaxSettings} onOpenChange={setShowTaxSettings}>
       <SheetContent>
@@ -115,27 +125,27 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
       <div className="bg-white rounded-lg border p-4 space-y-3">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Subtotal</span>
-          <span>₹{subtotal.toFixed(2)}</span>
+          <span>{formatCurrency(subtotal)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">CGST (9%)</span>
-          <span>₹{cgstAmount.toFixed(2)}</span>
+          <span>{formatCurrency(cgstAmount)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">SGST (9%)</span>
-          <span>₹{sgstAmount.toFixed(2)}</span>
+          <span>{formatCurrency(sgstAmount)}</span>
         </div>
         <div className="h-px bg-gray-200 my-2"></div>
         <div className="flex justify-between font-medium">
           <span>Grand Total</span>
-          <span>₹{grandTotal.toFixed(2)}</span>
+          <span>{formatCurrency(grandTotal)}</span>
         </div>
       </div>
       
       <div className="bg-white rounded-lg border p-4">
         <div className="flex justify-between items-center">
           <span className="font-medium">Amount Due</span>
-          <span className="font-medium">₹{grandTotal.toFixed(2)}</span>
+          <span className="font-medium">{formatCurrency(grandTotal)}</span>
         </div>
       </div>
       

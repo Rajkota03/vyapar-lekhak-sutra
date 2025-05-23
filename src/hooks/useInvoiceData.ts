@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { calcTotals } from "@/utils/invoiceMath";
-import { LineItem, Item } from "@/components/invoice/ItemsSection";
+import { LineItem } from "@/components/invoice/ItemsSection";
 
 export type Client = {
   id: string;
@@ -194,7 +194,7 @@ export const useInvoiceData = () => {
           invoiceData.number : 
           generateInvoiceNumber();
         
-        // Use the calculated totals from the utility function
+        // Directly use the calculated totals
         const invoicePayload: Invoice = {
           id: isEditing ? id : undefined,
           number: invoiceNumber,
