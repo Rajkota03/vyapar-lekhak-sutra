@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ItemPicker from "./ItemPicker";
+import { calcTotals } from "@/utils/invoiceMath";
 
 export type Item = {
   id: string;
@@ -22,7 +23,7 @@ export type Item = {
   default_cgst?: number;
   default_sgst?: number;
   photo_url?: string;
-  company_id: string; // Add this field to match the Supabase schema
+  company_id: string;
 };
 
 export type LineItem = {

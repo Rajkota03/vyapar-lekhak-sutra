@@ -14,6 +14,7 @@ import TotalsSection from "@/components/invoice/TotalsSection";
 
 // Custom Hook
 import { useInvoiceData } from "@/hooks/useInvoiceData";
+import { calcTotals } from "@/utils/invoiceMath";
 
 const InvoiceEdit = () => {
   const navigate = useNavigate();
@@ -29,14 +30,13 @@ const InvoiceEdit = () => {
     setLineItems,
     clients,
     items,
-    subtotal,
-    cgstAmount,
-    sgstAmount,
-    grandTotal,
     saveInvoiceMutation,
     isSubmitting,
     selectedCompanyId,
   } = useInvoiceData();
+
+  // Calculate totals using the utility function
+  const { subtotal, cgst: cgstAmount, sgst: sgstAmount, total: grandTotal } = calcTotals(lineItems);
 
   // Loading state
   if (isLoading) {

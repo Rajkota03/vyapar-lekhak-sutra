@@ -1,10 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { calcTotals } from "@/utils/invoiceMath";
+import { LineItem } from "@/components/invoice/ItemsSection";
 
 export type Client = {
   id: string;
@@ -184,21 +185,8 @@ export const useInvoiceData = () => {
     }
   }, [invoiceLineItems, isLoadingLines]);
 
-  // Calculate totals
-  const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-  const cgstAmount = lineItems.reduce((sum, item) => {
-    if (item.cgst) {
-      return sum + (item.amount * item.cgst / 100);
-    }
-    return sum;
-  }, 0);
-  const sgstAmount = lineItems.reduce((sum, item) => {
-    if (item.sgst) {
-      return sum + (item.amount * item.sgst / 100);
-    }
-    return sum;
-  }, 0);
-  const grandTotal = subtotal + cgstAmount + sgstAmount;
+  // Calculate totals using the utility function
+  const { subtotal, cgst: cgstAmount, sgst: sgstAmount, total: grandTotal } = calcTotals(lineItems);
 
   // Generate a new invoice number
   const generateInvoiceNumber = () => {
@@ -224,6 +212,9 @@ export const useInvoiceData = () => {
         const invoiceNumber = isEditing && invoiceData ? 
           invoiceData.number : 
           generateInvoiceNumber();
+        
+        // Use the calculated totals from the utility
+        const { subtotal, cgst, sgst, total } = calcTotals(lineItems);
           
         const invoicePayload: Invoice = {
           id: isEditing ? id : undefined,
@@ -232,10 +223,10 @@ export const useInvoiceData = () => {
           client_id: selectedClient.id,
           issue_date: format(selectedDate, 'yyyy-MM-dd'),
           subtotal: Number(subtotal.toFixed(2)),
-          cgst: Number(cgstAmount.toFixed(2)),
-          sgst: Number(sgstAmount.toFixed(2)),
+          cgst: Number(cgst.toFixed(2)),
+          sgst: Number(sgst.toFixed(2)),
           igst: 0,
-          total: Number(grandTotal.toFixed(2)),
+          total: Number(total.toFixed(2)),
           status: 'draft',
         };
         
