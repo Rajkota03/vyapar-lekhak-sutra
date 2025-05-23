@@ -1,9 +1,10 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, Eye } from "lucide-react";
+import { ChevronLeft, MoreVertical, Eye, Share } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { handleSharePdf } from "@/utils/sharePdf";
 
 interface InvoiceHeaderProps {
   isEditing: boolean;
@@ -23,6 +24,12 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   invoiceId,
 }) => {
   const navigate = useNavigate();
+
+  const handlePdfShare = async () => {
+    if (invoiceId) {
+      await handleSharePdf(invoiceId);
+    }
+  };
 
   const TaxSettingsSheet = () => (
     <Sheet>
@@ -67,6 +74,16 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             >
               <Eye className="h-4 w-4 mr-1" />
               Preview
+            </Button>
+          )}
+          {invoiceId && (
+            <Button
+              onClick={handlePdfShare}
+              variant="outline"
+              className="h-8 px-3 text-xs"
+            >
+              <Share className="h-4 w-4 mr-1" />
+              Share PDF
             </Button>
           )}
           <Button

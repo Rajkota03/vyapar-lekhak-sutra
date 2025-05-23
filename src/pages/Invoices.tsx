@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -6,7 +5,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown } from "lucide-react";
+import { Plus, ChevronDown, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +15,7 @@ import {
 import { Card } from "@/components/ui/primitives/Card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
+import { handleSharePdf } from "@/utils/sharePdf";
 
 type Invoice = {
   id: string;
@@ -128,6 +128,15 @@ const Invoices = () => {
     );
   }
 
+  const handleCardClick = (invoiceId: string) => {
+    navigate(`/invoices/${invoiceId}`);
+  };
+
+  const handlePdfShare = async (e: React.MouseEvent, invoiceId: string) => {
+    e.stopPropagation();
+    await handleSharePdf(invoiceId);
+  };
+
   return (
     <DashboardLayout>
       <div className="relative min-h-screen pb-20">
@@ -187,18 +196,29 @@ const Invoices = () => {
               {invoices.map((invoice) => (
                 <Card 
                   key={invoice.id} 
-                  className="mb-3 overflow-hidden hover:shadow-md transition-shadow p-0"
-                  onClick={() => navigate(`/invoices/${invoice.id}`)}
+                  className="mb-3 overflow-hidden hover:shadow-md transition-shadow p-0 cursor-pointer"
+                  onClick={() => handleCardClick(invoice.id)}
                 >
                   <div className="p-4">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-medium">{invoice.invoice_code || 'Draft Invoice'}</h3>
                         <p className="text-sm text-muted-foreground">{invoice.clients?.name}</p>
                       </div>
-                      <Badge variant={getStatusBadgeVariant(invoice.status)}>
-                        {invoice.status || 'Draft'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getStatusBadgeVariant(invoice.status)}>
+                          {invoice.status || 'Draft'}
+                        </Badge>
+                        <button
+                          className="p-2 hover:bg-gray-100 rounded"
+                          onClick={(e) => handlePdfShare(e, invoice.id)}
+                        >
+                          <FileText
+                            size={18}
+                            className="text-gray-500 hover:text-blue-600"
+                          />
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-between mt-3 text-sm">
                       <span>{invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}</span>
