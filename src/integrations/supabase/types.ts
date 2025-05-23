@@ -86,9 +86,11 @@ export type Database = {
           cgst: number
           created_at: string | null
           description: string
+          discount_amount: number | null
           id: string
           invoice_id: string
           item_id: string | null
+          note: string | null
           qty: number
           sgst: number
           unit_price: number
@@ -98,9 +100,11 @@ export type Database = {
           cgst?: number
           created_at?: string | null
           description: string
+          discount_amount?: number | null
           id?: string
           invoice_id: string
           item_id?: string | null
+          note?: string | null
           qty?: number
           sgst?: number
           unit_price: number
@@ -110,9 +114,11 @@ export type Database = {
           cgst?: number
           created_at?: string | null
           description?: string
+          discount_amount?: number | null
           id?: string
           invoice_id?: string
           item_id?: string | null
+          note?: string | null
           qty?: number
           sgst?: number
           unit_price?: number
@@ -148,8 +154,10 @@ export type Database = {
           issue_date: string
           number: string
           pdf_url: string | null
+          require_client_signature: boolean | null
           sgst: number | null
           sgst_pct: number | null
+          show_my_signature: boolean | null
           status: string | null
           subtotal: number
           total: number
@@ -168,8 +176,10 @@ export type Database = {
           issue_date: string
           number: string
           pdf_url?: string | null
+          require_client_signature?: boolean | null
           sgst?: number | null
           sgst_pct?: number | null
+          show_my_signature?: boolean | null
           status?: string | null
           subtotal?: number
           total?: number
@@ -188,8 +198,10 @@ export type Database = {
           issue_date?: string
           number?: string
           pdf_url?: string | null
+          require_client_signature?: boolean | null
           sgst?: number | null
           sgst_pct?: number | null
+          show_my_signature?: boolean | null
           status?: string | null
           subtotal?: number
           total?: number

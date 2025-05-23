@@ -39,6 +39,8 @@ export type Invoice = {
 interface SaveInvoiceParams {
   navigate: (path: string) => void;
   taxConfig: TaxConfig;
+  showMySignature?: boolean;
+  requireClientSignature?: boolean;
 }
 
 export const useInvoiceData = () => {
@@ -189,7 +191,7 @@ export const useInvoiceData = () => {
 
   // Save invoice mutation
   const saveInvoiceMutation = useMutation({
-    mutationFn: async ({ navigate, taxConfig }: SaveInvoiceParams) => {
+    mutationFn: async ({ navigate, taxConfig, showMySignature, requireClientSignature }: SaveInvoiceParams) => {
       if (!selectedClient || !selectedCompanyId) {
         throw new Error("Client and company are required");
       }
@@ -205,7 +207,7 @@ export const useInvoiceData = () => {
         // Calculate totals with tax config
         const calculatedTotals = calcTotals(lineItems, taxConfig);
         
-        // Prepare invoice payload with tax configuration
+        // Prepare invoice payload with tax configuration and signatures
         const invoicePayload: Invoice = {
           id: isEditing ? id : undefined,
           number: invoiceNumber,
@@ -222,7 +224,10 @@ export const useInvoiceData = () => {
           use_igst: taxConfig.useIgst,
           cgst_pct: taxConfig.cgstPct,
           sgst_pct: taxConfig.sgstPct,
-          igst_pct: taxConfig.igstPct
+          igst_pct: taxConfig.igstPct,
+          // Signature settings
+          show_my_signature: showMySignature || false,
+          require_client_signature: requireClientSignature || false
         };
         
         let invoiceId: string;
@@ -257,7 +262,7 @@ export const useInvoiceData = () => {
           if (deleteError) throw deleteError;
         }
         
-        // Insert line items
+        // Insert line items with new fields
         const lineItemsToInsert = lineItems.map(item => ({
           invoice_id: invoiceId,
           item_id: item.item_id,
@@ -267,6 +272,8 @@ export const useInvoiceData = () => {
           cgst: item.cgst,
           sgst: item.sgst,
           amount: item.amount,
+          discount_amount: item.discount_amount || 0,
+          note: item.note || '',
         }));
         
         const { error: lineItemsError } = await supabase

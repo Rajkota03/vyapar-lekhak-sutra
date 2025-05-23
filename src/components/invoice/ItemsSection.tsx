@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import NoItemsView from "./NoItemsView";
 import ItemsTable from "./ItemsTable";
 import ItemPickerDialog from "./ItemPickerDialog";
+import ItemEditSheet from "./ItemEditSheet";
 import { Item, LineItem } from "./types/InvoiceTypes";
 
 interface ItemsSectionProps {
@@ -21,6 +22,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
   selectedCompanyId,
 }) => {
   const [itemPickerOpen, setItemPickerOpen] = useState(false);
+  const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
 
   // Add a new line item from the selected item
   const addLineItem = (item: Item) => {
@@ -29,9 +31,11 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
       description: item.name,
       qty: 1,
       unit_price: item.default_price || 0,
-      cgst: item.default_cgst ?? 9, // Default to 9 if undefined
-      sgst: item.default_sgst ?? 9, // Default to 9 if undefined
+      cgst: item.default_cgst ?? 9,
+      sgst: item.default_sgst ?? 9,
       amount: item.default_price || 0,
+      discount_amount: 0,
+      note: '',
     };
 
     setLineItems([...lineItems, newItem]);
@@ -45,13 +49,20 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
     if (field === "qty") {
       item.qty = value;
-      item.amount = item.qty * item.unit_price;
+      item.amount = item.qty * item.unit_price - (item.discount_amount || 0);
     } else if (field === "unit_price") {
       item.unit_price = value;
-      item.amount = item.qty * item.unit_price;
+      item.amount = item.qty * item.unit_price - (item.discount_amount || 0);
     }
 
     updatedItems[index] = item;
+    setLineItems(updatedItems);
+  };
+
+  // Update entire line item (from edit sheet)
+  const updateEntireLineItem = (index: number, updatedLine: LineItem) => {
+    const updatedItems = [...lineItems];
+    updatedItems[index] = updatedLine;
     setLineItems(updatedItems);
   };
 
@@ -60,6 +71,11 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
     const updatedItems = [...lineItems];
     updatedItems.splice(index, 1);
     setLineItems(updatedItems);
+    setEditingLineIndex(null);
+  };
+
+  const handleEditItem = (index: number) => {
+    setEditingLineIndex(index);
   };
 
   return (
@@ -79,6 +95,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
             lineItems={lineItems}
             updateLineItem={updateLineItem}
             removeLineItem={removeLineItem}
+            onEditItem={handleEditItem}
           />
         ) : (
           <NoItemsView onAddItem={() => setItemPickerOpen(true)} />
@@ -100,6 +117,23 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
         onOpenChange={setItemPickerOpen}
         onItemSelect={addLineItem}
         selectedCompanyId={selectedCompanyId}
+      />
+
+      <ItemEditSheet
+        isOpen={editingLineIndex !== null}
+        onOpenChange={(open) => !open && setEditingLineIndex(null)}
+        line={editingLineIndex !== null ? lineItems[editingLineIndex] : null}
+        onSave={(updatedLine) => {
+          if (editingLineIndex !== null) {
+            updateEntireLineItem(editingLineIndex, updatedLine);
+            setEditingLineIndex(null);
+          }
+        }}
+        onDelete={() => {
+          if (editingLineIndex !== null) {
+            removeLineItem(editingLineIndex);
+          }
+        }}
       />
     </div>
   );

@@ -17,12 +17,14 @@ interface ItemsTableProps {
   lineItems: LineItem[];
   updateLineItem: (index: number, field: string, value: number) => void;
   removeLineItem: (index: number) => void;
+  onEditItem: (index: number) => void;
 }
 
 const ItemsTable: React.FC<ItemsTableProps> = ({
   lineItems,
   updateLineItem,
   removeLineItem,
+  onEditItem,
 }) => {
   return (
     <div className="overflow-x-auto">
@@ -44,6 +46,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
               index={index}
               updateLineItem={updateLineItem}
               removeLineItem={removeLineItem}
+              onEditItem={onEditItem}
             />
           ))}
         </TableBody>

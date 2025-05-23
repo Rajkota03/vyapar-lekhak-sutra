@@ -11,6 +11,7 @@ interface LineItemRowProps {
   index: number;
   updateLineItem: (index: number, field: string, value: number) => void;
   removeLineItem: (index: number) => void;
+  onEditItem: (index: number) => void;
 }
 
 const LineItemRow: React.FC<LineItemRowProps> = ({
@@ -18,9 +19,13 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
   index,
   updateLineItem,
   removeLineItem,
+  onEditItem,
 }) => {
   return (
-    <TableRow className="border-b last:border-none">
+    <TableRow 
+      className="border-b last:border-none cursor-pointer hover:bg-gray-50"
+      onClick={() => onEditItem(index)}
+    >
       <TableCell className="py-1 pr-2 font-medium text-xs">
         {item.description}
       </TableCell>
@@ -29,9 +34,11 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
           type="number"
           value={item.qty}
           min={1}
-          onChange={(e) =>
-            updateLineItem(index, "qty", Number(e.target.value))
-          }
+          onChange={(e) => {
+            e.stopPropagation();
+            updateLineItem(index, "qty", Number(e.target.value));
+          }}
+          onClick={(e) => e.stopPropagation()}
           className="w-14 h-8 text-right text-xs"
         />
       </TableCell>
@@ -40,13 +47,11 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
           type="number"
           value={item.unit_price}
           min={0}
-          onChange={(e) =>
-            updateLineItem(
-              index,
-              "unit_price",
-              Number(e.target.value)
-            )
-          }
+          onChange={(e) => {
+            e.stopPropagation();
+            updateLineItem(index, "unit_price", Number(e.target.value));
+          }}
+          onClick={(e) => e.stopPropagation()}
           className="w-20 h-8 text-right text-xs"
         />
       </TableCell>
@@ -57,7 +62,10 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => removeLineItem(index)}
+          onClick={(e) => {
+            e.stopPropagation();
+            removeLineItem(index);
+          }}
         >
           <X className="h-4 w-4 text-muted-foreground" />
         </Button>
