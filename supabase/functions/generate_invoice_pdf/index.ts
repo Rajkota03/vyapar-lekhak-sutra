@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
@@ -311,21 +312,21 @@ serve(async (req) => {
     const pdfBytes = await pdfDoc.save()
     console.log('PDF generated, size:', pdfBytes.length, 'bytes')
     
-    // Upload to Supabase Storage
-    const fileName = `invoice-${invoice.invoice_code || invoice.number}-${Date.now()}.pdf`
-    console.log('Uploading PDF to storage with filename:', fileName)
+    // Upload to Supabase Storage with organized structure
+    const filePath = `company_${invoice.company_id}/${invoice.invoice_code}.pdf`
+    console.log('Uploading PDF to storage with path:', filePath)
     
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from('invoices')
-      .upload(fileName, pdfBytes, {
+      .upload(filePath, pdfBytes, {
+        upsert: true,
         contentType: 'application/pdf',
-        upsert: true
       })
 
-    if (uploadError) {
-      console.error('Error uploading PDF:', uploadError)
+    if (error) {
+      console.error('Error uploading PDF:', error)
       return new Response(
-        JSON.stringify({ error: 'Failed to upload PDF', details: uploadError.message }),
+        JSON.stringify({ error: 'Failed to upload PDF', details: error.message }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -333,12 +334,12 @@ serve(async (req) => {
       )
     }
 
-    console.log('PDF uploaded successfully:', uploadData)
+    console.log('PDF uploaded successfully:', data)
 
-    // Get public URL
+    // Get public URL using the uploaded file path
     const { data: urlData } = supabase.storage
       .from('invoices')
-      .getPublicUrl(fileName)
+      .getPublicUrl(data.path)
 
     const pdfUrl = urlData.publicUrl
     console.log('PDF public URL:', pdfUrl)
