@@ -11,7 +11,8 @@ import { toast } from "@/hooks/use-toast";
 
 const LogoSheet: React.FC = () => {
   const navigate = useNavigate();
-  const companyId = "your-company-id"; // Replace with actual company ID from context
+  // TODO: Get actual company ID from user context/auth - for now using a placeholder
+  const companyId = "0d32b9a9-54b4-4d99-bf37-5526ede25b2a"; // This should come from user's selected company
   const { settings, updateSettings } = useCompanySettings(companyId);
   
   const [logoUrl, setLogoUrl] = useState("");
@@ -32,6 +33,8 @@ const LogoSheet: React.FC = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `company_${companyId}/logo.${fileExt}`;
       
+      console.log('Uploading logo to:', fileName);
+      
       const { error: uploadError } = await supabase.storage
         .from('company-assets')
         .upload(fileName, file, { upsert: true });
@@ -42,6 +45,8 @@ const LogoSheet: React.FC = () => {
         .from('company-assets')
         .getPublicUrl(fileName);
 
+      console.log('Logo uploaded, public URL:', data.publicUrl);
+      
       setLogoUrl(data.publicUrl);
       
       await updateSettings({ logo_url: data.publicUrl });
@@ -97,6 +102,8 @@ const LogoSheet: React.FC = () => {
                 src={logoUrl} 
                 alt="Company Logo" 
                 className="max-w-full max-h-32 mx-auto object-contain"
+                onLoad={() => console.log('Logo preview loaded')}
+                onError={(e) => console.error('Logo preview failed:', e)}
               />
             </div>
             <div className="flex gap-2">

@@ -16,10 +16,16 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
   lines 
 }) => {
   const [companySettings, setCompanySettings] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCompanySettings = async () => {
-      if (!company?.id) return;
+      if (!company?.id) {
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Fetching company settings for company ID:', company.id);
       
       const { data, error } = await supabase
         .from('company_settings')
@@ -27,9 +33,14 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
         .eq('company_id', company.id)
         .maybeSingle();
       
-      if (!error && data) {
+      if (error) {
+        console.error('Error fetching company settings:', error);
+      } else {
+        console.log('Company settings fetched:', data);
         setCompanySettings(data);
       }
+      
+      setLoading(false);
     };
 
     fetchCompanySettings();
@@ -39,6 +50,20 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
 
   // Use logo from company settings if available, otherwise fall back to company logo
   const logoUrl = companySettings?.logo_url || company?.logo_url;
+  
+  console.log('Logo URL to display:', logoUrl);
+  console.log('Company settings:', companySettings);
+  console.log('Company data:', company);
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto bg-white p-4 sm:p-8 font-sans text-sm">
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white p-4 sm:p-8 font-sans text-sm">
@@ -46,7 +71,15 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
         <div className="flex-1">
           {logoUrl && (
-            <img src={logoUrl} alt="Company Logo" className="w-20 h-15 mb-4 object-contain" />
+            <div className="mb-4">
+              <img 
+                src={logoUrl} 
+                alt="Company Logo" 
+                className="w-24 h-20 object-contain"
+                onLoad={() => console.log('Logo loaded successfully')}
+                onError={(e) => console.error('Logo failed to load:', e)}
+              />
+            </div>
           )}
           <h2 className="text-xl font-bold text-gray-800 mb-2">{company?.name || 'Company Name'}</h2>
           {company?.address && (
