@@ -1,7 +1,7 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
+import fontkit from 'https://esm.sh/@pdf-lib/fontkit@1.1.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -89,27 +89,38 @@ serve(async (req) => {
 
     // Create PDF using pdf-lib
     const pdfDoc = await PDFDocument.create()
+    
+    // Register fontkit to enable custom font embedding
+    pdfDoc.registerFontkit(fontkit)
+    
     const page = pdfDoc.addPage([595.28, 841.89]) // A4 size in points
     
-    // Try to load a Unicode-compatible font, fallback to Helvetica
-    let unicodeFont, fallbackFont
+    // Load fonts with proper Unicode support
+    let unicodeFont
+    let fallbackFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    
     try {
-      // Fetch Noto Sans font from Google Fonts
+      // Fetch Noto Sans font from Google Fonts for Unicode support
       const fontUrl = 'https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNb4j5Ba_2c7A.ttf'
-      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer())
-      unicodeFont = await pdfDoc.embedFont(new Uint8Array(fontBytes))
-      console.log('Unicode font loaded successfully')
+      const fontResponse = await fetch(fontUrl)
+      if (fontResponse.ok) {
+        const fontBytes = await fontResponse.arrayBuffer()
+        unicodeFont = await pdfDoc.embedFont(new Uint8Array(fontBytes))
+        console.log('Unicode font loaded successfully')
+      } else {
+        throw new Error(`Font fetch failed with status: ${fontResponse.status}`)
+      }
     } catch (fontError) {
       console.warn('Failed to load Unicode font, using fallback:', fontError)
+      unicodeFont = null
     }
-    
-    fallbackFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
     
     const { width, height } = page.getSize()
     
     // Helper function to draw text with Unicode support
     const drawText = (text: string, x: number, y: number, options: any = {}) => {
+      // Use Unicode font if available and text contains rupee symbol
       const useUnicodeFont = unicodeFont && text.includes('₹')
       const font = useUnicodeFont ? unicodeFont : (options.bold ? boldFont : fallbackFont)
       
@@ -298,9 +309,12 @@ serve(async (req) => {
     
     // Generate PDF bytes
     const pdfBytes = await pdfDoc.save()
+    console.log('PDF generated, size:', pdfBytes.length, 'bytes')
     
     // Upload to Supabase Storage
     const fileName = `invoice-${invoice.invoice_code || invoice.number}-${Date.now()}.pdf`
+    console.log('Uploading PDF to storage with filename:', fileName)
+    
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('invoices')
       .upload(fileName, pdfBytes, {
@@ -311,7 +325,7 @@ serve(async (req) => {
     if (uploadError) {
       console.error('Error uploading PDF:', uploadError)
       return new Response(
-        JSON.stringify({ error: 'Failed to upload PDF' }),
+        JSON.stringify({ error: 'Failed to upload PDF', details: uploadError.message }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -319,12 +333,15 @@ serve(async (req) => {
       )
     }
 
+    console.log('PDF uploaded successfully:', uploadData)
+
     // Get public URL
     const { data: urlData } = supabase.storage
       .from('invoices')
       .getPublicUrl(fileName)
 
     const pdfUrl = urlData.publicUrl
+    console.log('PDF public URL:', pdfUrl)
 
     // Update invoice with PDF URL (only if not preview)
     if (!preview) {
@@ -335,6 +352,8 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Error updating invoice with PDF URL:', updateError)
+      } else {
+        console.log('Invoice updated with PDF URL')
       }
     }
 
