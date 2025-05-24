@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { InvoicePdfPreview } from "@/components/InvoicePdfPreview";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +77,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
         className="max-w-[98vw] w-full p-2 sm:p-4 overflow-hidden"
         style={{ maxHeight: '95dvh', height: '95dvh' }}
       >
+        <DialogTitle className="sr-only">Invoice Preview</DialogTitle>
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-center mb-2 flex-shrink-0">
             <div className="flex gap-2">
