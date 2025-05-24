@@ -90,21 +90,37 @@ serve(async (req) => {
     // Create PDF using pdf-lib
     const pdfDoc = await PDFDocument.create()
     const page = pdfDoc.addPage([595.28, 841.89]) // A4 size in points
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    
+    // Try to load a Unicode-compatible font, fallback to Helvetica
+    let unicodeFont, fallbackFont
+    try {
+      // Fetch Noto Sans font from Google Fonts
+      const fontUrl = 'https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNb4j5Ba_2c7A.ttf'
+      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer())
+      unicodeFont = await pdfDoc.embedFont(new Uint8Array(fontBytes))
+      console.log('Unicode font loaded successfully')
+    } catch (fontError) {
+      console.warn('Failed to load Unicode font, using fallback:', fontError)
+    }
+    
+    fallbackFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
     
     const { width, height } = page.getSize()
     
-    // Helper function to draw text with safe encoding
+    // Helper function to draw text with Unicode support
     const drawText = (text: string, x: number, y: number, options: any = {}) => {
-      // Replace rupee symbol with Rs. to avoid encoding issues
-      const safeText = text.toString().replace(/₹/g, 'Rs.')
+      const useUnicodeFont = unicodeFont && text.includes('₹')
+      const font = useUnicodeFont ? unicodeFont : (options.bold ? boldFont : fallbackFont)
       
-      page.drawText(safeText, {
+      // Only replace rupee symbol if we don't have Unicode font support
+      const displayText = useUnicodeFont ? text : text.replace(/₹/g, 'Rs.')
+      
+      page.drawText(displayText, {
         x,
         y,
         size: options.size || 11,
-        font: options.bold ? boldFont : font,
+        font,
         color: options.color || rgb(0, 0, 0),
         ...options
       })
@@ -196,8 +212,8 @@ serve(async (req) => {
     yPosition = tableStartY - rowHeight
     
     // Table Rows
-    // Use Rs. instead of ₹ to avoid encoding issues
-    const currency = (n: number) => `Rs.${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+    // Use proper rupee symbol with Unicode font support
+    const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
     
     lineItems?.forEach((item: any) => {
       yPosition -= rowHeight
