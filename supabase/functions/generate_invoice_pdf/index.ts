@@ -68,6 +68,13 @@ serve(async (req) => {
       )
     }
 
+    // Fetch company settings for logo and signature
+    const { data: companySettings } = await supabase
+      .from('company_settings')
+      .select('*')
+      .eq('company_id', invoice.company_id)
+      .maybeSingle()
+
     // Fetch invoice line items
     const { data: lineItems, error: linesError } = await supabase
       .from('invoice_lines')
@@ -140,7 +147,29 @@ serve(async (req) => {
     
     let yPosition = height - 60 // Start from top
     
-    // Header Section
+    // Header Section with Logo
+    // Use logo from company settings if available, otherwise fall back to company logo
+    const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
+    if (logoUrl) {
+      try {
+        const logoResponse = await fetch(logoUrl)
+        if (logoResponse.ok) {
+          const logoBytes = await logoResponse.arrayBuffer()
+          const logo = await pdfDoc.embedPng(new Uint8Array(logoBytes))
+          const logoDims = logo.scale(0.3)
+          page.drawImage(logo, {
+            x: 40,
+            y: yPosition - logoDims.height,
+            width: logoDims.width,
+            height: logoDims.height,
+          })
+          yPosition -= logoDims.height + 10
+        }
+      } catch (logoError) {
+        console.warn('Failed to embed logo:', logoError)
+      }
+    }
+    
     drawText(invoice.companies?.name || 'Company Name', 40, yPosition, { size: 16, bold: true })
     drawText('INVOICE', width - 140, yPosition, { size: 18, bold: true })
     
@@ -283,12 +312,48 @@ serve(async (req) => {
     drawText('Grand Total', totalsX, yPosition, { bold: true })
     drawText(currency(Number(invoice.total)), width - 80, yPosition, { bold: true })
     
+    // Payment Terms
+    if (companySettings?.payment_note) {
+      yPosition -= 40
+      drawText('Payment Terms:', 50, yPosition, { bold: true })
+      yPosition -= 20
+      
+      // Split payment note into lines if it's too long
+      const paymentLines = companySettings.payment_note.split('\n')
+      paymentLines.forEach((line: string) => {
+        drawText(line, 50, yPosition, { size: 10 })
+        yPosition -= 15
+      })
+    }
+    
     // Signature Section
     if (invoice.show_my_signature || invoice.require_client_signature) {
       yPosition -= 60
       
       if (invoice.show_my_signature) {
         drawText('Authorized Signature:', 50, yPosition, { size: 10 })
+        
+        // Use signature from company settings if available
+        const signatureUrl = companySettings?.signature_url
+        if (signatureUrl) {
+          try {
+            const signatureResponse = await fetch(signatureUrl)
+            if (signatureResponse.ok) {
+              const signatureBytes = await signatureResponse.arrayBuffer()
+              const signature = await pdfDoc.embedPng(new Uint8Array(signatureBytes))
+              const signatureDims = signature.scale(0.5)
+              page.drawImage(signature, {
+                x: 50,
+                y: yPosition - 50,
+                width: signatureDims.width,
+                height: signatureDims.height,
+              })
+            }
+          } catch (signatureError) {
+            console.warn('Failed to embed signature:', signatureError)
+          }
+        }
+        
         page.drawLine({
           start: { x: 50, y: yPosition - 40 },
           end: { x: 200, y: yPosition - 40 },
@@ -373,7 +438,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { 
-        status: 500, 
+      status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )

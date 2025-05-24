@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InvoicePdfPreviewProps {
   invoice: any;
@@ -14,15 +15,38 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
   client, 
   lines 
 }) => {
+  const [companySettings, setCompanySettings] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchCompanySettings = async () => {
+      if (!company?.id) return;
+      
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('company_id', company.id)
+        .maybeSingle();
+      
+      if (!error && data) {
+        setCompanySettings(data);
+      }
+    };
+
+    fetchCompanySettings();
+  }, [company?.id]);
+
   const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+  // Use logo from company settings if available, otherwise fall back to company logo
+  const logoUrl = companySettings?.logo_url || company?.logo_url;
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white p-4 sm:p-8 font-sans text-sm">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
         <div className="flex-1">
-          {company?.logo_url && (
-            <img src={company.logo_url} alt="Company Logo" className="w-20 h-15 mb-4 object-contain" />
+          {logoUrl && (
+            <img src={logoUrl} alt="Company Logo" className="w-20 h-15 mb-4 object-contain" />
           )}
           <h2 className="text-xl font-bold text-gray-800 mb-2">{company?.name || 'Company Name'}</h2>
           {company?.address && (
@@ -124,10 +148,10 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
       </div>
 
       {/* Payment Terms */}
-      {company?.payment_note && (
+      {companySettings?.payment_note && (
         <div className="mb-8">
           <p className="font-bold text-gray-800 mb-3">Payment Terms:</p>
-          <p className="text-sm text-gray-600">{company.payment_note}</p>
+          <p className="text-sm text-gray-600">{companySettings.payment_note}</p>
         </div>
       )}
 
@@ -137,8 +161,8 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
           {invoice?.show_my_signature && (
             <div className="flex-1">
               <p className="text-sm mb-8">Authorized Signature:</p>
-              {company?.signature_url && (
-                <img src={company.signature_url} alt="Signature" className="w-32 h-12 object-contain mb-2" />
+              {companySettings?.signature_url && (
+                <img src={companySettings.signature_url} alt="Signature" className="w-32 h-12 object-contain mb-2" />
               )}
               <div className="border-t border-gray-800 w-40"></div>
             </div>
