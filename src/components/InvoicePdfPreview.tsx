@@ -77,7 +77,11 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
                 alt="Company Logo" 
                 className="w-24 h-20 object-contain"
                 onLoad={() => console.log('Logo loaded successfully')}
-                onError={(e) => console.error('Logo failed to load:', e)}
+                onError={(e) => {
+                  console.error('Logo failed to load:', e);
+                  console.error('Failed URL:', logoUrl);
+                }}
+                crossOrigin="anonymous"
               />
             </div>
           )}

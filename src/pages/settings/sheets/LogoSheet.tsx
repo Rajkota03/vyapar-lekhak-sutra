@@ -24,12 +24,41 @@ const LogoSheet: React.FC = () => {
     }
   }, [settings]);
 
+  // Create bucket if it doesn't exist
+  const ensureBucketExists = async () => {
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'company-assets');
+      
+      if (!bucketExists) {
+        console.log('Creating company-assets bucket...');
+        const { error } = await supabase.storage.createBucket('company-assets', {
+          public: true,
+          fileSizeLimit: 1024 * 1024 * 10, // 10MB
+          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
+        });
+        
+        if (error) {
+          console.error('Error creating bucket:', error);
+          throw error;
+        }
+        console.log('Bucket created successfully');
+      }
+    } catch (error) {
+      console.error('Error ensuring bucket exists:', error);
+      throw error;
+    }
+  };
+
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
     try {
+      // Ensure bucket exists
+      await ensureBucketExists();
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `company_${companyId}/logo.${fileExt}`;
       
@@ -104,6 +133,7 @@ const LogoSheet: React.FC = () => {
                 className="max-w-full max-h-32 mx-auto object-contain"
                 onLoad={() => console.log('Logo preview loaded')}
                 onError={(e) => console.error('Logo preview failed:', e)}
+                crossOrigin="anonymous"
               />
             </div>
             <div className="flex gap-2">
