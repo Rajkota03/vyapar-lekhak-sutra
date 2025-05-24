@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  return <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
+  return <div className="safe-h-screen flex flex-col md:flex-row bg-gray-100 mobile-safe">
       {/* Mobile menu toggle */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white p-4 shadow-md flex justify-between items-center">
         <h2 className="text-[1.125rem] font-bold">Vyapar Lekhak</h2>

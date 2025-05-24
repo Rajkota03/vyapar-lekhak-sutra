@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -72,7 +71,10 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] w-full h-[98vh] p-2 sm:p-4 overflow-hidden">
+      <DialogContent 
+        className="max-w-[98vw] w-full p-2 sm:p-4 overflow-hidden"
+        style={{ maxHeight: '95dvh', height: '95dvh' }}
+      >
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-center mb-2 flex-shrink-0">
             <div className="flex gap-2">
@@ -99,7 +101,6 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
                 src={pdfUrl} 
                 className="w-full h-full border-0" 
                 title="Invoice PDF"
-                style={{ minHeight: '80vh' }}
               />
             ) : viewMode === 'preview' && invoiceData ? (
               <div className="w-full h-full overflow-auto">
