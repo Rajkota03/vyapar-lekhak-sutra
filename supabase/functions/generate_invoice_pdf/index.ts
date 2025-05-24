@@ -95,9 +95,12 @@ serve(async (req) => {
     
     const { width, height } = page.getSize()
     
-    // Helper function to draw text
+    // Helper function to draw text with safe encoding
     const drawText = (text: string, x: number, y: number, options: any = {}) => {
-      page.drawText(text, {
+      // Replace rupee symbol with Rs. to avoid encoding issues
+      const safeText = text.toString().replace(/₹/g, 'Rs.')
+      
+      page.drawText(safeText, {
         x,
         y,
         size: options.size || 11,
@@ -193,7 +196,8 @@ serve(async (req) => {
     yPosition = tableStartY - rowHeight
     
     // Table Rows
-    const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+    // Use Rs. instead of ₹ to avoid encoding issues
+    const currency = (n: number) => `Rs.${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
     
     lineItems?.forEach((item: any) => {
       yPosition -= rowHeight
