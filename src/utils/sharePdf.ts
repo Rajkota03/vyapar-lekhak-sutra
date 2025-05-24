@@ -44,7 +44,7 @@ export const handleSharePdf = async (invoiceId: string) => {
     if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
       try {
         await navigator.share({
-          title: 'Invoice',
+          title: 'Invoice PDF',
           text: 'Please find attached invoice PDF.',
           url,
         });
@@ -60,15 +60,17 @@ export const handleSharePdf = async (invoiceId: string) => {
       }
     }
 
-    // Desktop fallback – open in new tab then auto-download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `invoice-${invoiceId}.pdf`;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Desktop fallback – open in new tab and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `invoice-${invoiceId}.pdf`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    // Append to body, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     
     toast({
       title: "Success",
