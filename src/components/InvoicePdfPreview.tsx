@@ -53,13 +53,11 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
   // Use logo from company settings if available, otherwise fall back to company logo
   const logoUrl = companySettings?.logo_url || company?.logo_url;
   
-  console.log('=== LOGO DEBUG INFO ===');
+  console.log('=== INVOICE PREVIEW DEBUG ===');
   console.log('Company ID:', company?.id);
-  console.log('Company settings logo URL:', companySettings?.logo_url);
-  console.log('Company logo URL:', company?.logo_url);
-  console.log('Final logo URL to display:', logoUrl);
-  console.log('Company settings full data:', companySettings);
-  console.log('Company full data:', company);
+  console.log('Company data:', company);
+  console.log('Company settings:', companySettings);
+  console.log('Logo URL:', logoUrl);
 
   if (loading) {
     return (
@@ -76,25 +74,18 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
         <div className="flex-1">
-          {logoUrl ? (
+          {logoUrl && (
             <div className="mb-4">
-              <div className="border border-gray-200 p-2 rounded mb-2">
-                <p className="text-xs text-gray-500 mb-1">Logo URL: {logoUrl}</p>
-                <p className="text-xs text-gray-500">Loading from: {logoUrl.includes('company-assets') ? 'Company Settings' : 'Company Data'}</p>
-              </div>
               <img 
                 src={logoUrl} 
                 alt="Company Logo" 
-                className="w-24 h-20 object-contain border border-gray-300"
+                className="w-24 h-20 object-contain"
                 onLoad={() => {
                   console.log('✅ Logo loaded successfully');
-                  console.log('Loaded URL:', logoUrl);
                   setLogoError(null);
                 }}
                 onError={(e) => {
-                  console.error('❌ Logo failed to load');
-                  console.error('Failed URL:', logoUrl);
-                  console.error('Error event:', e);
+                  console.error('❌ Logo failed to load:', logoUrl);
                   setLogoError(`Failed to load: ${logoUrl}`);
                 }}
                 crossOrigin="anonymous"
@@ -104,13 +95,6 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
                   {logoError}
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="mb-4 p-4 border border-yellow-200 bg-yellow-50 rounded">
-              <p className="text-xs text-yellow-700">
-                No logo found. Company settings: {companySettings?.logo_url ? 'Has logo' : 'No logo'}, 
-                Company data: {company?.logo_url ? 'Has logo' : 'No logo'}
-              </p>
             </div>
           )}
           <h2 className="text-xl font-bold text-gray-800 mb-2">{company?.name || 'Company Name'}</h2>

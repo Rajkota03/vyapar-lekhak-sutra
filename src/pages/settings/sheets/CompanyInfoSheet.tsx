@@ -6,14 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const CompanyInfoSheet: React.FC = () => {
   const navigate = useNavigate();
-  const companyId = "your-company-id"; // Replace with actual company ID from context
-  const { settings } = useCompanySettings(companyId);
+  const companyId = "0d32b9a9-54b4-4d99-bf37-5526ede25b2a"; // This should come from user's selected company
   
   const [formData, setFormData] = useState({
     name: "",
@@ -26,34 +24,49 @@ const CompanyInfoSheet: React.FC = () => {
     zipCode: "",
     country: "India"
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Load company data when available
     const loadCompanyData = async () => {
       try {
+        console.log('Loading company data for ID:', companyId);
+        
         const { data: company, error } = await supabase
           .from('companies')
           .select('*')
           .eq('id', companyId)
           .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error loading company:', error);
+          throw error;
+        }
+        
+        console.log('Loaded company data:', company);
         
         if (company) {
           setFormData({
             name: company.name || "",
-            email: "",
-            phone: "",
+            email: "", // Not stored in companies table
+            phone: "", // Not stored in companies table
             gstin: company.gstin || "",
             address: company.address || "",
-            city: "",
-            state: "",
-            zipCode: "",
+            city: "", // Not stored in companies table
+            state: "", // Not stored in companies table
+            zipCode: "", // Not stored in companies table
             country: "India"
           });
         }
       } catch (error) {
         console.error('Error loading company data:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load company information",
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -61,27 +74,74 @@ const CompanyInfoSheet: React.FC = () => {
   }, [companyId]);
 
   const handleChange = (field: string, value: string) => {
+    console.log(`Updating field ${field} with value:`, value);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
+    console.log('=== SAVING COMPANY INFO ===');
+    console.log('Form data to save:', formData);
+    console.log('Company ID:', companyId);
+    
+    if (!formData.name.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Company name is required",
+      });
+      return;
+    }
+
+    setSaving(true);
     try {
-      // Update companies table
+      // Update companies table with all available fields
+      const companyUpdateData = {
+        name: formData.name.trim(),
+        gstin: formData.gstin.trim() || null,
+        address: formData.address.trim() || null,
+        updated_at: new Date().toISOString(),
+      };
+      
+      console.log('Updating companies table with:', companyUpdateData);
+      
       const { error: companyError } = await supabase
         .from('companies')
-        .update({
-          name: formData.name,
-          gstin: formData.gstin,
-          address: formData.address,
-        })
+        .update(companyUpdateData)
         .eq('id', companyId);
 
-      if (companyError) throw companyError;
+      if (companyError) {
+        console.error('Company update error:', companyError);
+        throw companyError;
+      }
+
+      console.log('Company updated successfully');
+
+      // Create or update company_settings to store additional fields
+      const settingsUpdateData = {
+        company_id: companyId,
+        // We can store additional company info in company_settings if needed
+        // For now, we'll focus on the main company fields
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log('Updating company_settings with:', settingsUpdateData);
+
+      const { error: settingsError } = await supabase
+        .from('company_settings')
+        .upsert(settingsUpdateData);
+
+      if (settingsError) {
+        console.error('Settings update error:', settingsError);
+        // Don't throw here as this is not critical
+        console.log('Settings update failed, but continuing...');
+      }
 
       toast({
         title: "Success",
         description: "Company information saved successfully",
       });
+      
+      console.log('Save completed successfully');
       navigate('/settings');
     } catch (error) {
       console.error('Error saving company info:', error);
@@ -90,8 +150,20 @@ const CompanyInfoSheet: React.FC = () => {
         title: "Error",
         description: "Failed to save company information",
       });
+    } finally {
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <SheetLayout title="Company Information">
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </SheetLayout>
+    );
+  }
 
   return (
     <SheetLayout title="Company Information">
@@ -190,8 +262,12 @@ const CompanyInfoSheet: React.FC = () => {
           </div>
         </div>
 
-        <Button onClick={handleSave} className="w-full">
-          Save Company Information
+        <Button 
+          onClick={handleSave} 
+          className="w-full"
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Save Company Information"}
         </Button>
       </div>
     </SheetLayout>
