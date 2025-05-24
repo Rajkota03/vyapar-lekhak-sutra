@@ -1,10 +1,10 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, Eye, Share } from "lucide-react";
+import { ChevronLeft, MoreVertical, Eye, Download } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { handleSharePdf } from "@/utils/sharePdf";
+import { handleDownloadPdf } from "@/utils/downloadPdf";
 
 interface InvoiceHeaderProps {
   isEditing: boolean;
@@ -13,6 +13,7 @@ interface InvoiceHeaderProps {
   onSave: () => void;
   onPreview?: () => void;
   invoiceId?: string;
+  invoiceCode?: string;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -22,12 +23,13 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   onSave,
   onPreview,
   invoiceId,
+  invoiceCode,
 }) => {
   const navigate = useNavigate();
 
-  const handlePdfShare = async () => {
+  const handlePdfDownload = async () => {
     if (invoiceId) {
-      await handleSharePdf(invoiceId);
+      await handleDownloadPdf(invoiceId, invoiceCode);
     }
   };
 
@@ -78,12 +80,12 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           )}
           {invoiceId && (
             <Button
-              onClick={handlePdfShare}
+              onClick={handlePdfDownload}
               variant="outline"
               className="h-8 px-3 text-xs"
             >
-              <Share className="h-4 w-4 mr-1" />
-              Share PDF
+              <Download className="h-4 w-4 mr-1" />
+              Download PDF
             </Button>
           )}
           <Button

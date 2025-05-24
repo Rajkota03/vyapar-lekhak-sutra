@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, FileEdit, Trash2 } from "lucide-react";
+import { PlusCircle, FileEdit, Trash2, Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -24,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { handleDownloadPdf } from "@/utils/downloadPdf";
 
 // Define types using the Database type
 type Invoice = Database['public']['Tables']['invoices']['Row'];
@@ -192,6 +192,13 @@ const InvoiceList: React.FC = () => {
                               onClick={() => navigate(`/invoices/${invoice.id}`)}
                             >
                               <FileEdit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownloadPdf(invoice.id, invoice.invoice_code || invoice.number)}
+                            >
+                              <Download className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"

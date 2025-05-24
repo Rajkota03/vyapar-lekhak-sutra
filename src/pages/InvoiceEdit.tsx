@@ -204,6 +204,7 @@ const InvoiceEdit = () => {
             onSave={handleSaveInvoice}
             onPreview={isEditing ? handlePreview : undefined}
             invoiceId={existingInvoice?.id}
+            invoiceCode={existingInvoice?.invoice_code}
           />
 
           <div className="p-4 space-y-4 px-0 mx-0">
