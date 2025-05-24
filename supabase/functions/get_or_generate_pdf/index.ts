@@ -33,15 +33,26 @@ serve(async (req) => {
 
     console.log('Getting or generating PDF for invoice:', invoice_id)
 
-    // Check if PDF already exists
+    // Check if invoice exists first
     const { data: invoice, error: fetchError } = await supabase
       .from('invoices')
-      .select('pdf_url')
+      .select('id, pdf_url, status')
       .eq('id', invoice_id)
-      .single()
+      .maybeSingle()
 
     if (fetchError) {
       console.error('Error fetching invoice:', fetchError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch invoice', details: fetchError.message }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    if (!invoice) {
+      console.error('Invoice not found:', invoice_id)
       return new Response(
         JSON.stringify({ error: 'Invoice not found' }),
         { 
@@ -78,9 +89,21 @@ serve(async (req) => {
     if (pdfError) {
       console.error('Error generating PDF:', pdfError)
       return new Response(
-        JSON.stringify({ error: 'Failed to generate PDF' }),
+        JSON.stringify({ error: 'Failed to generate PDF', details: pdfError.message }),
         { 
           status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Check if PDF was generated and URL is available
+    if (pdfData && pdfData.pdf_url) {
+      console.log('PDF generated successfully:', pdfData.pdf_url)
+      return new Response(
+        JSON.stringify({ pdf_url: pdfData.pdf_url }),
+        { 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -91,12 +114,23 @@ serve(async (req) => {
       .from('invoices')
       .select('pdf_url')
       .eq('id', invoice_id)
-      .single()
+      .maybeSingle()
 
     if (updateError) {
       console.error('Error fetching updated invoice:', updateError)
       return new Response(
-        JSON.stringify({ error: 'Failed to get PDF URL' }),
+        JSON.stringify({ error: 'Failed to get PDF URL after generation' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    if (!updatedInvoice?.pdf_url) {
+      console.error('PDF URL not available after generation')
+      return new Response(
+        JSON.stringify({ error: 'PDF generation completed but URL not available' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -117,7 +151,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Unexpected error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

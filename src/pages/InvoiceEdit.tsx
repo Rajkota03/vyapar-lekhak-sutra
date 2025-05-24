@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -22,6 +21,7 @@ import PreviewModal from "@/components/invoice/PreviewModal";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 // Define form schema
 const invoiceFormSchema = z.object({
@@ -40,6 +40,7 @@ const InvoiceEdit = () => {
   const navigate = useNavigate();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   
   const {
     isEditing,
@@ -102,11 +103,22 @@ const InvoiceEdit = () => {
   // Generate invoice code for display
   const invoiceCode = existingInvoice?.invoice_code || "Will be generated on save";
 
-  // Handle preview
+  // Handle preview with better error handling
   const handlePreview = async () => {
-    if (!existingInvoice?.id) return;
+    if (!existingInvoice?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please save the invoice first before generating a preview.",
+      });
+      return;
+    }
+    
+    setIsGeneratingPreview(true);
     
     try {
+      console.log('Generating preview for invoice:', existingInvoice.id);
+      
       const { data, error } = await supabase.functions.invoke('generate_invoice_pdf', {
         body: { 
           invoice_id: existingInvoice.id, 
@@ -114,12 +126,39 @@ const InvoiceEdit = () => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error generating preview:', error);
+        toast({
+          variant: "destructive",
+          title: "Preview Error",
+          description: `Failed to generate preview: ${error.message || 'Unknown error'}`,
+        });
+        return;
+      }
       
+      if (!data?.pdf_url) {
+        console.error('No PDF URL in preview response:', data);
+        toast({
+          variant: "destructive",
+          title: "Preview Error",
+          description: "Preview URL not available. Please try again.",
+        });
+        return;
+      }
+      
+      console.log('Preview URL generated:', data.pdf_url);
       setPdfUrl(data.pdf_url);
       setPreviewOpen(true);
+      
     } catch (error) {
       console.error('Error generating preview:', error);
+      toast({
+        variant: "destructive",
+        title: "Preview Error",
+        description: `Failed to generate preview: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    } finally {
+      setIsGeneratingPreview(false);
     }
   };
 

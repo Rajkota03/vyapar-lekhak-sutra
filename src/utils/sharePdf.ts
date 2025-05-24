@@ -1,11 +1,16 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "@/hooks/use-toast";
 
 export const handleSharePdf = async (invoiceId: string) => {
   try {
     console.log('Generating PDF for invoice:', invoiceId);
+    
+    // Show loading toast
+    toast({
+      title: "Generating PDF",
+      description: "Please wait while we generate your invoice PDF...",
+    });
     
     const { data, error } = await supabase.functions.invoke(
       'get_or_generate_pdf',
@@ -17,7 +22,7 @@ export const handleSharePdf = async (invoiceId: string) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate PDF",
+        description: `Failed to generate PDF: ${error.message || 'Unknown error'}`,
       });
       return;
     }
@@ -26,10 +31,11 @@ export const handleSharePdf = async (invoiceId: string) => {
     console.log('PDF URL received:', url);
     
     if (!url) {
+      console.error('No PDF URL in response:', data);
       toast({
         variant: "destructive",
         title: "Error", 
-        description: "PDF URL not available",
+        description: "PDF URL not available. Please try again.",
       });
       return;
     }
@@ -41,6 +47,11 @@ export const handleSharePdf = async (invoiceId: string) => {
           title: 'Invoice',
           text: 'Please find attached invoice PDF.',
           url,
+        });
+        
+        toast({
+          title: "Success",
+          description: "PDF shared successfully",
         });
         return;
       } catch (err) {
@@ -61,7 +72,7 @@ export const handleSharePdf = async (invoiceId: string) => {
     
     toast({
       title: "Success",
-      description: "PDF is being downloaded",
+      description: "PDF download started",
     });
     
   } catch (error) {
@@ -69,7 +80,7 @@ export const handleSharePdf = async (invoiceId: string) => {
     toast({
       variant: "destructive",
       title: "Error",
-      description: "Failed to share PDF",
+      description: `Failed to share PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
   }
 };
