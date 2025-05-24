@@ -20,65 +20,46 @@ const LogoSheet: React.FC = () => {
 
   useEffect(() => {
     if (settings?.logo_url) {
+      console.log('Setting logo URL from settings:', settings.logo_url);
       setLogoUrl(settings.logo_url);
     }
   }, [settings]);
-
-  // Create bucket if it doesn't exist
-  const ensureBucketExists = async () => {
-    try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'company-assets');
-      
-      if (!bucketExists) {
-        console.log('Creating company-assets bucket...');
-        const { error } = await supabase.storage.createBucket('company-assets', {
-          public: true,
-          fileSizeLimit: 1024 * 1024 * 10, // 10MB
-          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
-        });
-        
-        if (error) {
-          console.error('Error creating bucket:', error);
-          throw error;
-        }
-        console.log('Bucket created successfully');
-      }
-    } catch (error) {
-      console.error('Error ensuring bucket exists:', error);
-      throw error;
-    }
-  };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('=== LOGO UPLOAD DEBUG ===');
+    console.log('File selected:', file.name, file.type, file.size);
+    console.log('Company ID:', companyId);
+
     setUploading(true);
     try {
-      // Ensure bucket exists
-      await ensureBucketExists();
-      
       const fileExt = file.name.split('.').pop();
       const fileName = `company_${companyId}/logo.${fileExt}`;
       
-      console.log('Uploading logo to:', fileName);
+      console.log('Uploading to path:', fileName);
       
       const { error: uploadError } = await supabase.storage
         .from('company-assets')
         .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage
         .from('company-assets')
         .getPublicUrl(fileName);
 
-      console.log('Logo uploaded, public URL:', data.publicUrl);
+      const publicUrl = data.publicUrl;
+      console.log('Generated public URL:', publicUrl);
       
-      setLogoUrl(data.publicUrl);
+      setLogoUrl(publicUrl);
       
-      await updateSettings({ logo_url: data.publicUrl });
+      console.log('Updating company settings with logo URL:', publicUrl);
+      await updateSettings({ logo_url: publicUrl });
       
       toast({
         title: "Success",
@@ -98,6 +79,7 @@ const LogoSheet: React.FC = () => {
 
   const handleDeleteLogo = async () => {
     try {
+      console.log('Deleting logo, current URL:', logoUrl);
       setLogoUrl("");
       await updateSettings({ logo_url: null });
       
@@ -106,6 +88,7 @@ const LogoSheet: React.FC = () => {
         description: "Logo removed successfully",
       });
     } catch (error) {
+      console.error('Error deleting logo:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -113,6 +96,11 @@ const LogoSheet: React.FC = () => {
       });
     }
   };
+
+  console.log('=== LOGO SHEET DEBUG ===');
+  console.log('Current logoUrl state:', logoUrl);
+  console.log('Settings from hook:', settings);
+  console.log('Company ID:', companyId);
 
   return (
     <SheetLayout title="Logo">
@@ -124,17 +112,32 @@ const LogoSheet: React.FC = () => {
           </p>
         </div>
 
+        {/* Debug info */}
+        <div className="bg-gray-100 p-3 rounded text-xs">
+          <p><strong>Debug Info:</strong></p>
+          <p>Company ID: {companyId}</p>
+          <p>Settings loaded: {settings ? 'Yes' : 'No'}</p>
+          <p>Logo URL from settings: {settings?.logo_url || 'None'}</p>
+          <p>Current logo state: {logoUrl || 'None'}</p>
+        </div>
+
         {logoUrl ? (
           <div className="space-y-4">
             <div className="border rounded-lg p-6 bg-gray-50">
               <img 
                 src={logoUrl} 
                 alt="Company Logo" 
-                className="max-w-full max-h-32 mx-auto object-contain"
-                onLoad={() => console.log('Logo preview loaded')}
-                onError={(e) => console.error('Logo preview failed:', e)}
+                className="max-w-full max-h-32 mx-auto object-contain border border-gray-200"
+                onLoad={() => console.log('Logo preview loaded successfully')}
+                onError={(e) => {
+                  console.error('Logo preview failed to load:', e);
+                  console.error('Failed URL:', logoUrl);
+                }}
                 crossOrigin="anonymous"
               />
+              <p className="text-xs text-gray-500 mt-2 text-center break-all">
+                URL: {logoUrl}
+              </p>
             </div>
             <div className="flex gap-2">
               <Button
