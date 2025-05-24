@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface InvoicePdfPreviewProps {
   invoice: any;
@@ -15,19 +16,31 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
   client, 
   lines 
 }) => {
-  const [companySettings, setCompanySettings] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [logoError, setLogoError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchCompanySettings = async () => {
-      if (!company?.id) {
-        console.log('No company ID available');
-        setLoading(false);
-        return;
-      }
+  // Fetch fresh company data to ensure we have the latest updates
+  const { data: freshCompanyData } = useQuery({
+    queryKey: ['companies', company?.id],
+    queryFn: async () => {
+      if (!company?.id) return null;
       
-      console.log('Fetching company settings for company ID:', company.id);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', company.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!company?.id,
+  });
+
+  // Fetch company settings with fresh data
+  const { data: companySettings } = useQuery({
+    queryKey: ['company-settings', company?.id],
+    queryFn: async () => {
+      if (!company?.id) return null;
       
       const { data, error } = await supabase
         .from('company_settings')
@@ -35,39 +48,25 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
         .eq('company_id', company.id)
         .maybeSingle();
       
-      if (error) {
-        console.error('Error fetching company settings:', error);
-      } else {
-        console.log('Company settings fetched:', data);
-        setCompanySettings(data);
-      }
-      
-      setLoading(false);
-    };
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!company?.id,
+  });
 
-    fetchCompanySettings();
-  }, [company?.id]);
+  // Use fresh company data if available, otherwise fall back to props
+  const currentCompany = freshCompanyData || company;
 
   const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 
   // Use logo from company settings if available, otherwise fall back to company logo
-  const logoUrl = companySettings?.logo_url || company?.logo_url;
+  const logoUrl = companySettings?.logo_url || currentCompany?.logo_url;
   
   console.log('=== INVOICE PREVIEW DEBUG ===');
-  console.log('Company ID:', company?.id);
-  console.log('Company data:', company);
+  console.log('Company ID:', currentCompany?.id);
+  console.log('Fresh company data:', freshCompanyData);
   console.log('Company settings:', companySettings);
   console.log('Logo URL:', logoUrl);
-
-  if (loading) {
-    return (
-      <div className="w-full max-w-4xl mx-auto bg-white p-4 sm:p-8 font-sans text-sm">
-        <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white p-4 sm:p-8 font-sans text-sm">
@@ -97,12 +96,12 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
               )}
             </div>
           )}
-          <h2 className="text-xl font-bold text-gray-800 mb-2">{company?.name || 'Company Name'}</h2>
-          {company?.address && (
-            <p className="text-gray-600 text-xs mb-1">{company.address}</p>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{currentCompany?.name || 'Company Name'}</h2>
+          {currentCompany?.address && (
+            <p className="text-gray-600 text-xs mb-1">{currentCompany.address}</p>
           )}
-          {company?.gstin && (
-            <p className="text-gray-600 text-xs">GSTIN: {company.gstin}</p>
+          {currentCompany?.gstin && (
+            <p className="text-gray-600 text-xs">GSTIN: {currentCompany.gstin}</p>
           )}
         </div>
         <div className="text-right">

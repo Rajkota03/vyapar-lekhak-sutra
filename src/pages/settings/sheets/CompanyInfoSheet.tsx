@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const CompanyInfoSheet: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const companyId = "0d32b9a9-54b4-4d99-bf37-5526ede25b2a"; // This should come from user's selected company
   
   const [formData, setFormData] = useState({
@@ -133,6 +135,11 @@ const CompanyInfoSheet: React.FC = () => {
         // Don't throw here as this is not critical
         console.log('Settings update failed, but continuing...');
       }
+
+      // Invalidate all related queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['company-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice-data'] });
 
       toast({
         title: "Success",
