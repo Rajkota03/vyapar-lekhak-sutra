@@ -40,21 +40,50 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
       return;
     }
 
-    // Create a download link and trigger it
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice-${invoiceCode || invoiceId}.pdf`;
-    link.target = '_blank';
+    // Detect if we're on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     
-    // Append to body, click, and remove
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Success",
-      description: "PDF download started",
-    });
+    if (isIOS) {
+      // On iOS, open PDF in new tab instead of trying to download
+      window.open(url, '_blank');
+      toast({
+        title: "PDF Opened",
+        description: "PDF opened in new tab. Use share button to save or print.",
+      });
+    } else {
+      // For other platforms, try to download
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        
+        // Create a download link and trigger it
+        const link = document.createElement('a');
+        const objectURL = URL.createObjectURL(blob);
+        link.href = objectURL;
+        link.download = `invoice-${invoiceCode || invoiceId}.pdf`;
+        
+        // Append to body, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the object URL
+        URL.revokeObjectURL(objectURL);
+        
+        toast({
+          title: "Success",
+          description: "PDF download started",
+        });
+      } catch (downloadError) {
+        console.error('Download failed, opening in new tab:', downloadError);
+        // Fallback to opening in new tab
+        window.open(url, '_blank');
+        toast({
+          title: "PDF Opened",
+          description: "PDF opened in new tab. Use browser's save option to download.",
+        });
+      }
+    }
     
   } catch (error) {
     console.error('Error downloading PDF:', error);
