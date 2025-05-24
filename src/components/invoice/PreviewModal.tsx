@@ -72,48 +72,53 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] h-[95vh] p-4">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'pdf' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('pdf')}
-            >
-              PDF View
-            </Button>
-            <Button
-              variant={viewMode === 'preview' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('preview')}
-            >
-              Live Preview
-            </Button>
+      <DialogContent className="max-w-[98vw] w-full h-[98vh] p-2 sm:p-4 overflow-hidden">
+        <div className="flex flex-col h-full">
+          <div className="flex justify-between items-center mb-2 flex-shrink-0">
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'pdf' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('pdf')}
+              >
+                PDF View
+              </Button>
+              <Button
+                variant={viewMode === 'preview' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('preview')}
+              >
+                Live Preview
+              </Button>
+            </div>
           </div>
-        </div>
-        
-        <div className="flex-1 overflow-hidden">
-          {viewMode === 'pdf' && pdfUrl ? (
-            <iframe 
-              src={pdfUrl} 
-              className="w-full h-full border-0 rounded-lg" 
-              title="Invoice PDF"
-            />
-          ) : viewMode === 'preview' && invoiceData ? (
-            <InvoicePdfPreview {...invoiceData} />
-          ) : loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <p className="text-muted-foreground">
-                  {viewMode === 'pdf' ? 'No PDF available' : 'No invoice data available'}
-                </p>
+          
+          <div className="flex-1 overflow-hidden bg-white rounded-lg">
+            {viewMode === 'pdf' && pdfUrl ? (
+              <iframe 
+                src={pdfUrl} 
+                className="w-full h-full border-0" 
+                title="Invoice PDF"
+                style={{ minHeight: '80vh' }}
+              />
+            ) : viewMode === 'preview' && invoiceData ? (
+              <div className="w-full h-full overflow-auto">
+                <InvoicePdfPreview {...invoiceData} />
               </div>
-            </div>
-          )}
+            ) : loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-muted-foreground">
+                    {viewMode === 'pdf' ? 'No PDF available' : 'No invoice data available'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -212,8 +212,10 @@ interface InvoicePdfPreviewProps {
 
 export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = (props) => {
   return (
-    <PDFViewer width="100%" height="90vh">
-      <InvoicePdfDocument {...props} />
-    </PDFViewer>
+    <div className="w-full h-full">
+      <PDFViewer width="100%" height="100%" showToolbar={false}>
+        <InvoicePdfDocument {...props} />
+      </PDFViewer>
+    </div>
   );
 };
