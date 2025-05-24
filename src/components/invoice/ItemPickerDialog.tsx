@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Package } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ItemPicker from "./ItemPicker";
 import { Item } from "./types/InvoiceTypes";
 
@@ -19,22 +19,22 @@ const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
   selectedCompanyId,
 }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-md shadow-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="h-[85vh] p-4">
+        <SheetHeader className="mb-4">
+          <SheetTitle className="flex items-center">
             <Package className="h-5 w-5 mr-2 text-blue-500" /> Add Item
-          </DialogTitle>
-        </DialogHeader>
-        <div>
+          </SheetTitle>
+        </SheetHeader>
+        <div className="h-full overflow-auto">
           <ItemPicker
             companyId={selectedCompanyId}
             onItemSelect={onItemSelect}
             onClose={() => onOpenChange(false)}
           />
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

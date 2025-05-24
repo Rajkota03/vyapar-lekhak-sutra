@@ -62,66 +62,77 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="flex flex-col h-full space-y-4">
+        {/* Create new item button - Fixed at top */}
+        <div className="flex-shrink-0">
           <Button 
             variant="outline" 
-            className="w-full justify-start text-blue-500"
+            className="w-full justify-start text-blue-500 border-blue-200 hover:bg-blue-50"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" /> Create new item
           </Button>
         </div>
         
-        <div className="bg-gray-50 p-2 rounded-lg mb-4">
+        {/* Search bar - Fixed at top */}
+        <div className="flex-shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-white"
+              className="pl-9 h-12 text-base"
               autoFocus
             />
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-          </div>
-        ) : (
-          <>
-            <p className="text-sm font-medium mb-2">Items</p>
-            <div className="space-y-2 max-h-72 overflow-y-auto rounded-lg">
-              {items.length > 0 ? (
-                items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 bg-white border rounded-lg hover:bg-accent cursor-pointer"
-                    onClick={() => handleItemSelect(item)}
-                  >
-                    <div className="flex justify-between">
-                      <div className="font-medium">{item.name}</div>
-                      {item.default_price !== undefined && (
-                        <div className="font-medium">₹{parseFloat(item.default_price.toString()).toFixed(2)}</div>
-                      )}
-                    </div>
-                    {item.code && (
-                      <div className="text-sm text-muted-foreground">
-                        {item.code}
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-4 text-muted-foreground bg-white p-3 rounded-lg border">
-                  {searchTerm ? "No items found" : "Start typing to search items"}
-                </div>
-              )}
+        {/* Items list - Scrollable */}
+        <div className="flex-1 overflow-hidden">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-32">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
             </div>
-          </>
-        )}
+          ) : (
+            <div className="h-full flex flex-col">
+              <p className="text-sm font-medium mb-3 text-gray-700">Items</p>
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                {items.length > 0 ? (
+                  items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-colors"
+                      onClick={() => handleItemSelect(item)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                          {item.code && (
+                            <div className="text-sm text-gray-500 mt-1">{item.code}</div>
+                          )}
+                        </div>
+                        {item.default_price !== undefined && (
+                          <div className="font-medium text-gray-900 ml-3">
+                            ₹{parseFloat(item.default_price.toString()).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-lg font-medium mb-1">No items found</p>
+                    <p className="text-sm">
+                      {searchTerm ? "Try a different search term" : "Create your first item to get started"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <ItemModal 
