@@ -25,13 +25,13 @@ const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[90vh] max-h-[90vh]">
-          <DrawerHeader className="px-4 py-3 border-b">
-            <DrawerTitle className="flex items-center text-lg">
-              <Package className="h-5 w-5 mr-2 text-blue-500" /> Add Item
+        <DrawerContent className="h-[75vh] max-h-[75vh]">
+          <DrawerHeader className="px-4 py-2 border-b flex-shrink-0">
+            <DrawerTitle className="flex items-center text-base">
+              <Package className="h-4 w-4 mr-2 text-blue-500" /> Add Item
             </DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 overflow-hidden px-4 pb-4">
+          <div className="flex-1 overflow-hidden px-4 pb-4 min-h-0">
             <ItemPicker
               companyId={selectedCompanyId}
               onItemSelect={onItemSelect}
@@ -45,7 +45,7 @@ const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] p-4">
+      <SheetContent side="bottom" className="h-[75vh] p-4">
         <SheetHeader className="mb-4">
           <SheetTitle className="flex items-center">
             <Package className="h-5 w-5 mr-2 text-blue-500" /> Add Item

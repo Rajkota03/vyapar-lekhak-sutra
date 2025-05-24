@@ -116,12 +116,34 @@
       width: 100%;
       min-height: 100vh;
       min-height: -webkit-fill-available;
+      max-width: 100vw;
     }
     
     /* Prevent background scroll when drawer is open */
     body[style*="overflow: hidden"] {
       position: fixed;
       width: 100%;
+      max-width: 100vw;
+    }
+    
+    /* Ensure all content stays within viewport */
+    * {
+      max-width: 100vw;
+      box-sizing: border-box;
+    }
+  }
+
+  /* Better mobile drawer handling */
+  @supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+      html {
+        height: -webkit-fill-available;
+      }
+      
+      /* Drawer content adjustments for iOS */
+      [data-vaul-drawer] {
+        max-height: 75vh !important;
+      }
     }
   }
 }

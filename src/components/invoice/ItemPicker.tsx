@@ -62,12 +62,12 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
 
   return (
     <>
-      <div className="flex flex-col h-full space-y-3">
+      <div className="flex flex-col h-full space-y-2 pt-2">
         {/* Create new item button - Fixed at top */}
         <div className="flex-shrink-0">
           <Button 
             variant="outline" 
-            className="w-full justify-start text-blue-500 border-blue-200 hover:bg-blue-50 h-12"
+            className="w-full justify-start text-blue-500 border-blue-200 hover:bg-blue-50 h-10 text-sm"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" /> Create new item
@@ -82,7 +82,7 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
               placeholder="Search items..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-12 text-base"
+              className="pl-9 h-10 text-sm"
               autoFocus
             />
           </div>
@@ -91,13 +91,13 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
         {/* Items list - Scrollable */}
         <div className="flex-1 overflow-hidden min-h-0">
           {isLoading ? (
-            <div className="flex justify-center items-center h-32">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+            <div className="flex justify-center items-center h-24">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
             </div>
           ) : (
             <div className="h-full flex flex-col">
-              <p className="text-sm font-medium mb-3 text-gray-700 flex-shrink-0">Items</p>
-              <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+              <p className="text-xs font-medium mb-2 text-gray-700 flex-shrink-0">Items</p>
+              <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
                 {items.length > 0 ? (
                   items.map((item) => (
                     <div
@@ -121,10 +121,10 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Package className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-base font-medium mb-1">No items found</p>
-                    <p className="text-sm">
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Package className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm font-medium mb-1">No items found</p>
+                    <p className="text-xs">
                       {searchTerm ? "Try a different search term" : "Create your first item to get started"}
                     </p>
                   </div>
