@@ -62,12 +62,12 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
 
   return (
     <>
-      <div className="flex flex-col h-full space-y-4">
+      <div className="flex flex-col h-full space-y-3">
         {/* Create new item button - Fixed at top */}
         <div className="flex-shrink-0">
           <Button 
             variant="outline" 
-            className="w-full justify-start text-blue-500 border-blue-200 hover:bg-blue-50"
+            className="w-full justify-start text-blue-500 border-blue-200 hover:bg-blue-50 h-12"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" /> Create new item
@@ -89,31 +89,31 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
         </div>
 
         {/* Items list - Scrollable */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           {isLoading ? (
             <div className="flex justify-center items-center h-32">
               <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
             </div>
           ) : (
             <div className="h-full flex flex-col">
-              <p className="text-sm font-medium mb-3 text-gray-700">Items</p>
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              <p className="text-sm font-medium mb-3 text-gray-700 flex-shrink-0">Items</p>
+              <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
                 {items.length > 0 ? (
                   items.map((item) => (
                     <div
                       key={item.id}
-                      className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-colors"
+                      className="p-3 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-colors"
                       onClick={() => handleItemSelect(item)}
                     >
                       <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                        <div className="flex-1 min-w-0 pr-3">
+                          <div className="font-medium text-gray-900 truncate text-sm">{item.name}</div>
                           {item.code && (
-                            <div className="text-sm text-gray-500 mt-1">{item.code}</div>
+                            <div className="text-xs text-gray-500 mt-1">{item.code}</div>
                           )}
                         </div>
                         {item.default_price !== undefined && (
-                          <div className="font-medium text-gray-900 ml-3">
+                          <div className="font-medium text-gray-900 text-sm flex-shrink-0">
                             ₹{parseFloat(item.default_price.toString()).toFixed(2)}
                           </div>
                         )}
@@ -123,7 +123,7 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-lg font-medium mb-1">No items found</p>
+                    <p className="text-base font-medium mb-1">No items found</p>
                     <p className="text-sm">
                       {searchTerm ? "Try a different search term" : "Create your first item to get started"}
                     </p>

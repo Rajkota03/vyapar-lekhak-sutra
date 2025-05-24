@@ -107,6 +107,23 @@
       font-size: 15px;
     }
   }
+
+  /* Mobile viewport fixes */
+  @media (max-width: 768px) {
+    html, body {
+      overflow-x: hidden;
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
+    
+    /* Prevent background scroll when drawer is open */
+    body[style*="overflow: hidden"] {
+      position: fixed;
+      width: 100%;
+    }
+  }
 }
 
 @layer base {
