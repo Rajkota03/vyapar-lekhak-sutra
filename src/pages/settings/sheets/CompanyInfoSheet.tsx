@@ -94,12 +94,11 @@ const CompanyInfoSheet: React.FC = () => {
 
     setSaving(true);
     try {
-      // Update companies table with all available fields
+      // Update companies table with only the fields that exist in the schema
       const companyUpdateData = {
         name: formData.name.trim(),
         gstin: formData.gstin.trim() || null,
         address: formData.address.trim() || null,
-        updated_at: new Date().toISOString(),
       };
       
       console.log('Updating companies table with:', companyUpdateData);
@@ -121,7 +120,6 @@ const CompanyInfoSheet: React.FC = () => {
         company_id: companyId,
         // We can store additional company info in company_settings if needed
         // For now, we'll focus on the main company fields
-        updated_at: new Date().toISOString(),
       };
 
       console.log('Updating company_settings with:', settingsUpdateData);
