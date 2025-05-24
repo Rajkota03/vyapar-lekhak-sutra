@@ -80,6 +80,83 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          credit_note_title: string | null
+          default_cgst_pct: number | null
+          default_igst_pct: number | null
+          default_note: string | null
+          default_sgst_pct: number | null
+          due_days: number | null
+          invoice_prefix: string | null
+          invoice_title: string | null
+          logo_url: string | null
+          next_credit_seq: number | null
+          next_invoice_seq: number | null
+          next_quote_seq: number | null
+          overdue_reminder: boolean | null
+          payment_note: string | null
+          payment_qr_url: string | null
+          quote_title: string | null
+          signature_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          credit_note_title?: string | null
+          default_cgst_pct?: number | null
+          default_igst_pct?: number | null
+          default_note?: string | null
+          default_sgst_pct?: number | null
+          due_days?: number | null
+          invoice_prefix?: string | null
+          invoice_title?: string | null
+          logo_url?: string | null
+          next_credit_seq?: number | null
+          next_invoice_seq?: number | null
+          next_quote_seq?: number | null
+          overdue_reminder?: boolean | null
+          payment_note?: string | null
+          payment_qr_url?: string | null
+          quote_title?: string | null
+          signature_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          credit_note_title?: string | null
+          default_cgst_pct?: number | null
+          default_igst_pct?: number | null
+          default_note?: string | null
+          default_sgst_pct?: number | null
+          due_days?: number | null
+          invoice_prefix?: string | null
+          invoice_title?: string | null
+          logo_url?: string | null
+          next_credit_seq?: number | null
+          next_invoice_seq?: number | null
+          next_quote_seq?: number | null
+          overdue_reminder?: boolean | null
+          payment_note?: string | null
+          payment_qr_url?: string | null
+          quote_title?: string | null
+          signature_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_lines: {
         Row: {
           amount: number
@@ -309,6 +386,39 @@ export type Database = {
           },
         ]
       }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          currency_code: string | null
+          date_format: string | null
+          language_code: string | null
+          passcode_enabled: boolean | null
+          send_me_copy: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency_code?: string | null
+          date_format?: string | null
+          language_code?: string | null
+          passcode_enabled?: boolean | null
+          send_me_copy?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          currency_code?: string | null
+          date_format?: string | null
+          language_code?: string | null
+          passcode_enabled?: boolean | null
+          send_me_copy?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -383,6 +493,10 @@ export type Database = {
           chunk_text: string
           similarity: number
         }[]
+      }
+      next_doc_number: {
+        Args: { p_company_id: string; p_doc_type: string }
+        Returns: string
       }
       next_invoice_number: {
         Args: { p_company_id: string }
