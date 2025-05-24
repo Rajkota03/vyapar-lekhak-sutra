@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
+import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -76,177 +76,203 @@ serve(async (req) => {
       )
     }
 
-    // Create PDF
-    const doc = new jsPDF()
+    // Create PDF using pdf-lib
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage([595.28, 841.89]) // A4 size in points
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
     
-    // Set up fonts and colors
-    doc.setFont('helvetica')
+    const { width, height } = page.getSize()
     
-    // Header - Company info
-    doc.setFontSize(24)
-    doc.setTextColor(40, 40, 40)
-    doc.text(invoice.companies?.name || 'Company Name', 20, 30)
+    // Helper function to draw text
+    const drawText = (text: string, x: number, y: number, options: any = {}) => {
+      page.drawText(text, {
+        x,
+        y,
+        size: options.size || 11,
+        font: options.bold ? boldFont : font,
+        color: options.color || rgb(0, 0, 0),
+        ...options
+      })
+    }
     
-    // Invoice title
-    doc.setFontSize(32)
-    doc.setTextColor(100, 100, 100)
-    doc.text('Invoice', 140, 30)
+    let yPosition = height - 60 // Start from top
     
-    // Invoice details
-    doc.setFontSize(10)
-    doc.setTextColor(100, 100, 100)
-    doc.text(`Invoice#: ${invoice.invoice_code || invoice.number}`, 140, 40)
-    doc.text(`Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, 140, 45)
+    // Header Section
+    drawText(invoice.companies?.name || 'Company Name', 40, yPosition, { size: 16, bold: true })
+    drawText('INVOICE', width - 140, yPosition, { size: 18, bold: true })
     
-    // Company address
-    doc.setFontSize(9)
-    doc.setTextColor(80, 80, 80)
+    yPosition -= 20
     if (invoice.companies?.address) {
       const addressLines = invoice.companies.address.split('\n')
-      let yPos = 45
-      addressLines.forEach(line => {
-        doc.text(line, 20, yPos)
-        yPos += 4
+      addressLines.forEach((line: string) => {
+        drawText(line, 40, yPosition, { size: 9, color: rgb(0.4, 0.4, 0.4) })
+        yPosition -= 12
       })
     }
-    if (invoice.companies?.gstin) {
-      doc.text(`GSTIN: ${invoice.companies.gstin}`, 20, yPos + 5)
+    
+    // Invoice details (right side)
+    let rightY = height - 80
+    drawText(`Invoice # ${invoice.invoice_code || invoice.number}`, width - 200, rightY, { size: 10 })
+    rightY -= 15
+    drawText(`Date: ${new Date(invoice.issue_date).toLocaleDateString('en-IN')}`, width - 200, rightY, { size: 10 })
+    
+    if (invoice.due_date) {
+      rightY -= 15
+      drawText(`Due: ${new Date(invoice.due_date).toLocaleDateString('en-IN')}`, width - 200, rightY, { size: 10 })
     }
     
-    // Bill To section
-    doc.setFontSize(12)
-    doc.setTextColor(40, 40, 40)
-    doc.text('Bill To:', 20, 80)
+    yPosition = Math.min(yPosition, rightY) - 30
     
-    doc.setFontSize(10)
-    doc.text(invoice.clients?.name || 'Client Name', 20, 90)
-    if (invoice.clients?.billing_address) {
-      const clientAddressLines = invoice.clients.billing_address.split('\n')
-      let yPos = 95
-      clientAddressLines.forEach(line => {
-        doc.text(line, 20, yPos)
-        yPos += 4
-      })
-    }
-    if (invoice.clients?.gstin) {
-      doc.text(`GSTIN: ${invoice.clients.gstin}`, 20, 110)
-    }
-    
-    // Total Due section
-    doc.setFontSize(12)
-    doc.setTextColor(40, 40, 40)
-    doc.text('Total Due:', 140, 80)
-    doc.setFontSize(16)
-    doc.setTextColor(0, 0, 0)
-    doc.text(`₹ ${Number(invoice.total).toFixed(2)}`, 140, 90)
-    
-    // Table header
-    let yPos = 130
-    doc.setFillColor(240, 240, 240)
-    doc.rect(20, yPos - 5, 170, 10, 'F')
-    
-    doc.setFontSize(10)
-    doc.setTextColor(60, 60, 60)
-    doc.text('ITEM DESCRIPTION', 25, yPos)
-    doc.text('PRICE', 120, yPos)
-    doc.text('QTY', 140, yPos)
-    doc.text('TOTAL', 160, yPos)
-    
-    // Table content
-    yPos += 10
-    doc.setTextColor(40, 40, 40)
-    
-    lineItems?.forEach((item) => {
-      // Item description
-      doc.text(item.description, 25, yPos)
-      
-      // Price
-      doc.text(`₹${Number(item.unit_price).toFixed(2)}`, 120, yPos)
-      
-      // Quantity
-      doc.text(item.qty.toString(), 140, yPos)
-      
-      // Total
-      doc.text(`₹${Number(item.amount).toFixed(2)}`, 160, yPos)
-      
-      yPos += 8
+    // Bill To Section
+    page.drawRectangle({
+      x: 40,
+      y: yPosition - 80,
+      width: width - 80,
+      height: 80,
+      color: rgb(0.98, 0.98, 0.98),
+      borderColor: rgb(0.8, 0.8, 0.8),
+      borderWidth: 1,
     })
     
-    // Totals section
-    yPos += 10
-    doc.setDrawColor(200, 200, 200)
-    doc.line(20, yPos, 190, yPos)
+    drawText('Bill To:', 50, yPosition - 20, { bold: true })
+    yPosition -= 35
+    drawText(invoice.clients?.name || 'Client Name', 50, yPosition, { size: 12, bold: true })
     
-    yPos += 10
-    doc.setFontSize(10)
+    if (invoice.clients?.billing_address) {
+      yPosition -= 15
+      const clientAddressLines = invoice.clients.billing_address.split('\n')
+      clientAddressLines.forEach((line: string) => {
+        drawText(line, 50, yPosition, { size: 10 })
+        yPosition -= 12
+      })
+    }
     
-    // Subtotal
-    doc.text('SUB TOTAL', 130, yPos)
-    doc.text(`₹${Number(invoice.subtotal).toFixed(2)}`, 160, yPos)
-    yPos += 6
+    if (invoice.clients?.phone) {
+      yPosition -= 5
+      drawText(`Phone: ${invoice.clients.phone}`, 50, yPosition, { size: 10 })
+    }
     
-    // Tax details
+    if (invoice.clients?.gstin) {
+      yPosition -= 15
+      drawText(`GSTIN: ${invoice.clients.gstin}`, 50, yPosition, { size: 10 })
+    }
+    
+    yPosition -= 40
+    
+    // Table Header
+    const tableStartY = yPosition
+    const rowHeight = 25
+    
+    page.drawRectangle({
+      x: 40,
+      y: tableStartY - rowHeight,
+      width: width - 80,
+      height: rowHeight,
+      color: rgb(0.95, 0.95, 0.95),
+      borderColor: rgb(0.8, 0.8, 0.8),
+      borderWidth: 1,
+    })
+    
+    drawText('Item Description', 50, tableStartY - 15, { bold: true })
+    drawText('Price', width - 200, tableStartY - 15, { bold: true })
+    drawText('Qty', width - 150, tableStartY - 15, { bold: true })
+    drawText('Total', width - 100, tableStartY - 15, { bold: true })
+    
+    yPosition = tableStartY - rowHeight
+    
+    // Table Rows
+    const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+    
+    lineItems?.forEach((item: any) => {
+      yPosition -= rowHeight
+      
+      // Draw row border
+      page.drawRectangle({
+        x: 40,
+        y: yPosition,
+        width: width - 80,
+        height: rowHeight,
+        borderColor: rgb(0.8, 0.8, 0.8),
+        borderWidth: 0.5,
+      })
+      
+      drawText(item.description, 50, yPosition + 8)
+      drawText(currency(Number(item.unit_price)), width - 200, yPosition + 8)
+      drawText(item.qty.toString(), width - 150, yPosition + 8)
+      drawText(currency(Number(item.amount)), width - 100, yPosition + 8)
+    })
+    
+    // Totals Section
+    yPosition -= 40
+    const totalsX = width - 250
+    
+    drawText('Subtotal', totalsX, yPosition)
+    drawText(currency(Number(invoice.subtotal)), width - 80, yPosition)
+    
+    if (!invoice.use_igst && Number(invoice.cgst) > 0) {
+      yPosition -= 20
+      drawText(`CGST (${invoice.cgst_pct}%)`, totalsX, yPosition)
+      drawText(currency(Number(invoice.cgst)), width - 80, yPosition)
+    }
+    
+    if (!invoice.use_igst && Number(invoice.sgst) > 0) {
+      yPosition -= 20
+      drawText(`SGST (${invoice.sgst_pct}%)`, totalsX, yPosition)
+      drawText(currency(Number(invoice.sgst)), width - 80, yPosition)
+    }
+    
     if (invoice.use_igst && Number(invoice.igst) > 0) {
-      doc.text(`IGST ${invoice.igst_pct}%`, 130, yPos)
-      doc.text(`₹${Number(invoice.igst).toFixed(2)}`, 160, yPos)
-      yPos += 6
-    } else {
-      if (Number(invoice.cgst) > 0) {
-        doc.text(`CGST ${invoice.cgst_pct}%`, 130, yPos)
-        doc.text(`₹${Number(invoice.cgst).toFixed(2)}`, 160, yPos)
-        yPos += 6
-      }
-      if (Number(invoice.sgst) > 0) {
-        doc.text(`SGST ${invoice.sgst_pct}%`, 130, yPos)
-        doc.text(`₹${Number(invoice.sgst).toFixed(2)}`, 160, yPos)
-        yPos += 6
-      }
+      yPosition -= 20
+      drawText(`IGST (${invoice.igst_pct}%)`, totalsX, yPosition)
+      drawText(currency(Number(invoice.igst)), width - 80, yPosition)
     }
     
     // Grand Total
-    yPos += 5
-    doc.setDrawColor(40, 40, 40)
-    doc.line(130, yPos, 190, yPos)
-    yPos += 8
+    yPosition -= 25
+    page.drawLine({
+      start: { x: totalsX, y: yPosition + 15 },
+      end: { x: width - 40, y: yPosition + 15 },
+      thickness: 2,
+      color: rgb(0, 0, 0),
+    })
     
-    doc.setFontSize(12)
-    doc.setTextColor(0, 0, 0)
-    doc.text('Grand Total', 130, yPos)
-    doc.text(`₹${Number(invoice.total).toFixed(2)}`, 160, yPos)
+    drawText('Grand Total', totalsX, yPosition, { bold: true })
+    drawText(currency(Number(invoice.total)), width - 80, yPosition, { bold: true })
     
-    // Signature section if enabled
+    // Signature Section
     if (invoice.show_my_signature || invoice.require_client_signature) {
-      yPos += 30
+      yPosition -= 60
       
       if (invoice.show_my_signature) {
-        doc.setFontSize(10)
-        doc.setTextColor(100, 100, 100)
-        doc.text('Authorized Signature:', 20, yPos)
-        
-        // Add signature line
-        doc.setDrawColor(200, 200, 200)
-        doc.line(20, yPos + 15, 80, yPos + 15)
+        drawText('Authorized Signature:', 50, yPosition, { size: 10 })
+        page.drawLine({
+          start: { x: 50, y: yPosition - 40 },
+          end: { x: 200, y: yPosition - 40 },
+          thickness: 1,
+          color: rgb(0, 0, 0),
+        })
       }
       
       if (invoice.require_client_signature) {
-        doc.setFontSize(10)
-        doc.setTextColor(100, 100, 100)
-        doc.text('Client Signature:', 120, yPos)
-        
-        // Add signature line
-        doc.setDrawColor(200, 200, 200)
-        doc.line(120, yPos + 15, 180, yPos + 15)
+        drawText('Client Signature:', width - 200, yPosition, { size: 10 })
+        page.drawLine({
+          start: { x: width - 200, y: yPosition - 40 },
+          end: { x: width - 50, y: yPosition - 40 },
+          thickness: 1,
+          color: rgb(0, 0, 0),
+        })
       }
     }
     
-    // Generate PDF buffer
-    const pdfBuffer = doc.output('arraybuffer')
+    // Generate PDF bytes
+    const pdfBytes = await pdfDoc.save()
     
     // Upload to Supabase Storage
     const fileName = `invoice-${invoice.invoice_code || invoice.number}-${Date.now()}.pdf`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('invoices')
-      .upload(fileName, pdfBuffer, {
+      .upload(fileName, pdfBytes, {
         contentType: 'application/pdf',
         upsert: true
       })

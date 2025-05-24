@@ -240,6 +240,7 @@ const InvoiceEdit = () => {
         isOpen={previewOpen}
         onOpenChange={setPreviewOpen}
         pdfUrl={pdfUrl}
+        invoiceId={existingInvoice?.id}
       />
     </DashboardLayout>;
 };
