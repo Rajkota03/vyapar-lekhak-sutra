@@ -28,7 +28,7 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
     }
     
     const url = data?.pdf_url;
-    console.log('PDF URL received:', url);
+    console.log('PDF URL received for download:', url);
     
     if (!url) {
       console.error('No PDF URL in response:', data);

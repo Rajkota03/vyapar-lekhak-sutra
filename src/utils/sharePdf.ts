@@ -4,7 +4,7 @@ import { toast } from "@/hooks/use-toast";
 
 export const handleSharePdf = async (invoiceId: string) => {
   try {
-    console.log('Generating PDF for invoice:', invoiceId);
+    console.log('Generating PDF for sharing invoice:', invoiceId);
     
     // Show loading toast
     toast({
@@ -28,7 +28,7 @@ export const handleSharePdf = async (invoiceId: string) => {
     }
     
     const url = data?.pdf_url;
-    console.log('PDF URL received:', url);
+    console.log('PDF URL received for sharing:', url);
     
     if (!url) {
       console.error('No PDF URL in response:', data);
@@ -40,13 +40,13 @@ export const handleSharePdf = async (invoiceId: string) => {
       return;
     }
 
-    // Try native Share API for mobile devices
-    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+    // Check if native sharing is available (mobile devices)
+    if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Invoice PDF',
-          text: 'Please find attached invoice PDF.',
-          url,
+          title: `Invoice ${invoiceId}`,
+          text: 'Please find the invoice attached.',
+          url: url,
         });
         
         toast({
@@ -54,27 +54,31 @@ export const handleSharePdf = async (invoiceId: string) => {
           description: "PDF shared successfully",
         });
         return;
-      } catch (err) {
-        console.log('Share cancelled or failed:', err);
-        // Fall through to desktop behavior
+      } catch (shareError) {
+        // User cancelled sharing or sharing failed, continue to fallback
+        console.log('Native sharing cancelled or failed:', shareError);
       }
     }
 
-    // Desktop fallback – open in new tab and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice-${invoiceId}.pdf`;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    
-    // Append to body, click, and remove
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
+    // Fallback for devices without native sharing
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: "Link Copied",
+          description: "PDF link copied to clipboard. You can now paste it in WhatsApp, email, or any messaging app.",
+        });
+        return;
+      } catch (clipboardError) {
+        console.error('Clipboard copy failed:', clipboardError);
+      }
+    }
+
+    // Final fallback - open in new tab
+    window.open(url, '_blank');
     toast({
-      title: "Success",
-      description: "PDF download started",
+      title: "PDF Opened",
+      description: "PDF opened in new tab. You can copy the URL from your browser to share it.",
     });
     
   } catch (error) {
