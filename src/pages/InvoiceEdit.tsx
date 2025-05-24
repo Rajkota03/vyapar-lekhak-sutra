@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -194,8 +195,9 @@ const InvoiceEdit = () => {
       </DashboardLayout>;
   }
 
-  return <DashboardLayout>
-      <div className="min-h-screen pb-20 bg-gray-50">
+  return (
+    <DashboardLayout>
+      <div className="min-h-screen bg-gray-50" style={{ paddingBottom: existingInvoice?.id ? '80px' : '20px' }}>
         <div className="mx-auto w-full max-w-screen-sm sm:max-w-screen-md px-3 sm:px-6">
           <InvoiceHeader 
             isEditing={isEditing} 
@@ -243,7 +245,8 @@ const InvoiceEdit = () => {
         pdfUrl={pdfUrl}
         invoiceId={existingInvoice?.id}
       />
-    </DashboardLayout>;
+    </DashboardLayout>
+  );
 };
 
 export default InvoiceEdit;

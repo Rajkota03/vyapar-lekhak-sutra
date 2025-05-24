@@ -36,7 +36,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   const TaxSettingsSheet = () => (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreVertical className="h-4 w-4" />
         </Button>
       </SheetTrigger>
@@ -52,53 +52,63 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   );
 
   return (
-    <div className="sticky top-0 z-10 bg-white border-b p-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate('/invoices')}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-lg font-semibold">
-            {isEditing ? "Edit Invoice" : "Invoice"}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <TaxSettingsSheet />
-          {invoiceId && onPreview && (
+    <>
+      {/* Compact Header */}
+      <div className="sticky top-0 z-10 bg-white border-b p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate('/invoices')}
+              className="h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-lg font-semibold">
+              {isEditing ? "Edit Invoice" : "Invoice"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <TaxSettingsSheet />
             <Button
-              onClick={onPreview}
+              onClick={onSave}
+              disabled={!canSave || isSubmitting}
               variant="ghost"
-              className="font-medium text-blue-500 h-8 px-3 rounded text-xs font-medium"
+              className="font-medium text-blue-500 h-8 px-3 rounded text-xs"
             >
-              <Eye className="h-4 w-4 mr-1" />
-              Preview
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
-          )}
-          {invoiceId && (
-            <Button
-              onClick={handlePdfDownload}
-              variant="outline"
-              className="h-8 px-3 text-xs"
-            >
-              <Download className="h-4 w-4 mr-1" />
-              Download PDF
-            </Button>
-          )}
-          <Button
-            onClick={onSave}
-            disabled={!canSave || isSubmitting}
-            variant="ghost"
-            className="font-medium text-blue-500 h-8 px-3 rounded text-xs font-medium"
-          >
-            {isSubmitting ? "Saving..." : "Save"}
-          </Button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Floating Bottom Action Bar - Only show if invoice exists */}
+      {invoiceId && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg p-3">
+          <div className="max-w-screen-sm mx-auto flex gap-3">
+            {onPreview && (
+              <Button
+                onClick={onPreview}
+                variant="outline"
+                className="flex-1 h-10"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+            )}
+            <Button
+              onClick={handlePdfDownload}
+              variant="default"
+              className="flex-1 h-10"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
