@@ -17,7 +17,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     const { invoice_id, preview = false } = await req.json()
@@ -34,7 +34,7 @@ serve(async (req) => {
 
     console.log('Generating PDF for invoice:', invoice_id, 'Preview mode:', preview)
 
-    // Fetch invoice with related data
+    // Fetch invoice with related data - using maybeSingle to handle missing records gracefully
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .select(`
@@ -43,10 +43,21 @@ serve(async (req) => {
         clients (*)
       `)
       .eq('id', invoice_id)
-      .single()
+      .maybeSingle()
 
-    if (invoiceError || !invoice) {
+    if (invoiceError) {
       console.error('Error fetching invoice:', invoiceError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch invoice', details: invoiceError.message }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    if (!invoice) {
+      console.error('Invoice not found:', invoice_id)
       return new Response(
         JSON.stringify({ error: 'Invoice not found' }),
         { 

@@ -16,7 +16,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     const { invoice_id } = await req.json()
@@ -33,7 +33,7 @@ serve(async (req) => {
 
     console.log('Getting or generating PDF for invoice:', invoice_id)
 
-    // Check if invoice exists first
+    // Check if invoice exists first - using maybeSingle to handle missing records gracefully
     const { data: invoice, error: fetchError } = await supabase
       .from('invoices')
       .select('id, pdf_url, status')
