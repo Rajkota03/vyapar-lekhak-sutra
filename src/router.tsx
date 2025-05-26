@@ -3,6 +3,7 @@ import {
   RouterProvider,
   Navigate,
 } from 'react-router-dom';
+import App from './App';
 import Dashboard from '@/pages/Dashboard';
 import InvoiceList from '@/pages/InvoiceList'; 
 import InvoiceEdit from '@/pages/InvoiceEdit';
@@ -33,115 +34,121 @@ import GeneralSettingsSheet from '@/pages/settings/sheets/GeneralSettingsSheet';
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export const router = createBrowserRouter([
-  { 
-    path: '/', 
-    element: <ProtectedRoute><Dashboard /></ProtectedRoute>
-  },
-  { 
-    path: '/auth', 
-    element: <Auth />
-  },
-  { 
-    path: '/dashboard', 
-    element: <ProtectedRoute><Dashboard /></ProtectedRoute>
-  },
-  { 
-    path: '/company/new', 
-    element: <ProtectedRoute><CreateCompany /></ProtectedRoute>
-  },
-  { 
-    path: '/invoices', 
-    element: <ProtectedRoute><Invoices /></ProtectedRoute>
-  },
-  { 
-    path: '/invoice-list', 
-    element: <ProtectedRoute><Invoices /></ProtectedRoute>
-  },
-  { 
-    path: '/invoices/new', 
-    element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>
-  },
-  { 
-    path: '/invoices/:id', 
-    element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>
-  },
-  { 
-    path: '/items', 
-    element: <ProtectedRoute><ItemList /></ProtectedRoute>
-  },
-  { 
-    path: '/settings', 
-    element: <ProtectedRoute><Settings /></ProtectedRoute>,
+  {
+    path: '/',
+    element: <App />,
     children: [
-      {
-        path: 'user',
-        element: <ProtectedRoute><UserAccountSheet /></ProtectedRoute>
+      { 
+        index: true,
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
       },
-      {
-        path: 'company',
-        element: <ProtectedRoute><CompanyMenuSheet /></ProtectedRoute>
+      { 
+        path: 'auth', 
+        element: <Auth />
       },
-      {
-        path: 'logo',
-        element: <ProtectedRoute><LogoSheet /></ProtectedRoute>
+      { 
+        path: 'dashboard', 
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
       },
-      {
-        path: 'company-info',
-        element: <ProtectedRoute><CompanyInfoSheet /></ProtectedRoute>
+      { 
+        path: 'company/new', 
+        element: <ProtectedRoute><CreateCompany /></ProtectedRoute>
       },
-      {
-        path: 'signature',
-        element: <ProtectedRoute><SignatureSheet /></ProtectedRoute>
+      { 
+        path: 'invoices', 
+        element: <ProtectedRoute><Invoices /></ProtectedRoute>
       },
-      {
-        path: 'payment-note',
-        element: <ProtectedRoute><PaymentNoteSheet /></ProtectedRoute>
+      { 
+        path: 'invoice-list', 
+        element: <ProtectedRoute><Invoices /></ProtectedRoute>
       },
-      {
-        path: 'tax',
-        element: <ProtectedRoute><CompanyTaxSheet /></ProtectedRoute>
+      { 
+        path: 'invoices/new', 
+        element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>
       },
-      {
-        path: 'numbering',
-        element: <ProtectedRoute><NumberingSheet /></ProtectedRoute>
+      { 
+        path: 'invoices/:id', 
+        element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>
       },
-      {
-        path: 'invoice-defaults',
-        element: <ProtectedRoute><InvoiceDefaultsSheet /></ProtectedRoute>
+      { 
+        path: 'items', 
+        element: <ProtectedRoute><ItemList /></ProtectedRoute>
       },
-      {
-        path: 'general',
-        element: <ProtectedRoute><GeneralSettingsSheet /></ProtectedRoute>
+      { 
+        path: 'settings', 
+        element: <ProtectedRoute><Settings /></ProtectedRoute>,
+        children: [
+          {
+            path: 'user',
+            element: <ProtectedRoute><UserAccountSheet /></ProtectedRoute>
+          },
+          {
+            path: 'company',
+            element: <ProtectedRoute><CompanyMenuSheet /></ProtectedRoute>
+          },
+          {
+            path: 'logo',
+            element: <ProtectedRoute><LogoSheet /></ProtectedRoute>
+          },
+          {
+            path: 'company-info',
+            element: <ProtectedRoute><CompanyInfoSheet /></ProtectedRoute>
+          },
+          {
+            path: 'signature',
+            element: <ProtectedRoute><SignatureSheet /></ProtectedRoute>
+          },
+          {
+            path: 'payment-note',
+            element: <ProtectedRoute><PaymentNoteSheet /></ProtectedRoute>
+          },
+          {
+            path: 'tax',
+            element: <ProtectedRoute><CompanyTaxSheet /></ProtectedRoute>
+          },
+          {
+            path: 'numbering',
+            element: <ProtectedRoute><NumberingSheet /></ProtectedRoute>
+          },
+          {
+            path: 'invoice-defaults',
+            element: <ProtectedRoute><InvoiceDefaultsSheet /></ProtectedRoute>
+          },
+          {
+            path: 'general',
+            element: <ProtectedRoute><GeneralSettingsSheet /></ProtectedRoute>
+          },
+          {
+            path: '*',
+            element: <Navigate to="/settings" replace />
+          }
+        ]
       },
-      {
-        path: '*',
-        element: <Navigate to="/settings" replace />
+      // Keep legacy routes for compatibility
+      { 
+        path: 'settings/user', 
+        element: <ProtectedRoute><UserSettings /></ProtectedRoute>
+      },
+      { 
+        path: 'settings/company', 
+        element: <ProtectedRoute><CompanySettings /></ProtectedRoute>
+      },
+      { 
+        path: 'settings/invoice', 
+        element: <ProtectedRoute><InvoiceSettings /></ProtectedRoute>
+      },
+      { 
+        path: 'settings/general', 
+        element: <ProtectedRoute><GeneralSettings /></ProtectedRoute>
+      },
+      { 
+        path: 'settings/customization', 
+        element: <ProtectedRoute><CustomizationSettings /></ProtectedRoute>
+      },
+      { 
+        path: '*', 
+        element: <NotFound />
       }
     ]
-  },
-  // Keep legacy routes for compatibility
-  { 
-    path: '/settings/user', 
-    element: <ProtectedRoute><UserSettings /></ProtectedRoute>
-  },
-  { 
-    path: '/settings/company', 
-    element: <ProtectedRoute><CompanySettings /></ProtectedRoute>
-  },
-  { 
-    path: '/settings/invoice', 
-    element: <ProtectedRoute><InvoiceSettings /></ProtectedRoute>
-  },
-  { 
-    path: '/settings/general', 
-    element: <ProtectedRoute><GeneralSettings /></ProtectedRoute>
-  },
-  { 
-    path: '/settings/customization', 
-    element: <ProtectedRoute><CustomizationSettings /></ProtectedRoute>
-  },
-  { 
-    path: '*', 
-    element: <NotFound />
-  },
+  }
 ]);
