@@ -30,89 +30,88 @@ import NumberingSheet from '@/pages/settings/sheets/NumberingSheet';
 import InvoiceDefaultsSheet from '@/pages/settings/sheets/InvoiceDefaultsSheet';
 import GeneralSettingsSheet from '@/pages/settings/sheets/GeneralSettingsSheet';
 
-import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   { 
     path: '/', 
-    element: <AuthProvider><ProtectedRoute><Dashboard /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>
   },
   { 
     path: '/auth', 
-    element: <AuthProvider><Auth /></AuthProvider> 
+    element: <Auth />
   },
   { 
     path: '/dashboard', 
-    element: <AuthProvider><ProtectedRoute><Dashboard /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>
   },
   { 
     path: '/company/new', 
-    element: <AuthProvider><ProtectedRoute><CreateCompany /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><CreateCompany /></ProtectedRoute>
   },
   { 
     path: '/invoices', 
-    element: <AuthProvider><ProtectedRoute><Invoices /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><Invoices /></ProtectedRoute>
   },
   { 
     path: '/invoice-list', 
-    element: <AuthProvider><ProtectedRoute><Invoices /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><Invoices /></ProtectedRoute>
   },
   { 
     path: '/invoices/new', 
-    element: <AuthProvider><ProtectedRoute><InvoiceEdit /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>
   },
   { 
     path: '/invoices/:id', 
-    element: <AuthProvider><ProtectedRoute><InvoiceEdit /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>
   },
   { 
     path: '/items', 
-    element: <AuthProvider><ProtectedRoute><ItemList /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><ItemList /></ProtectedRoute>
   },
   { 
     path: '/settings', 
-    element: <AuthProvider><ProtectedRoute><Settings /></ProtectedRoute></AuthProvider>,
+    element: <ProtectedRoute><Settings /></ProtectedRoute>,
     children: [
       {
         path: 'user',
-        element: <AuthProvider><ProtectedRoute><UserAccountSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><UserAccountSheet /></ProtectedRoute>
       },
       {
         path: 'company',
-        element: <AuthProvider><ProtectedRoute><CompanyMenuSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><CompanyMenuSheet /></ProtectedRoute>
       },
       {
         path: 'logo',
-        element: <AuthProvider><ProtectedRoute><LogoSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><LogoSheet /></ProtectedRoute>
       },
       {
         path: 'company-info',
-        element: <AuthProvider><ProtectedRoute><CompanyInfoSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><CompanyInfoSheet /></ProtectedRoute>
       },
       {
         path: 'signature',
-        element: <AuthProvider><ProtectedRoute><SignatureSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><SignatureSheet /></ProtectedRoute>
       },
       {
         path: 'payment-note',
-        element: <AuthProvider><ProtectedRoute><PaymentNoteSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><PaymentNoteSheet /></ProtectedRoute>
       },
       {
         path: 'tax',
-        element: <AuthProvider><ProtectedRoute><CompanyTaxSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><CompanyTaxSheet /></ProtectedRoute>
       },
       {
         path: 'numbering',
-        element: <AuthProvider><ProtectedRoute><NumberingSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><NumberingSheet /></ProtectedRoute>
       },
       {
         path: 'invoice-defaults',
-        element: <AuthProvider><ProtectedRoute><InvoiceDefaultsSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><InvoiceDefaultsSheet /></ProtectedRoute>
       },
       {
         path: 'general',
-        element: <AuthProvider><ProtectedRoute><GeneralSettingsSheet /></ProtectedRoute></AuthProvider>
+        element: <ProtectedRoute><GeneralSettingsSheet /></ProtectedRoute>
       },
       {
         path: '*',
@@ -123,26 +122,26 @@ export const router = createBrowserRouter([
   // Keep legacy routes for compatibility
   { 
     path: '/settings/user', 
-    element: <AuthProvider><ProtectedRoute><UserSettings /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><UserSettings /></ProtectedRoute>
   },
   { 
     path: '/settings/company', 
-    element: <AuthProvider><ProtectedRoute><CompanySettings /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><CompanySettings /></ProtectedRoute>
   },
   { 
     path: '/settings/invoice', 
-    element: <AuthProvider><ProtectedRoute><InvoiceSettings /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><InvoiceSettings /></ProtectedRoute>
   },
   { 
     path: '/settings/general', 
-    element: <AuthProvider><ProtectedRoute><GeneralSettings /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><GeneralSettings /></ProtectedRoute>
   },
   { 
     path: '/settings/customization', 
-    element: <AuthProvider><ProtectedRoute><CustomizationSettings /></ProtectedRoute></AuthProvider>
+    element: <ProtectedRoute><CustomizationSettings /></ProtectedRoute>
   },
   { 
     path: '*', 
-    element: <AuthProvider><NotFound /></AuthProvider> 
+    element: <NotFound />
   },
 ]);

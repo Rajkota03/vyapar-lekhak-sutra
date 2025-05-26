@@ -1,13 +1,14 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/context/AuthContext";
+import { router } from "@/router";
+import { RouterProvider } from "react-router-dom";
 
-const App = () => (
-  <TooltipProvider>
-    <Toaster />
-    <Sonner />
-  </TooltipProvider>
-);
+function App() {
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
+}
 
 export default App;
