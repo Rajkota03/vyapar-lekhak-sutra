@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Upload, Trash2 } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,12 +17,17 @@ const LogoSheet: React.FC = () => {
   const { settings, updateSettings } = useCompanySettings(companyId);
   
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoScale, setLogoScale] = useState(0.3);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (settings?.logo_url) {
       console.log('Setting logo URL from settings:', settings.logo_url);
       setLogoUrl(settings.logo_url);
+    }
+    if (settings?.logo_scale) {
+      console.log('Setting logo scale from settings:', settings.logo_scale);
+      setLogoScale(Number(settings.logo_scale));
     }
   }, [settings]);
 
@@ -97,8 +103,26 @@ const LogoSheet: React.FC = () => {
     }
   };
 
+  const handleScaleChange = async (value: number[]) => {
+    const newScale = value[0];
+    setLogoScale(newScale);
+    
+    try {
+      await updateSettings({ logo_scale: newScale });
+      console.log('Logo scale updated to:', newScale);
+    } catch (error) {
+      console.error('Error updating logo scale:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update logo scale",
+      });
+    }
+  };
+
   console.log('=== LOGO SHEET DEBUG ===');
   console.log('Current logoUrl state:', logoUrl);
+  console.log('Current logoScale state:', logoScale);
   console.log('Settings from hook:', settings);
   console.log('Company ID:', companyId);
 
@@ -118,7 +142,9 @@ const LogoSheet: React.FC = () => {
           <p>Company ID: {companyId}</p>
           <p>Settings loaded: {settings ? 'Yes' : 'No'}</p>
           <p>Logo URL from settings: {settings?.logo_url || 'None'}</p>
+          <p>Logo scale from settings: {settings?.logo_scale || 'None'}</p>
           <p>Current logo state: {logoUrl || 'None'}</p>
+          <p>Current scale state: {logoScale}</p>
         </div>
 
         {logoUrl ? (
@@ -127,7 +153,11 @@ const LogoSheet: React.FC = () => {
               <img 
                 src={logoUrl} 
                 alt="Company Logo" 
-                className="max-w-full max-h-32 mx-auto object-contain border border-gray-200"
+                className="max-w-full mx-auto object-contain border border-gray-200"
+                style={{ 
+                  height: `${64 * logoScale}px`,
+                  width: `${64 * logoScale}px`
+                }}
                 onLoad={() => console.log('Logo preview loaded successfully')}
                 onError={(e) => {
                   console.error('Logo preview failed to load:', e);
@@ -139,6 +169,29 @@ const LogoSheet: React.FC = () => {
                 URL: {logoUrl}
               </p>
             </div>
+
+            {/* Logo Scale Slider */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700">
+                Logo Size
+              </label>
+              <div className="px-2">
+                <Slider
+                  value={[logoScale]}
+                  onValueChange={handleScaleChange}
+                  max={1.0}
+                  min={0.1}
+                  step={0.1}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Small (0.1x)</span>
+                <span>Current: {logoScale.toFixed(1)}x</span>
+                <span>Large (1.0x)</span>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <Button
                 variant="outline"

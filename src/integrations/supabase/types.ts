@@ -92,6 +92,7 @@ export type Database = {
           due_days: number | null
           invoice_prefix: string | null
           invoice_title: string | null
+          logo_scale: number | null
           logo_url: string | null
           next_credit_seq: number | null
           next_invoice_seq: number | null
@@ -114,6 +115,7 @@ export type Database = {
           due_days?: number | null
           invoice_prefix?: string | null
           invoice_title?: string | null
+          logo_scale?: number | null
           logo_url?: string | null
           next_credit_seq?: number | null
           next_invoice_seq?: number | null
@@ -136,6 +138,7 @@ export type Database = {
           due_days?: number | null
           invoice_prefix?: string | null
           invoice_title?: string | null
+          logo_scale?: number | null
           logo_url?: string | null
           next_credit_seq?: number | null
           next_invoice_seq?: number | null

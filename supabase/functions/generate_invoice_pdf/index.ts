@@ -150,13 +150,15 @@ serve(async (req) => {
     // Header Section - Logo on left, Company info on right
     let logoHeight = 0
     const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
+    const logoScale = Number(companySettings?.logo_scale || 0.3)
+    
     if (logoUrl) {
       try {
         const logoResponse = await fetch(logoUrl)
         if (logoResponse.ok) {
           const logoBytes = await logoResponse.arrayBuffer()
           const logo = await pdfDoc.embedPng(new Uint8Array(logoBytes))
-          const logoDims = logo.scale(0.3)
+          const logoDims = logo.scale(logoScale)
           page.drawImage(logo, {
             x: 40,
             y: yPosition - logoDims.height,
@@ -164,6 +166,7 @@ serve(async (req) => {
             height: logoDims.height,
           })
           logoHeight = logoDims.height
+          console.log('Logo embedded with scale:', logoScale, 'Dimensions:', logoDims.width, 'x', logoDims.height)
         }
       } catch (logoError) {
         console.warn('Failed to embed logo:', logoError)

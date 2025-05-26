@@ -61,12 +61,14 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
 
   // Use logo from company settings if available, otherwise fall back to company logo
   const logoUrl = companySettings?.logo_url || currentCompany?.logo_url;
+  const logoScale = Number(companySettings?.logo_scale || 0.3);
   
   console.log('=== INVOICE PREVIEW DEBUG ===');
   console.log('Company ID:', currentCompany?.id);
   console.log('Fresh company data:', freshCompanyData);
   console.log('Company settings:', companySettings);
   console.log('Logo URL:', logoUrl);
+  console.log('Logo scale:', logoScale);
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white p-4 sm:p-8 font-sans text-sm">
@@ -79,9 +81,13 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
               <img 
                 src={logoUrl} 
                 alt="Company Logo" 
-                className="w-16 h-16 object-contain"
+                className="object-contain"
+                style={{
+                  width: `${64 * logoScale}px`,
+                  height: `${64 * logoScale}px`
+                }}
                 onLoad={() => {
-                  console.log('✅ Logo loaded successfully');
+                  console.log('✅ Logo loaded successfully with scale:', logoScale);
                   setLogoError(null);
                 }}
                 onError={(e) => {
