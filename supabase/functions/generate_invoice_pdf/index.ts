@@ -147,7 +147,7 @@ serve(async (req) => {
     
     let yPosition = height - 40 // Start from top with margin
     
-    // Header Section - Logo and Company Info on Left, Invoice Title on Right
+    // Header Section - Logo on left, Company info on right
     let logoHeight = 0
     const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
     if (logoUrl) {
@@ -156,7 +156,7 @@ serve(async (req) => {
         if (logoResponse.ok) {
           const logoBytes = await logoResponse.arrayBuffer()
           const logo = await pdfDoc.embedPng(new Uint8Array(logoBytes))
-          const logoDims = logo.scale(0.4) // Larger logo scale
+          const logoDims = logo.scale(0.3)
           page.drawImage(logo, {
             x: 40,
             y: yPosition - logoDims.height,
@@ -170,55 +170,51 @@ serve(async (req) => {
       }
     }
     
-    // Company name and details on the left
-    drawText(invoice.companies?.name || 'Company Name', 40, yPosition - Math.max(logoHeight, 0) - 10, { size: 14, bold: true })
+    // Company info on the right side
+    let rightY = yPosition
+    drawText(invoice.companies?.name || 'Company Name', width - 200, rightY, { size: 14, bold: true })
+    rightY -= 15
     
-    // Invoice title on the right
-    drawText('Invoice', width - 100, yPosition - 10, { size: 20, bold: true })
-    
-    yPosition -= Math.max(logoHeight, 40) + 20
-    
-    // Company address and details
     if (invoice.companies?.address) {
       const addressLines = invoice.companies.address.split('\n')
       addressLines.forEach((line: string) => {
-        drawText(line, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-        yPosition -= 12
+        drawText(line, width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+        rightY -= 12
       })
     }
     
-    // Company email and GSTIN
-    yPosition -= 5
     if (invoice.companies?.name) {
-      // Use company name to create email (placeholder logic)
-      const companyEmail = 'squarebluemedia@gmail.com' // You can make this dynamic
-      drawText(companyEmail, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-      yPosition -= 12
+      rightY -= 5
+      drawText('squarebluemedia@gmail.com', width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+      rightY -= 12
     }
     
     if (invoice.companies?.gstin) {
-      drawText(`GSTIN : ${invoice.companies.gstin}`, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-      yPosition -= 12
+      drawText(`GSTIN: ${invoice.companies.gstin}`, width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+      rightY -= 12
     }
     
-    // Invoice details (right side)
-    let rightY = height - 80
-    drawText(`H.NO. ${invoice.invoice_code || invoice.number}`, width - 160, rightY, { size: 10, color: rgb(0.3, 0.3, 0.3) })
+    // Invoice title and details on the right
+    rightY -= 10
+    drawText('Invoice', width - 200, rightY, { size: 20, bold: true })
+    rightY -= 20
+    drawText(`H.NO. ${invoice.invoice_code || invoice.number}`, width - 200, rightY, { size: 10, color: rgb(0.3, 0.3, 0.3) })
     rightY -= 12
-    drawText(`${invoice.companies?.address?.split(',').pop()?.trim() || 'HYDERABAD TELANGANA 500038'}`, width - 160, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+    drawText('HYDERABAD TELANGANA 500038', width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
     rightY -= 20
     
     // Invoice details box
-    drawText(`Invoice #`, width - 160, rightY, { size: 10, bold: true })
-    drawText(`${invoice.invoice_code || invoice.number}`, width - 80, rightY, { size: 10 })
+    drawText(`Invoice #`, width - 200, rightY, { size: 10, bold: true })
+    drawText(`${invoice.invoice_code || invoice.number}`, width - 120, rightY, { size: 10 })
     rightY -= 15
-    drawText('Date', width - 160, rightY, { size: 10, bold: true })
-    drawText(`${new Date(invoice.issue_date).toLocaleDateString('en-GB')}`, width - 80, rightY, { size: 10 })
+    drawText('Date', width - 200, rightY, { size: 10, bold: true })
+    drawText(`${new Date(invoice.issue_date).toLocaleDateString('en-GB')}`, width - 120, rightY, { size: 10 })
     rightY -= 15
-    drawText('SAC / HSN CODE', width - 160, rightY, { size: 10, bold: true })
-    drawText('998387', width - 80, rightY, { size: 10 })
+    drawText('SAC / HSN CODE', width - 200, rightY, { size: 10, bold: true })
+    drawText('998387', width - 120, rightY, { size: 10 })
     
-    yPosition = Math.min(yPosition, rightY) - 30
+    // Move to next section based on the larger of logo or company info
+    yPosition = Math.min(yPosition - logoHeight, rightY) - 30
     
     // Bill To Section
     drawText('BILL TO', 40, yPosition, { size: 10, bold: true, color: rgb(0.4, 0.4, 0.4) })
@@ -236,7 +232,7 @@ serve(async (req) => {
     
     if (invoice.clients?.gstin) {
       yPosition -= 5
-      drawText(`GSTIN : ${invoice.clients.gstin}`, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+      drawText(`GSTIN: ${invoice.clients.gstin}`, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
     }
     
     // Project section

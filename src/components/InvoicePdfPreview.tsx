@@ -70,11 +70,12 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white p-4 sm:p-8 font-sans text-sm">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
-        <div className="flex items-start gap-4">
+      {/* Header Section - Logo left, Company info right */}
+      <div className="flex justify-between items-start mb-8">
+        {/* Logo on the left */}
+        <div className="flex-shrink-0">
           {logoUrl && (
-            <div className="flex-shrink-0">
+            <div>
               <img 
                 src={logoUrl} 
                 alt="Company Logo" 
@@ -96,23 +97,24 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
               )}
             </div>
           )}
-          <div>
-            <h2 className="text-lg font-bold text-gray-800 mb-1">{currentCompany?.name || 'Square Blue Media'}</h2>
-            {currentCompany?.address && (
-              <p className="text-gray-600 text-xs mb-1">{currentCompany.address}</p>
-            )}
-            <p className="text-gray-600 text-xs mb-1">squarebluemedia@gmail.com</p>
-            {currentCompany?.gstin && (
-              <p className="text-gray-600 text-xs">GSTIN: {currentCompany.gstin}</p>
-            )}
-          </div>
         </div>
         
+        {/* Company info and invoice details on the right */}
         <div className="text-right">
+          <h2 className="text-lg font-bold text-gray-800 mb-1">{currentCompany?.name || 'Square Blue Media'}</h2>
+          {currentCompany?.address && (
+            <p className="text-gray-600 text-xs mb-1">{currentCompany.address}</p>
+          )}
+          <p className="text-gray-600 text-xs mb-1">squarebluemedia@gmail.com</p>
+          {currentCompany?.gstin && (
+            <p className="text-gray-600 text-xs mb-3">GSTIN: {currentCompany.gstin}</p>
+          )}
+          
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Invoice</h1>
           <p className="text-xs text-gray-600 mb-1">H.NO. {invoice?.invoice_code || invoice?.number}</p>
-          <p className="text-xs text-gray-600 mb-1">HYDERABAD TELANGANA 500038</p>
-          <div className="mt-3 space-y-1">
+          <p className="text-xs text-gray-600 mb-3">HYDERABAD TELANGANA 500038</p>
+          
+          <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="font-medium">Invoice #</span>
               <span>{invoice?.invoice_code || invoice?.number}</span>
