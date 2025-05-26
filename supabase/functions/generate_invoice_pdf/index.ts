@@ -138,17 +138,17 @@ serve(async (req) => {
       page.drawText(displayText, {
         x,
         y,
-        size: options.size || 11,
+        size: options.size || 10,
         font,
         color: options.color || rgb(0, 0, 0),
         ...options
       })
     }
     
-    let yPosition = height - 60 // Start from top
+    let yPosition = height - 40 // Start from top with margin
     
-    // Header Section with Logo
-    // Use logo from company settings if available, otherwise fall back to company logo
+    // Header Section - Logo and Company Info on Left, Invoice Title on Right
+    let logoHeight = 0
     const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
     if (logoUrl) {
       try {
@@ -156,85 +156,102 @@ serve(async (req) => {
         if (logoResponse.ok) {
           const logoBytes = await logoResponse.arrayBuffer()
           const logo = await pdfDoc.embedPng(new Uint8Array(logoBytes))
-          const logoDims = logo.scale(0.3)
+          const logoDims = logo.scale(0.4) // Larger logo scale
           page.drawImage(logo, {
             x: 40,
             y: yPosition - logoDims.height,
             width: logoDims.width,
             height: logoDims.height,
           })
-          yPosition -= logoDims.height + 10
+          logoHeight = logoDims.height
         }
       } catch (logoError) {
         console.warn('Failed to embed logo:', logoError)
       }
     }
     
-    drawText(invoice.companies?.name || 'Company Name', 40, yPosition, { size: 16, bold: true })
-    drawText('INVOICE', width - 140, yPosition, { size: 18, bold: true })
+    // Company name and details on the left
+    drawText(invoice.companies?.name || 'Company Name', 40, yPosition - Math.max(logoHeight, 0) - 10, { size: 14, bold: true })
     
-    yPosition -= 20
+    // Invoice title on the right
+    drawText('Invoice', width - 100, yPosition - 10, { size: 20, bold: true })
+    
+    yPosition -= Math.max(logoHeight, 40) + 20
+    
+    // Company address and details
     if (invoice.companies?.address) {
       const addressLines = invoice.companies.address.split('\n')
       addressLines.forEach((line: string) => {
-        drawText(line, 40, yPosition, { size: 9, color: rgb(0.4, 0.4, 0.4) })
+        drawText(line, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
         yPosition -= 12
       })
+    }
+    
+    // Company email and GSTIN
+    yPosition -= 5
+    if (invoice.companies?.name) {
+      // Use company name to create email (placeholder logic)
+      const companyEmail = 'squarebluemedia@gmail.com' // You can make this dynamic
+      drawText(companyEmail, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+      yPosition -= 12
+    }
+    
+    if (invoice.companies?.gstin) {
+      drawText(`GSTIN : ${invoice.companies.gstin}`, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+      yPosition -= 12
     }
     
     // Invoice details (right side)
     let rightY = height - 80
-    drawText(`Invoice # ${invoice.invoice_code || invoice.number}`, width - 200, rightY, { size: 10 })
-    rightY -= 15
-    drawText(`Date: ${new Date(invoice.issue_date).toLocaleDateString('en-IN')}`, width - 200, rightY, { size: 10 })
+    drawText(`H.NO. ${invoice.invoice_code || invoice.number}`, width - 160, rightY, { size: 10, color: rgb(0.3, 0.3, 0.3) })
+    rightY -= 12
+    drawText(`${invoice.companies?.address?.split(',').pop()?.trim() || 'HYDERABAD TELANGANA 500038'}`, width - 160, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+    rightY -= 20
     
-    if (invoice.due_date) {
-      rightY -= 15
-      drawText(`Due: ${new Date(invoice.due_date).toLocaleDateString('en-IN')}`, width - 200, rightY, { size: 10 })
-    }
+    // Invoice details box
+    drawText(`Invoice #`, width - 160, rightY, { size: 10, bold: true })
+    drawText(`${invoice.invoice_code || invoice.number}`, width - 80, rightY, { size: 10 })
+    rightY -= 15
+    drawText('Date', width - 160, rightY, { size: 10, bold: true })
+    drawText(`${new Date(invoice.issue_date).toLocaleDateString('en-GB')}`, width - 80, rightY, { size: 10 })
+    rightY -= 15
+    drawText('SAC / HSN CODE', width - 160, rightY, { size: 10, bold: true })
+    drawText('998387', width - 80, rightY, { size: 10 })
     
     yPosition = Math.min(yPosition, rightY) - 30
     
     // Bill To Section
-    page.drawRectangle({
-      x: 40,
-      y: yPosition - 80,
-      width: width - 80,
-      height: 80,
-      color: rgb(0.98, 0.98, 0.98),
-      borderColor: rgb(0.8, 0.8, 0.8),
-      borderWidth: 1,
-    })
-    
-    drawText('Bill To:', 50, yPosition - 20, { bold: true })
-    yPosition -= 35
-    drawText(invoice.clients?.name || 'Client Name', 50, yPosition, { size: 12, bold: true })
+    drawText('BILL TO', 40, yPosition, { size: 10, bold: true, color: rgb(0.4, 0.4, 0.4) })
+    yPosition -= 15
+    drawText(invoice.clients?.name || 'Client Name', 40, yPosition, { size: 11, bold: true })
     
     if (invoice.clients?.billing_address) {
-      yPosition -= 15
+      yPosition -= 12
       const clientAddressLines = invoice.clients.billing_address.split('\n')
       clientAddressLines.forEach((line: string) => {
-        drawText(line, 50, yPosition, { size: 10 })
-        yPosition -= 12
+        drawText(line, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+        yPosition -= 11
       })
     }
     
-    if (invoice.clients?.phone) {
-      yPosition -= 5
-      drawText(`Phone: ${invoice.clients.phone}`, 50, yPosition, { size: 10 })
-    }
-    
     if (invoice.clients?.gstin) {
-      yPosition -= 15
-      drawText(`GSTIN: ${invoice.clients.gstin}`, 50, yPosition, { size: 10 })
+      yPosition -= 5
+      drawText(`GSTIN : ${invoice.clients.gstin}`, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
     }
     
-    yPosition -= 40
+    // Project section
+    yPosition -= 25
+    drawText('PROJECT', 40, yPosition, { size: 10, bold: true, color: rgb(0.4, 0.4, 0.4) })
+    yPosition -= 12
+    drawText('CHEEKATLO', 40, yPosition, { size: 10 })
+    
+    yPosition -= 30
     
     // Table Header
     const tableStartY = yPosition
-    const rowHeight = 25
+    const rowHeight = 20
     
+    // Draw table header background
     page.drawRectangle({
       x: 40,
       y: tableStartY - rowHeight,
@@ -242,97 +259,120 @@ serve(async (req) => {
       height: rowHeight,
       color: rgb(0.95, 0.95, 0.95),
       borderColor: rgb(0.8, 0.8, 0.8),
-      borderWidth: 1,
+      borderWidth: 0.5,
     })
     
-    drawText('Item Description', 50, tableStartY - 15, { bold: true })
-    drawText('Price', width - 200, tableStartY - 15, { bold: true })
-    drawText('Qty', width - 150, tableStartY - 15, { bold: true })
-    drawText('Total', width - 100, tableStartY - 15, { bold: true })
+    // Table headers with better spacing
+    drawText('EQUIPMENT', 50, tableStartY - 13, { size: 9, bold: true })
+    drawText('PKG', 320, tableStartY - 13, { size: 9, bold: true })
+    drawText('Rate', 370, tableStartY - 13, { size: 9, bold: true })
+    drawText('Amount', 480, tableStartY - 13, { size: 9, bold: true })
     
     yPosition = tableStartY - rowHeight
     
     // Table Rows
-    // Use proper rupee symbol with Unicode font support
     const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
     
-    lineItems?.forEach((item: any) => {
+    lineItems?.forEach((item: any, index: number) => {
       yPosition -= rowHeight
       
-      // Draw row border
-      page.drawRectangle({
-        x: 40,
-        y: yPosition,
-        width: width - 80,
-        height: rowHeight,
-        borderColor: rgb(0.8, 0.8, 0.8),
-        borderWidth: 0.5,
-      })
+      // Alternate row colors
+      if (index % 2 === 1) {
+        page.drawRectangle({
+          x: 40,
+          y: yPosition,
+          width: width - 80,
+          height: rowHeight,
+          color: rgb(0.98, 0.98, 0.98),
+          borderColor: rgb(0.9, 0.9, 0.9),
+          borderWidth: 0.5,
+        })
+      } else {
+        page.drawRectangle({
+          x: 40,
+          y: yPosition,
+          width: width - 80,
+          height: rowHeight,
+          borderColor: rgb(0.9, 0.9, 0.9),
+          borderWidth: 0.5,
+        })
+      }
       
-      drawText(item.description, 50, yPosition + 8)
-      drawText(currency(Number(item.unit_price)), width - 200, yPosition + 8)
-      drawText(item.qty.toString(), width - 150, yPosition + 8)
-      drawText(currency(Number(item.amount)), width - 100, yPosition + 8)
+      // Draw row data
+      drawText(item.description, 50, yPosition + 6, { size: 9 })
+      drawText(item.qty.toString(), 330, yPosition + 6, { size: 9 })
+      drawText(currency(Number(item.unit_price)), 370, yPosition + 6, { size: 9 })
+      drawText(currency(Number(item.amount)), 480, yPosition + 6, { size: 9 })
     })
     
-    // Totals Section
+    // Payment Instructions Section
     yPosition -= 40
-    const totalsX = width - 250
-    
-    drawText('Subtotal', totalsX, yPosition)
-    drawText(currency(Number(invoice.subtotal)), width - 80, yPosition)
-    
-    if (!invoice.use_igst && Number(invoice.cgst) > 0) {
-      yPosition -= 20
-      drawText(`CGST (${invoice.cgst_pct}%)`, totalsX, yPosition)
-      drawText(currency(Number(invoice.cgst)), width - 80, yPosition)
-    }
-    
-    if (!invoice.use_igst && Number(invoice.sgst) > 0) {
-      yPosition -= 20
-      drawText(`SGST (${invoice.sgst_pct}%)`, totalsX, yPosition)
-      drawText(currency(Number(invoice.sgst)), width - 80, yPosition)
-    }
-    
-    if (invoice.use_igst && Number(invoice.igst) > 0) {
-      yPosition -= 20
-      drawText(`IGST (${invoice.igst_pct}%)`, totalsX, yPosition)
-      drawText(currency(Number(invoice.igst)), width - 80, yPosition)
-    }
-    
-    // Grand Total
-    yPosition -= 25
-    page.drawLine({
-      start: { x: totalsX, y: yPosition + 15 },
-      end: { x: width - 40, y: yPosition + 15 },
-      thickness: 2,
-      color: rgb(0, 0, 0),
-    })
-    
-    drawText('Grand Total', totalsX, yPosition, { bold: true })
-    drawText(currency(Number(invoice.total)), width - 80, yPosition, { bold: true })
-    
-    // Payment Terms
     if (companySettings?.payment_note) {
-      yPosition -= 40
-      drawText('Payment Terms:', 50, yPosition, { bold: true })
-      yPosition -= 20
+      drawText('Payment Instructions', 50, yPosition, { size: 10, bold: true })
+      yPosition -= 15
       
-      // Split payment note into lines if it's too long
       const paymentLines = companySettings.payment_note.split('\n')
       paymentLines.forEach((line: string) => {
-        drawText(line, 50, yPosition, { size: 10 })
-        yPosition -= 15
+        drawText(line, 50, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+        yPosition -= 12
       })
     }
+    
+    // Totals Section (Right aligned)
+    let totalsY = yPosition - 30
+    const totalsX = width - 200
+    
+    // Subtotal
+    drawText('Subtotal', totalsX, totalsY, { size: 10 })
+    drawText(currency(Number(invoice.subtotal)), width - 80, totalsY, { size: 10 })
+    totalsY -= 15
+    
+    // Tax calculations
+    if (!invoice.use_igst) {
+      if (Number(invoice.cgst) > 0) {
+        drawText(`CGST (${invoice.cgst_pct}%)`, totalsX, totalsY, { size: 10 })
+        drawText(currency(Number(invoice.cgst)), width - 80, totalsY, { size: 10 })
+        totalsY -= 15
+      }
+      
+      if (Number(invoice.sgst) > 0) {
+        drawText(`SGST (${invoice.sgst_pct}%)`, totalsX, totalsY, { size: 10 })
+        drawText(currency(Number(invoice.sgst)), width - 80, totalsY, { size: 10 })
+        totalsY -= 15
+      }
+    } else if (Number(invoice.igst) > 0) {
+      drawText(`IGST (${invoice.igst_pct}%)`, totalsX, totalsY, { size: 10 })
+      drawText(currency(Number(invoice.igst)), width - 80, totalsY, { size: 10 })
+      totalsY -= 15
+    }
+    
+    drawText('Total', totalsX, totalsY, { size: 10 })
+    drawText(currency(Number(invoice.total)), width - 80, totalsY, { size: 10 })
+    totalsY -= 20
+    
+    // Grand Total with background
+    page.drawRectangle({
+      x: totalsX - 10,
+      y: totalsY - 5,
+      width: 200,
+      height: 20,
+      color: rgb(0.9, 0.9, 0.9),
+    })
+    
+    drawText('GRAND TOTAL', totalsX, totalsY, { size: 12, bold: true })
+    drawText(currency(Number(invoice.total)), width - 80, totalsY, { size: 12, bold: true })
+    
+    // Footer message
+    yPosition = 120
+    drawText('Thank you for your business!', 50, yPosition, { size: 10 })
+    yPosition -= 15
+    drawText(invoice.companies?.name || 'Company Name', 50, yPosition, { size: 10, bold: true })
     
     // Signature Section
     if (invoice.show_my_signature || invoice.require_client_signature) {
-      yPosition -= 60
+      yPosition -= 40
       
       if (invoice.show_my_signature) {
-        drawText('Authorized Signature:', 50, yPosition, { size: 10 })
-        
         // Use signature from company settings if available
         const signatureUrl = companySettings?.signature_url
         if (signatureUrl) {
@@ -341,10 +381,10 @@ serve(async (req) => {
             if (signatureResponse.ok) {
               const signatureBytes = await signatureResponse.arrayBuffer()
               const signature = await pdfDoc.embedPng(new Uint8Array(signatureBytes))
-              const signatureDims = signature.scale(0.5)
+              const signatureDims = signature.scale(0.3)
               page.drawImage(signature, {
-                x: 50,
-                y: yPosition - 50,
+                x: 160,
+                y: yPosition - 30,
                 width: signatureDims.width,
                 height: signatureDims.height,
               })
@@ -354,22 +394,16 @@ serve(async (req) => {
           }
         }
         
+        // Signature line and date
         page.drawLine({
-          start: { x: 50, y: yPosition - 40 },
-          end: { x: 200, y: yPosition - 40 },
+          start: { x: 160, y: yPosition },
+          end: { x: 260, y: yPosition },
           thickness: 1,
           color: rgb(0, 0, 0),
         })
-      }
-      
-      if (invoice.require_client_signature) {
-        drawText('Client Signature:', width - 200, yPosition, { size: 10 })
-        page.drawLine({
-          start: { x: width - 200, y: yPosition - 40 },
-          end: { x: width - 50, y: yPosition - 40 },
-          thickness: 1,
-          color: rgb(0, 0, 0),
-        })
+        
+        // Date under signature
+        drawText(new Date(invoice.issue_date).toLocaleDateString('en-GB'), 190, yPosition - 15, { size: 9 })
       }
     }
     
