@@ -16,7 +16,7 @@ export const InvoiceTotalsSection: React.FC<InvoiceTotalsSectionProps> = ({
     <div 
       className="absolute"
       style={{
-        ...getAbsoluteStyles(PAGE.margin + BANDS.footer, BANDS.totals),
+        ...getAbsoluteStyles(PAGE.margin + BANDS.footer, 110),
         bottom: `${PAGE.margin + BANDS.footer}px`,
       }}
     >
@@ -103,8 +103,6 @@ export const InvoiceTotalsSection: React.FC<InvoiceTotalsSectionProps> = ({
                 </span>
               </div>
             )}
-            
-            {/* Removed the horizontal line here - no <hr> element */}
             
             <div className="flex justify-between py-1">
               <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
