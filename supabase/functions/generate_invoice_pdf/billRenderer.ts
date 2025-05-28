@@ -1,4 +1,3 @@
-
 import {
   PAGE,
   BANDS,
@@ -82,7 +81,7 @@ export function renderBillSection(
     });
   }
 
-  /* ─────────── INVOICE-META (NO GREY BOX) ─────────── */
+  /* ─────────── INVOICE-META GREY BOX ─────────── */
 
   const detailsBox = {
     x: PAGE.width - PAGE.margin - 206, // 6 pt left shift to keep right edge aligned
@@ -91,23 +90,14 @@ export function renderBillSection(
     height: 60,
   };
 
-  // Commented out the grey background box
-  // drawRoundedRect(
-  //   page,
-  //   detailsBox.x,
-  //   detailsBox.y,
-  //   detailsBox.width,
-  //   detailsBox.height,
-  //   COLORS.background.medium,
-  // );
-
-  // Optional: Add a thin separator line at the bottom
-  page.drawLine({
-    start: { x: detailsBox.x, y: detailsBox.y + detailsBox.height },
-    end: { x: detailsBox.x + detailsBox.width, y: detailsBox.y + detailsBox.height },
-    thickness: 0.5,
-    color: { r: COLORS.lines.light[0], g: COLORS.lines.light[1], b: COLORS.lines.light[2] },
-  });
+  drawRoundedRect(
+    page,
+    detailsBox.x,
+    detailsBox.y,
+    detailsBox.width,
+    detailsBox.height,
+    COLORS.background.medium,
+  );
 
   let detailsY = detailsBox.y + detailsBox.height - 15;
 
