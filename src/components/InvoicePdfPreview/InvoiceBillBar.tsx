@@ -9,12 +9,69 @@ interface InvoiceBillBarProps {
   companySettings: any;
 }
 
+// Utility function to wrap text for React preview (matching the Edge Function)
+const wrapLines = (text: string, maxWidth: number, fontSize: number): string[] => {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+  
+  // Approximate character width as 60% of font size
+  const avgCharWidth = fontSize * 0.6;
+  
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = testLine.length * avgCharWidth;
+    
+    if (testWidth <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        lines.push(word);
+        currentLine = '';
+      }
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+};
+
+// Utility function to truncate text with ellipsis
+const truncateText = (text: string, maxWidth: number, fontSize: number): string => {
+  const avgCharWidth = fontSize * 0.6;
+  const textWidth = text.length * avgCharWidth;
+  
+  if (textWidth <= maxWidth) {
+    return text;
+  }
+  
+  const maxChars = Math.floor(maxWidth / avgCharWidth) - 3; // Account for ellipsis
+  return text.substring(0, Math.max(0, maxChars)) + '...';
+};
+
 export const InvoiceBillBar: React.FC<InvoiceBillBarProps> = ({ 
   client, 
   invoice, 
   companySettings 
 }) => {
   const positions = getBandPositions();
+
+  // Calculate available width for values in the details box (matching Edge Function logic)
+  const detailsBoxWidth = 160; // Matching the Edge Function width
+  const labelWidth = 45;
+  const valueWidth = detailsBoxWidth - 20 - labelWidth; // Available width for values
+
+  const invoiceDetails = [
+    { label: 'Invoice #', value: invoice?.invoice_code || invoice?.number || '25-26/02' },
+    { label: 'Date', value: formatDate(invoice?.issue_date) || '23 Apr 2025' },
+    { label: 'SAC/HSN', value: companySettings?.sac_code || '998387' }
+  ];
 
   return (
     <div 
@@ -58,30 +115,31 @@ export const InvoiceBillBar: React.FC<InvoiceBillBarProps> = ({
           className="rounded px-4 py-3"
           style={{
             backgroundColor: rgbToCSS(COLORS.background.medium),
-            width: '160px'
+            width: `${detailsBoxWidth}px`
           }}
         >
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="font-bold" style={{ fontSize: `${FONTS.base}px` }}>Invoice #</span>
-              <span style={{ fontSize: `${FONTS.base}px` }}>
-                {invoice?.invoice_code || invoice?.number || '25-26/02'}
-              </span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="font-bold" style={{ fontSize: `${FONTS.base}px` }}>Date</span>
-              <span style={{ fontSize: `${FONTS.base}px` }}>
-                {formatDate(invoice?.issue_date) || '23 Apr 2025'}
-              </span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="font-bold" style={{ fontSize: `${FONTS.base}px` }}>SAC/HSN</span>
-              <span style={{ fontSize: `${FONTS.base}px` }}>
-                {companySettings?.sac_code || '998387'}
-              </span>
-            </div>
+            {invoiceDetails.map((detail, index) => {
+              // Apply text wrapping/truncation logic
+              const wrappedLines = wrapLines(detail.value, valueWidth, FONTS.base);
+              const displayValue = wrappedLines.length === 1 
+                ? wrappedLines[0] 
+                : truncateText(detail.value, valueWidth, FONTS.base);
+
+              return (
+                <div key={index} className="flex justify-between">
+                  <span className="font-bold" style={{ fontSize: `${FONTS.base}px` }}>
+                    {detail.label}
+                  </span>
+                  <span 
+                    style={{ fontSize: `${FONTS.base}px` }}
+                    title={detail.value} // Show full text on hover if truncated
+                  >
+                    {displayValue}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

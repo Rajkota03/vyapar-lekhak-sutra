@@ -1,6 +1,7 @@
 
 import { PAGE, BANDS, FONTS, COLORS, SPACING, getBandPositions, formatDate } from './layout.ts'
 import { drawRoundedRect } from './pdfUtils.ts'
+import { wrapLines, truncateText } from './textUtils.ts'
 import type { InvoiceData, CompanySettings, DrawTextOptions } from './types.ts'
 
 export function renderBillSection(
@@ -73,7 +74,7 @@ export function renderBillSection(
     })
   }
   
-  // Invoice details section - properly positioned with better spacing
+  // Invoice details section - properly positioned with better spacing and text wrapping
   const detailsBox = {
     x: PAGE.width - PAGE.margin - 150,
     y: positions.topOfBill + 20,
@@ -93,24 +94,44 @@ export function renderBillSection(
   
   let detailsY = detailsBox.y + detailsBox.height - 15
   
-  // Invoice details with consistent spacing
+  // Invoice details with consistent spacing and text wrapping
   const invoiceDetails = [
     { label: 'Invoice #', value: invoice.invoice_code || '25-26/02' },
     { label: 'Date', value: formatDate(invoice.issue_date) },
     { label: 'SAC/HSN', value: companySettings?.sac_code || '998387' }
   ]
   
+  // Calculate available width for text (accounting for padding and label space)
+  const labelWidth = 45  // Space reserved for labels
+  const valueWidth = detailsBox.width - 20 - labelWidth  // Available width for values (minus padding)
+  
   invoiceDetails.forEach(detail => {
     if (detailsY > detailsBox.y + 10) {
+      // Draw label
       drawText(detail.label, detailsBox.x + 10, detailsY, { 
         size: FONTS.small, 
         bold: true,
         color: COLORS.text.primary
       })
-      drawText(detail.value, detailsBox.x + detailsBox.width - 10, detailsY, { 
-        size: FONTS.small,
-        color: COLORS.text.primary
-      }, { textAlign: 'right' })
+      
+      // Wrap or truncate value text to fit within available width
+      const wrappedLines = wrapLines(detail.value, valueWidth, FONTS.small)
+      
+      if (wrappedLines.length === 1) {
+        // Single line - draw normally
+        drawText(wrappedLines[0], detailsBox.x + detailsBox.width - 10, detailsY, { 
+          size: FONTS.small,
+          color: COLORS.text.primary
+        }, { textAlign: 'right' })
+      } else {
+        // Multiple lines - use first line and truncate if needed
+        const truncatedValue = truncateText(detail.value, valueWidth, FONTS.small)
+        drawText(truncatedValue, detailsBox.x + detailsBox.width - 10, detailsY, { 
+          size: FONTS.small,
+          color: COLORS.text.primary
+        }, { textAlign: 'right' })
+      }
+      
       detailsY -= 16
     }
   })
