@@ -34,9 +34,10 @@ export function renderItemsAndTotals(
 ) {
   const positions = getBandPositions();
   let cursor = positions.topOfItems;
+  const startY = cursor;
 
   /* ─────────── TABLE HEADER ─────────── */
-  const tableWidth = PAGE.inner;
+  const tableWidth = PAGE.inner - 220; // leave 220pt for totals
   const colWidths = TABLE.cols.map(col => col * tableWidth);
   
   drawRoundedRect(
@@ -96,6 +97,17 @@ export function renderItemsAndTotals(
     cursor -= TABLE.rowH;
   });
 
+  // White background behind items+totals
+  const blockHeight = startY - cursor + 120; // rows + totals space
+  drawRoundedRect(
+    page,
+    PAGE.margin,
+    cursor - 6,
+    PAGE.inner,
+    blockHeight,
+    COLORS.background.light,
+  );
+
   // 14 pt gap before totals
   cursor -= 14;
 
@@ -108,17 +120,6 @@ export function renderItemsAndTotals(
 
   const totalsStartY = cursor;
   cursor = totalsStartY - 20;
-
-  // Draw background for entire totals block
-  const blockHeight = totalsStartY - (totBox.y);
-  drawRoundedRect(
-    page,
-    totBox.x,
-    totBox.y,
-    totBox.width,
-    blockHeight,
-    COLORS.background.light,
-  );
 
   const rows: [string, string][] = [
     ['Subtotal', formatMoney(invoice.subtotal)],
