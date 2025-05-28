@@ -1,5 +1,4 @@
 
-
 import { PAGE, FONTS, COLORS, getBandPositions } from './layout.ts';
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
@@ -17,10 +16,10 @@ export function renderItemsAndTotals(
   items: LineItem[],
 ) {
   const pos = getBandPositions();
-  // Add spacing between Bill To and Items sections
+  // Add spacing between Bill To and Items sections, align with left margin
   let y = pos.topOfItems - 30; // Added 30pt spacing
 
-  /* A. Column geometry - unified grid for items and totals */
+  /* A. Column geometry - unified grid for items and totals, starting from left margin */
   const grid = [0.45, 0.15, 0.15, 0.25];   // equipment / pkg / qty / amount
   const colX = grid.reduce<number[]>((arr, f, i) => {
     arr.push(PAGE.margin + PAGE.inner * grid.slice(0, i).reduce((a, b) => a + b, 0));
@@ -92,4 +91,3 @@ export function renderItemsAndTotals(
     { size: FONTS.medium, bold: true },
     { textAlign: 'right' });
 }
-

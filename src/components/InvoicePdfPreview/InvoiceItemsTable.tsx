@@ -1,7 +1,6 @@
 
-
 import React from 'react';
-import { TABLE, FONTS, COLORS, SPACING, getBandPositions, formatCurrency } from '@/lib/pdf/layout';
+import { TABLE, FONTS, COLORS, SPACING, getBandPositions, formatCurrency, PAGE } from '@/lib/pdf/layout';
 import { rgbToCSS, getAbsoluteStyles } from './invoicePreviewUtils';
 
 interface InvoiceItemsTableProps {
@@ -23,6 +22,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
       style={{
         ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
         bottom: `${positions.bottomOfTable}px`,
+        left: `${PAGE.margin}px`, // Align with left margin like Bill To section
+        width: `${PAGE.inner}px`, // Use full inner width
         overflow: 'hidden'
       }}
     >
@@ -165,4 +166,3 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
     </div>
   );
 };
-
