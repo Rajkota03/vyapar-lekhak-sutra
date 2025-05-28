@@ -37,31 +37,41 @@ export async function createPDFContext(): Promise<{ pdfDoc: any; context: PDFCon
 }
 
 export function createDrawTextFunction(context: PDFContext) {
-  return (text: string, x: number, y: number, options: DrawTextOptions = {}) => {
+  return (text: string, x: number, y: number, options: DrawTextOptions = {}, extraOptions: any = {}) => {
     const useUnicodeFont = context.unicodeFont && text.includes('₹')
     const font = useUnicodeFont ? context.unicodeFont : (options.bold ? context.boldFont : context.fallbackFont)
     const displayText = useUnicodeFont ? text : text.replace(/₹/g, 'Rs.')
     
-    // Convert color from array format to rgb() function
-    let color = rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    // Convert color from array format to rgb() function - this is the key fix
+    let color = rgb(0, 0, 0) // Default black color
     if (options.color) {
       if (Array.isArray(options.color) && options.color.length === 3) {
-        color = rgb(options.color[0], options.color[1], options.color[2])
+        // Ensure values are between 0 and 1
+        const r = Math.max(0, Math.min(1, options.color[0]))
+        const g = Math.max(0, Math.min(1, options.color[1]))
+        const b = Math.max(0, Math.min(1, options.color[2]))
+        color = rgb(r, g, b)
       } else if (typeof options.color === 'object' && 'r' in options.color) {
         // Handle color objects with r,g,b properties
         color = rgb(options.color.r, options.color.g, options.color.b)
       }
     }
     
-    context.page.drawText(displayText, {
+    // Prepare the draw options, excluding our custom properties
+    const drawOptions = {
       x,
       y,
       size: options.size || FONTS.base,
       font,
       color,
       lineHeight: options.lineHeight || SPACING.lineHeight,
-      ...options
-    })
+      ...extraOptions // Include any extra options like textAlign
+    }
+    
+    // Remove our custom properties that pdf-lib doesn't understand
+    delete drawOptions.bold
+    
+    context.page.drawText(displayText, drawOptions)
   }
 }
 

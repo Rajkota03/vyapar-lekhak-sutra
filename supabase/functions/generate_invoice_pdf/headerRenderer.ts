@@ -50,7 +50,7 @@ export async function renderHeader(
   const companyInfoX = logoWidth > 0 ? PAGE.margin + logoWidth + 30 : PAGE.width - PAGE.margin - 220
   let companyInfoY = headerY
   
-  // Invoice title - use array format for colors
+  // Invoice title - properly pass color as array
   drawText('INVOICE', companyInfoX, companyInfoY, { 
     size: FONTS.h1, 
     bold: true,

@@ -5,7 +5,7 @@ import type { InvoiceData, CompanySettings, DrawTextOptions } from './types.ts'
 
 export function renderBillSection(
   page: any,
-  drawText: (text: string, x: number, y: number, options?: DrawTextOptions) => void,
+  drawText: (text: string, x: number, y: number, options?: DrawTextOptions, extraOptions?: any) => void,
   invoice: InvoiceData,
   companySettings: CompanySettings | null
 ) {
