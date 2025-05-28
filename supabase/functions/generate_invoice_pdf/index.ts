@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
@@ -12,7 +11,7 @@ import {
   SIGNATURE, 
   SPACING, 
   getBandPositions 
-} from '../../../src/lib/pdf/layout.ts'
+} from './layout.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -258,7 +257,7 @@ serve(async (req) => {
     detailsY -= 12
     
     drawText('SAC/HSN CODE', detailsX, detailsY, { size: FONTS.base, bold: true })
-    drawText(companySettings?.sac_hsn || '998387', detailsX + 60, detailsY, { size: FONTS.base })
+    drawText(companySettings?.sac_code || '998387', detailsX + 60, detailsY, { size: FONTS.base })
     
     // ===== ITEMS TABLE BAND =====
     let tableY = positions.topOfBill - 14

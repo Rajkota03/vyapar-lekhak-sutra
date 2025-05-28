@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -225,7 +224,7 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
               <div className="flex justify-between">
                 <span className="font-bold mr-4" style={{ fontSize: `${FONTS.base}px` }}>SAC/HSN CODE</span>
                 <span style={{ fontSize: `${FONTS.base}px` }}>
-                  {companySettings?.sac_hsn || '998387'}
+                  {companySettings?.sac_code || '998387'}
                 </span>
               </div>
             </div>
