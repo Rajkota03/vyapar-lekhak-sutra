@@ -90,6 +90,12 @@ serve(async (req) => {
       )
     }
 
+    console.log('Invoice data:', { 
+      invoice: invoice.invoice_code, 
+      client: invoice.clients?.name, 
+      lineItemsCount: lineItems?.length || 0 
+    })
+
     // Determine if we should regenerate PDF
     let shouldRegenerate = force_regenerate || preview
     
@@ -153,11 +159,22 @@ serve(async (req) => {
     
     const drawText = createDrawTextFunction(context)
     
-    // Render PDF sections in new order
+    console.log('Rendering PDF sections...')
+    
+    // Render PDF sections in correct order
+    console.log('1. Rendering header...')
     await renderHeader(pdfDoc, page, drawText, invoice as InvoiceData, companySettings as CompanySettings)
+    
+    console.log('2. Rendering bill section (client details)...')
     renderBillSection(page, drawText, invoice as InvoiceData, companySettings as CompanySettings)
+    
+    console.log('3. Rendering items and totals...')
     renderItemsAndTotals(page, drawText, invoice as InvoiceData, lineItems as LineItem[])
+    
+    console.log('4. Rendering payment section...')
     await renderPayment(pdfDoc, page, drawText, companySettings as CompanySettings)
+    
+    console.log('5. Rendering footer...')
     await renderFooter(pdfDoc, page, drawText, invoice as InvoiceData, companySettings as CompanySettings)
     
     // Generate PDF bytes
@@ -212,7 +229,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('PDF generated successfully with refactored layout')
+    console.log('PDF generated successfully with all sections rendered')
     
     return new Response(
       JSON.stringify({ pdf_url: pdfUrl }),
