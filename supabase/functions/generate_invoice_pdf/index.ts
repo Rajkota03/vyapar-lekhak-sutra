@@ -30,7 +30,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { invoice_id, preview = false } = await req.json()
+    const { invoice_id, preview = false, force_regenerate = false } = await req.json()
     
     if (!invoice_id) {
       return new Response(
@@ -42,7 +42,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Generating PDF for invoice:', invoice_id, 'Preview mode:', preview)
+    console.log('Generating PDF for invoice:', invoice_id, 'Preview mode:', preview, 'Force regenerate:', force_regenerate)
 
     // Fetch invoice with related data
     const { data: invoice, error: invoiceError } = await supabase
@@ -93,6 +93,51 @@ serve(async (req) => {
       )
     }
 
+    // Check if we need to regenerate PDF due to settings changes
+    let shouldRegenerate = force_regenerate || preview
+    
+    if (!shouldRegenerate && !preview) {
+      // Check if PDF exists and if company settings have been updated after PDF was generated
+      const filePath = `company_${invoice.company_id}/${invoice.invoice_code}.pdf`
+      
+      try {
+        const { data: existingFile } = await supabase.storage
+          .from('invoices')
+          .list(`company_${invoice.company_id}`, {
+            search: `${invoice.invoice_code}.pdf`
+          })
+        
+        if (existingFile && existingFile.length > 0) {
+          const pdfCreatedAt = new Date(existingFile[0].created_at)
+          const settingsUpdatedAt = companySettings?.updated_at ? new Date(companySettings.updated_at) : new Date(0)
+          
+          // Regenerate if settings were updated after PDF was created
+          if (settingsUpdatedAt > pdfCreatedAt) {
+            console.log('Company settings updated after PDF creation, regenerating...')
+            shouldRegenerate = true
+          } else {
+            console.log('PDF exists and is up to date, using existing version')
+            const { data } = supabase.storage
+              .from('invoices')
+              .getPublicUrl(filePath)
+            
+            return new Response(
+              JSON.stringify({ pdf_url: data.publicUrl }),
+              { 
+                status: 200, 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+              }
+            )
+          }
+        } else {
+          shouldRegenerate = true
+        }
+      } catch (error) {
+        console.log('Error checking existing PDF, will regenerate:', error)
+        shouldRegenerate = true
+      }
+    }
+
     // Create PDF using pdf-lib
     const pdfDoc = await PDFDocument.create()
     pdfDoc.registerFontkit(fontkit)
@@ -139,10 +184,12 @@ serve(async (req) => {
     // ===== HEADER BAND =====
     let headerY = positions.topOfHeader + BANDS.header - 20
     
-    // Logo positioning with proper scaling
+    // Logo positioning with proper scaling - only if logo_url exists
     const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
     const logoScale = Math.min(Number(companySettings?.logo_scale || 0.25), 1.0)
     const maxLogoSize = BANDS.header - 20
+    
+    console.log('Logo URL:', logoUrl, 'Logo scale:', logoScale)
     
     if (logoUrl) {
       try {
@@ -177,8 +224,10 @@ serve(async (req) => {
       } catch (logoError) {
         console.warn('Failed to embed logo:', logoError)
       }
+    } else {
+      console.log('No logo URL found, skipping logo embedding')
     }
-    
+
     // Company info on the right side of header
     const rightX = PAGE.width - PAGE.margin - 200
     let rightY = headerY
@@ -428,7 +477,7 @@ serve(async (req) => {
     const pdfBytes = await pdfDoc.save()
     console.log('PDF generated, size:', pdfBytes.length, 'bytes')
     
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage with force overwrite
     const filePath = `company_${invoice.company_id}/${invoice.invoice_code}.pdf`
     console.log('Uploading PDF to storage with path:', filePath)
     

@@ -12,9 +12,10 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
       description: "Please wait while we generate your invoice PDF...",
     });
     
+    // Force regeneration to ensure latest logo settings are applied
     const { data, error } = await supabase.functions.invoke(
-      'get_or_generate_pdf',
-      { body: { invoice_id: invoiceId } }
+      'generate_invoice_pdf',
+      { body: { invoice_id: invoiceId, force_regenerate: true } }
     );
     
     if (error) {

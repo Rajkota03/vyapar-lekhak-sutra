@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -104,7 +103,7 @@ const InvoiceEdit = () => {
   // Generate invoice code for display
   const invoiceCode = existingInvoice?.invoice_code || "Will be generated on save";
 
-  // Handle preview with better error handling
+  // Handle preview with force regeneration
   const handlePreview = async () => {
     if (!existingInvoice?.id) {
       toast({
@@ -123,7 +122,8 @@ const InvoiceEdit = () => {
       const { data, error } = await supabase.functions.invoke('generate_invoice_pdf', {
         body: { 
           invoice_id: existingInvoice.id, 
-          preview: true 
+          preview: true,
+          force_regenerate: true  // Force regeneration for preview
         }
       });
       
