@@ -16,6 +16,16 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
   const maxRows = 3;
   const displayLines = lines?.slice(0, maxRows) || [];
 
+  // Calculate column positions to match the PDF layout
+  const billToContentInset = 25; // Match the 25px inset from Bill To section
+  const availableWidth = PAGE.inner - billToContentInset;
+  const grid = [0.45, 0.15, 0.15, 0.25]; // equipment / pkg / qty / amount
+  const colX = grid.reduce<number[]>((arr, f, i) => {
+    arr.push(billToContentInset + availableWidth * grid.slice(0, i).reduce((a, b) => a + b, 0));
+    return arr;
+  }, []);
+  const colW = grid.map(f => f * availableWidth);
+
   return (
     <div 
       className="absolute"
@@ -89,26 +99,27 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           ))}
         </div>
 
-        {/* Totals Section - Positioned exactly under the Amount column */}
+        {/* Totals Section - Positioned exactly within the Amount column boundaries */}
         <div style={{ 
           marginTop: '20px',
           position: 'relative',
           width: '100%'
         }}>
-          {/* Container positioned to align with Amount column */}
+          {/* Container positioned to align exactly with Amount column */}
           <div style={{
             position: 'absolute',
-            right: '0px', // Align to the right edge like the Amount column
-            width: '23%', // Same width as Amount column
-            paddingRight: '8px' // Match the table padding
+            left: `${colX[3] - billToContentInset}px`, // Start at Amount column position
+            width: `${colW[3]}px`, // Exact width of Amount column
+            paddingLeft: '8px',
+            paddingRight: '8px'
           }}>
             <div className="space-y-4">
               {/* Subtotal */}
               <div className="flex justify-between py-1">
                 <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  Subtotal
+                  subtotal
                 </span>
-                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                   {formatCurrency(Number(invoice?.subtotal || 214500))}
                 </span>
               </div>
@@ -119,7 +130,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     CGST ({invoice?.cgst_pct || 9}%)
                   </span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     {formatCurrency(Number(invoice?.cgst || 19305))}
                   </span>
                 </div>
@@ -130,7 +141,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     SGST ({invoice?.sgst_pct || 9}%)
                   </span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     {formatCurrency(Number(invoice?.sgst || 19305))}
                   </span>
                 </div>
@@ -141,23 +152,30 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     IGST ({invoice?.igst_pct || 18}%)
                   </span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     {formatCurrency(Number(invoice?.igst || 38610))}
                   </span>
                 </div>
               )}
               
-              {/* Grand Total with light background */}
-              <div 
-                className="flex justify-between py-3 px-3 font-bold rounded mt-3"
-                style={{
-                  backgroundColor: rgbToCSS(COLORS.background.light),
-                  fontSize: `${FONTS.medium}px`,
-                  color: rgbToCSS(COLORS.text.primary)
-                }}
-              >
-                <span>GRAND TOTAL</span>
-                <span style={{ marginLeft: '20px' }}>{formatCurrency(Number(invoice?.total || 253110))}</span>
+              {/* Grand Total with separator line and proper styling */}
+              <div style={{ marginTop: '8px' }}>
+                {/* Separator line */}
+                <div style={{
+                  height: '0.5px',
+                  backgroundColor: rgbToCSS(COLORS.lines.medium),
+                  marginBottom: '12px'
+                }} />
+                
+                {/* Grand Total */}
+                <div className="flex justify-between py-1 font-bold">
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>
+                    GRAND TOTAL
+                  </span>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>
+                    {formatCurrency(Number(invoice?.total || 253110))}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

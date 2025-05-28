@@ -52,7 +52,7 @@ export function renderItemsAndTotals(
 
   y -= 20; // gap before totals
 
-  /* C. Totals rows as part of the same grid */
+  /* C. Totals rows positioned within the QTY and AMOUNT columns only */
   const totalsRows: [string, number][] = [
     ['subtotal', inv.subtotal]
   ];
@@ -67,17 +67,17 @@ export function renderItemsAndTotals(
 
   let yTot = y;
   totalsRows.forEach(([lbl, val]) => {
-    // Label in Qty column (colX[2])
+    // Label starts at QTY column (colX[2])
     drawText(lbl, colX[2], yTot, { size: FONTS.base });
-    // Value right-aligned in Amount column
+    // Value right-aligned within Amount column boundaries
     drawText(fm(val), colX[3] + colW[3], yTot,
       { size: FONTS.base }, { textAlign: 'right' });
     yTot -= 16;
   });
 
-  /* D. GRAND TOTAL with separator line */
+  /* D. GRAND TOTAL with separator line - contained within QTY and AMOUNT columns */
   yTot -= 8;
-  // Thin separator rule from Qty column to right edge of Amount column
+  // Thin separator rule from QTY column start to right edge of Amount column
   page.drawLine({
     start: { x: colX[2], y: yTot },
     end:   { x: colX[3] + colW[3], y: yTot },
@@ -86,7 +86,7 @@ export function renderItemsAndTotals(
   });
   yTot -= 12;
   
-  // GRAND TOTAL label and value
+  // GRAND TOTAL label and value - positioned same as other totals
   drawText('GRAND TOTAL', colX[2], yTot, 
     { size: FONTS.medium, bold: true });
   drawText(fm(inv.total), colX[3] + colW[3], yTot,
