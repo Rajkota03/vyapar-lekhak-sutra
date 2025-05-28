@@ -1,8 +1,6 @@
 
-/*  renderTotalsSection.ts
- *  – widened totals column (220 pt)
- *  – grey GRAND TOTAL bar fills full width
- *  – consistent 12 pt inner padding
+/*  footerRenderer.ts
+ *  – renders the footer section of the invoice
  */
 
 import {
@@ -26,7 +24,8 @@ function formatMoney(amount: number): string {
   }).format(amount);
 }
 
-export function renderTotalsSection(
+export async function renderFooter(
+  pdfDoc: any,
   page: any,
   drawText: (
     text: string,
