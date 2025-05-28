@@ -122,7 +122,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 <span style={{ 
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`,
-                  paddingLeft: '40px' // Move values to the left
+                  paddingLeft: '80px' // Move values further to the left
                 }}>
                   {formatCurrency(Number(invoice?.subtotal || 214500))}
                 </span>
@@ -137,7 +137,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ 
                     color: rgbToCSS(COLORS.text.primary), 
                     fontSize: `${FONTS.base}px`,
-                    paddingLeft: '40px' // Move values to the left
+                    paddingLeft: '80px' // Move values further to the left
                   }}>
                     {formatCurrency(Number(invoice?.cgst || 19305))}
                   </span>
@@ -152,7 +152,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ 
                     color: rgbToCSS(COLORS.text.primary), 
                     fontSize: `${FONTS.base}px`,
-                    paddingLeft: '40px' // Move values to the left
+                    paddingLeft: '80px' // Move values further to the left
                   }}>
                     {formatCurrency(Number(invoice?.sgst || 19305))}
                   </span>
@@ -167,7 +167,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ 
                     color: rgbToCSS(COLORS.text.primary), 
                     fontSize: `${FONTS.base}px`,
-                    paddingLeft: '40px' // Move values to the left
+                    paddingLeft: '80px' // Move values further to the left
                   }}>
                     {formatCurrency(Number(invoice?.igst || 38610))}
                   </span>
@@ -191,7 +191,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ 
                     color: rgbToCSS(COLORS.text.primary), 
                     fontSize: `${FONTS.medium}px`,
-                    paddingLeft: '40px' // Move values to the left
+                    paddingLeft: '80px' // Move values further to the left
                   }}>
                     {formatCurrency(Number(invoice?.total || 253110))}
                   </span>
