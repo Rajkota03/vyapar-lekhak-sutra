@@ -22,8 +22,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
       style={{
         ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
         bottom: `${positions.bottomOfTable}px`,
-        left: `${PAGE.margin}px`, // Align with left margin like Bill To section
-        width: `${PAGE.inner}px`, // Use full inner width
+        left: `${PAGE.margin + 25}px`, // Align with Bill To content (25px inset)
+        width: `${PAGE.inner - 25}px`, // Adjust width to account for left inset
         overflow: 'hidden'
       }}
     >

@@ -16,16 +16,18 @@ export function renderItemsAndTotals(
   items: LineItem[],
 ) {
   const pos = getBandPositions();
-  // Add spacing between Bill To and Items sections, align with left margin
+  // Add spacing between Bill To and Items sections, align with Bill To content
   let y = pos.topOfItems - 30; // Added 30pt spacing
 
-  /* A. Column geometry - unified grid for items and totals, starting from left margin */
+  /* A. Column geometry - unified grid for items and totals, starting with Bill To content inset */
+  const billToContentInset = 20; // Match the 20pt inset from Bill To section
+  const availableWidth = PAGE.inner - billToContentInset; // Reduce available width by inset
   const grid = [0.45, 0.15, 0.15, 0.25];   // equipment / pkg / qty / amount
   const colX = grid.reduce<number[]>((arr, f, i) => {
-    arr.push(PAGE.margin + PAGE.inner * grid.slice(0, i).reduce((a, b) => a + b, 0));
+    arr.push(PAGE.margin + billToContentInset + availableWidth * grid.slice(0, i).reduce((a, b) => a + b, 0));
     return arr;
   }, []);
-  const colW = grid.map(f => f * PAGE.inner);
+  const colW = grid.map(f => f * availableWidth);
 
   /* header - with capitalized column names */
   ['EQUIPMENT', 'PKG', 'QTY', 'AMOUNT'].forEach((h, i) => {
