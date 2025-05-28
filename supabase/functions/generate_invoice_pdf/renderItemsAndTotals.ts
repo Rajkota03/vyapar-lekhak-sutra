@@ -1,4 +1,3 @@
-
 import {
   PAGE,
   TABLE,
@@ -10,15 +9,14 @@ import { drawRoundedRect } from './pdfUtils.ts';
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
 
-// Helper function to format money values
-function formatMoney(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
+/* Money formatter */
+const fm = (v: number) =>
+  new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
-}
+  }).format(v);
 
 export function renderItemsAndTotals(
   page: any,
@@ -26,20 +24,20 @@ export function renderItemsAndTotals(
     text: string,
     x: number,
     y: number,
-    options?: DrawTextOptions,
+    opts?: DrawTextOptions,
     extra?: any,
   ) => void,
   invoice: InvoiceData,
-  lineItems: LineItem[],
+  lines: LineItem[],
 ) {
-  const positions = getBandPositions();
-  let cursor = positions.topOfItems;
-  const startY = cursor;
+  const pos = getBandPositions();
+  let cursor = pos.topOfItems;          // first row y
+  const startY = cursor;               // remember top for white bg
 
-  /* ─────────── TABLE HEADER ─────────── */
-  const tableWidth = PAGE.inner - 220; // leave 220pt for totals
-  const colWidths = TABLE.cols.map(col => col * tableWidth);
-  
+  /* -------- table header -------- */
+  const tableWidth = PAGE.inner - 220;
+  const colW = TABLE.cols.map((f) => f * tableWidth);
+
   drawRoundedRect(
     page,
     PAGE.margin,
@@ -49,125 +47,77 @@ export function renderItemsAndTotals(
     COLORS.background.medium,
   );
 
-  const headers = ['Description', 'Qty', 'Rate', 'Amount'];
-  let xPos = PAGE.margin;
-  
-  headers.forEach((header, i) => {
-    drawText(header, xPos + TABLE.padding, cursor - 16, {
+  ['Description', 'Qty', 'Rate', 'Amount'].forEach((h, i) => {
+    let x = PAGE.margin + colW.slice(0, i).reduce((a, b) => a + b, 0) + TABLE.padding;
+    drawText(h, x, cursor - 16, {
       size: FONTS.base,
       bold: true,
       color: COLORS.text.primary,
     });
-    xPos += colWidths[i];
   });
-
   cursor -= TABLE.headerH + 4;
 
-  /* ─────────── TABLE ROWS ─────────── */
-  lineItems.forEach((item) => {
-    xPos = PAGE.margin;
-    
-    // Description
-    drawText(item.description || '', xPos + TABLE.padding, cursor, {
-      size: FONTS.base,
-      color: COLORS.text.primary,
-    });
-    xPos += colWidths[0];
+  /* -------- table rows -------- */
+  lines.forEach((l) => {
+    let x = PAGE.margin;
 
-    // Quantity
-    drawText(String(item.qty || 1), xPos + TABLE.padding, cursor, {
-      size: FONTS.base,
-      color: COLORS.text.primary,
-    });
-    xPos += colWidths[1];
+    drawText(l.description, x + TABLE.padding, cursor, { size: FONTS.base });          // desc
+    x += colW[0];
 
-    // Rate
-    drawText(formatMoney(item.unit_price || 0), xPos + TABLE.padding, cursor, {
-      size: FONTS.base,
-      color: COLORS.text.primary,
-    });
-    xPos += colWidths[2];
+    drawText(String(l.qty ?? 1), x + TABLE.padding, cursor, { size: FONTS.base });     // qty
+    x += colW[1];
 
-    // Amount
-    drawText(formatMoney(item.amount || 0), xPos + TABLE.padding, cursor, {
-      size: FONTS.base,
-      color: COLORS.text.primary,
-    });
+    drawText(fm(l.unit_price), x + TABLE.padding, cursor, { size: FONTS.base });       // rate
+    x += colW[2];
 
+    drawText(fm(l.amount), x + TABLE.padding, cursor, { size: FONTS.base });           // amount
     cursor -= TABLE.rowH;
   });
 
-  // White background behind items+totals
-  const blockHeight = startY - cursor + 120; // rows + totals space
-  drawRoundedRect(
-    page,
-    PAGE.margin,
-    cursor - 6,
-    PAGE.inner,
-    blockHeight,
-    COLORS.background.light,
-  );
+  /* -------- totals -------- */
+  cursor -= 14; // gap before totals
 
-  // 14 pt gap before totals
-  cursor -= 14;
-
-  /* ─────────── TOTALS SECTION ─────────── */
-  const totBox = {
-    width: 220,
-    x: PAGE.width - PAGE.margin - 220,
-    y: cursor - 120, // Reserve space for totals
-  };
-
-  const totalsStartY = cursor;
-  cursor = totalsStartY - 20;
-
-  const rows: [string, string][] = [
-    ['Subtotal', formatMoney(invoice.subtotal)],
-    [`CGST (${invoice.cgst_pct} %)`, formatMoney(invoice.cgst)],
-    [`SGST (${invoice.sgst_pct} %)`, formatMoney(invoice.sgst)],
+  const tot = { x: PAGE.width - PAGE.margin - 220, w: 220 };
+  const rows: [string, number][] = [
+    ['Subtotal', invoice.subtotal],
+    [`CGST (${invoice.cgst_pct} %)`, invoice.cgst],
+    [`SGST (${invoice.sgst_pct} %)`, invoice.sgst],
   ];
-  if (invoice.use_igst) {
-    rows.push([`IGST (${invoice.igst_pct} %)`, formatMoney(invoice.igst)]);
-  }
+  if (invoice.use_igst) rows.push([`IGST (${invoice.igst_pct} %)`, invoice.igst]);
 
-  /* Regular totals rows */
-  rows.forEach(([label, val]) => {
-    drawText(label, totBox.x + 12, cursor, {
-      size: FONTS.base,
-      color: COLORS.text.primary,
-    });
-    drawText(
-      val,
-      totBox.x + totBox.width - 12,
-      cursor,
-      { size: FONTS.base, color: COLORS.text.primary },
-      { textAlign: 'right' },
-    );
+  rows.forEach(([lbl, val]) => {
+    drawText(lbl, tot.x + 12, cursor, { size: FONTS.base });
+    drawText(fm(val), tot.x + tot.w - 12, cursor, { size: FONTS.base }, { textAlign: 'right' });
     cursor -= 14;
   });
 
-  /* ─────────── GRAND TOTAL GREY BAR ─────────── */
-  const barHeight = 22;
+  /* -------- grand-total bar -------- */
+  const barH = 22;
   const barY = cursor - 4;
-  
   page.drawRectangle({
-    x: totBox.x,
+    x: tot.x,
     y: barY,
-    width: totBox.width,
-    height: barHeight,
-    color: rgb(COLORS.background.medium[0], COLORS.background.medium[1], COLORS.background.medium[2]),
+    width: tot.w,
+    height: barH,
+    color: rgb(...COLORS.background.medium),
   });
-
-  drawText('GRAND TOTAL', totBox.x + 12, barY + 6, {
-    size: FONTS.medium,
-    bold: true,
-    color: COLORS.text.primary,
-  });
+  drawText('GRAND TOTAL', tot.x + 12, barY + 6, { size: FONTS.medium, bold: true });
   drawText(
-    formatMoney(invoice.total),
-    totBox.x + totBox.width - 12,
+    fm(invoice.total),
+    tot.x + tot.w - 12,
     barY + 6,
-    { size: FONTS.medium, bold: true, color: COLORS.text.primary },
+    { size: FONTS.medium, bold: true },
     { textAlign: 'right' },
+  );
+
+  /* -------- white background just tall enough -------- */
+  const blockH = startY - (barY - 6) + barH;   // header→grand total bottom
+  drawRoundedRect(
+    page,
+    PAGE.margin,
+    barY - 10,               // extend 10 pt below bar
+    PAGE.inner,
+    blockH,
+    COLORS.background.light,
   );
 }
