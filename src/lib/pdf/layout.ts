@@ -1,3 +1,4 @@
+
 /**
  * Shared layout constants for invoice PDF generation
  * 
@@ -20,39 +21,12 @@ export const BANDS = {
   footer: 100,            // Footer space
 };
 
-export const COMPANY_BLOCK = {
-  rightColumnWidth: 200,  // width reserved for meta in header
-  logoMax: 120,           // px before scaling
-  logoScale: 0.25,        // default scale for logo
-  logoPosition: {
-    x: 40,                // Left margin
-    y: 40,                // Top margin from top of page
-  },
-  companyNamePosition: {
-    x: 40,                // Left margin
-    y: 180,               // Position below logo
-  }
-};
-
-export const BILL_BAR = {
-  height: 160,
-  bgGray: 0.95,           // for pdf-lib rgb values (0-1) - slightly lighter gray
-  padding: 20,
-  detailsWidth: 120,      // Width for invoice details (number, date, etc.)
-  detailsLabelWidth: 100, // Width for invoice detail labels
-  detailsValueWidth: 100, // Width for invoice detail values
-};
-
 export const TABLE = {
-  startY: 430,
   rowH: 18,               // Increased row height for better readability
   headerH: 24,            // Increased header height
   cols: [0.45, 0.12, 0.20, 0.23], // Adjusted column proportions
-  headerBgColor: 1,       // White for header
-  altRowBgColor: 0.98,    // Alternate row background color
   borderColor: 0.85,      // Slightly darker borders
   padding: 6,             // Cell padding
-  lineSpacing: 5,         // Space between text and horizontal lines
 };
 
 export const FONTS = {
@@ -99,8 +73,6 @@ export const SPACING = {
   lineHeight: 14,           // Increased line height
   itemSpacing: 8,           // Spacing between items
   sectionGap: 20,           // Gap between sections
-  afterLine: 10,            // Space after horizontal lines
-  beforeLine: 5,            // Space before horizontal lines
 };
 
 // Calculate band positions with improved spacing
@@ -120,49 +92,6 @@ export const getBandPositions = () => {
   };
 };
 
-// Positions for various sections
-export const POSITIONS = {
-  header: {
-    startY: PAGE.height - PAGE.margin,
-  },
-  billTo: {
-    x: PAGE.margin,
-    y: PAGE.height - PAGE.margin - BANDS.header - SPACING.sectionGap - BILL_BAR.height,
-    width: PAGE.width - (PAGE.margin * 2),
-    labelY: 742,
-    contentStartY: 732,
-    lineSpacing: 12,
-  },
-  table: {
-    headerY: TABLE.startY - 13,
-    // Adjusted column positions for better alignment
-    colPositions: [10, 320, 400, 480], // X positions for each column
-    colWidths: [300, 60, 80, 80],      // Widths for each column
-  },
-  totals: {
-    x: 200,
-    lineSpacing: 15,
-    width: 120,           // Width for totals labels
-    valueWidth: 80,       // Width for totals values
-    rightAlign: 20,       // Right margin for right-aligned text
-  },
-  footer: {
-    startY: 120,
-    linePosition: 70,     // Y position for signature line
-    datePosition: 50,     // Y position for date under signature
-  },
-  grandTotal: {
-    width: 200,
-    height: 40,
-    bgColor: [0.95, 0.95, 0.95], // Light gray
-    padding: 10,          // Padding inside grand total box
-  },
-  payment: {
-    lineHeight: 12,       // Line height for payment instructions
-    maxWidth: 300,        // Maximum width for payment instruction lines
-  }
-};
-
 // Helper functions for consistent formatting
 export const formatCurrency = (amount: number) => {
   return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
@@ -174,19 +103,4 @@ export const formatDate = (dateString: string) => {
     month: 'short', 
     year: 'numeric' 
   });
-};
-
-// Text overflow handling
-export const TEXT_HANDLING = {
-  maxInvoiceCodeLength: 15,    // Maximum length for invoice code before truncating
-  maxClientNameLength: 30,     // Maximum length for client name before truncating
-  maxItemDescLength: 40,       // Maximum length for item description before truncating
-  ellipsis: '...',             // Characters to use for truncation
-  
-  // Helper function to truncate text with ellipsis if needed
-  truncateWithEllipsis: (text: string, maxLength: number): string => {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength - 3) + '...';
-  }
 };
