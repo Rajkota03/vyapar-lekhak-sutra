@@ -74,11 +74,11 @@ export function renderBillSection(
     })
   }
   
-  // Invoice details section - properly positioned with better spacing and text wrapping
+  // Invoice details section - FIXED: increased width and proper text wrapping
   const detailsBox = {
-    x: PAGE.width - PAGE.margin - 150,
+    x: PAGE.width - PAGE.margin - 200, // Increased from 150 to 200
     y: positions.topOfBill + 20,
-    width: 130,
+    width: 180, // Increased from 130 to 180
     height: 60
   }
   
@@ -102,10 +102,13 @@ export function renderBillSection(
   ]
   
   // Calculate available width for text (accounting for padding and label space)
-  const labelWidth = 45  // Space reserved for labels
+  const labelWidth = 50  // Space reserved for labels
   const valueWidth = detailsBox.width - 20 - labelWidth  // Available width for values (minus padding)
   
-  invoiceDetails.forEach(detail => {
+  console.log('Details box dimensions:', detailsBox.width, 'x', detailsBox.height)
+  console.log('Value width available:', valueWidth)
+  
+  invoiceDetails.forEach((detail, index) => {
     if (detailsY > detailsBox.y + 10) {
       // Draw label
       drawText(detail.label, detailsBox.x + 10, detailsY, { 
@@ -114,8 +117,9 @@ export function renderBillSection(
         color: COLORS.text.primary
       })
       
-      // Wrap or truncate value text to fit within available width
+      // TEST: Wrap text and log execution
       const wrappedLines = wrapLines(detail.value, valueWidth, FONTS.small)
+      console.log(`wrap test - ${detail.label} lines:`, wrappedLines.length, 'value:', detail.value)
       
       if (wrappedLines.length === 1) {
         // Single line - draw normally
@@ -124,8 +128,9 @@ export function renderBillSection(
           color: COLORS.text.primary
         }, { textAlign: 'right' })
       } else {
-        // Multiple lines - use first line and truncate if needed
+        // Multiple lines - draw first line and truncate if needed
         const truncatedValue = truncateText(detail.value, valueWidth, FONTS.small)
+        console.log(`truncated ${detail.label}:`, truncatedValue)
         drawText(truncatedValue, detailsBox.x + detailsBox.width - 10, detailsY, { 
           size: FONTS.small,
           color: COLORS.text.primary

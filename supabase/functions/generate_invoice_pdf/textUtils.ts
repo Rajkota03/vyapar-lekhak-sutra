@@ -28,6 +28,8 @@ export function measureText(text: string, fontSize: number): TextMeasurement {
  * Returns an array of lines that fit within the specified width
  */
 export function wrapLines(text: string, maxWidth: number, fontSize: number): string[] {
+  console.log('wrapLines called with:', { text, maxWidth, fontSize })
+  
   const words = text.split(' ');
   const lines: string[] = [];
   let currentLine = '';
@@ -54,6 +56,7 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
     lines.push(currentLine);
   }
   
+  console.log('wrapLines result:', lines)
   return lines;
 }
 
@@ -61,6 +64,8 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
  * Truncate text with ellipsis if it exceeds maximum width
  */
 export function truncateText(text: string, maxWidth: number, fontSize: number): string {
+  console.log('truncateText called with:', { text, maxWidth, fontSize })
+  
   const { width } = measureText(text, fontSize);
   
   if (width <= maxWidth) {
@@ -85,5 +90,6 @@ export function truncateText(text: string, maxWidth: number, fontSize: number): 
     }
   }
   
+  console.log('truncateText result:', result)
   return result;
 }
