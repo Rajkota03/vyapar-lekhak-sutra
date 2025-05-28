@@ -10,7 +10,9 @@ import {
   COLORS, 
   SIGNATURE, 
   SPACING, 
-  getBandPositions 
+  getBandPositions,
+  formatCurrency,
+  formatDate
 } from '@/lib/pdf/layout';
 
 interface InvoicePdfPreviewProps {
@@ -65,21 +67,13 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
   });
 
   const currentCompany = freshCompanyData || company;
-  const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   const logoUrl = companySettings?.logo_url || currentCompany?.logo_url;
   const logoScale = Math.min(Number(companySettings?.logo_scale || 0.25), 1.0);
-  const maxLogoSize = BANDS.header - 20;
+  const maxLogoSize = BANDS.header - 30;
 
   // Convert RGB array to CSS color
   const rgbToCSS = (rgb: number[]) => `rgb(${rgb[0] * 255}, ${rgb[1] * 255}, ${rgb[2] * 255})`;
   
-  // Format date
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  };
-
   // Get band positions
   const positions = getBandPositions();
 
@@ -110,7 +104,7 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
       >
         <div className="flex justify-between items-start h-full">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center" style={{ height: `${BANDS.header}px` }}>
             {logoUrl && (
               <img 
                 src={logoUrl} 
@@ -133,19 +127,19 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
           </div>
           
           {/* Company info */}
-          <div className="text-right" style={{ width: '200px' }}>
+          <div className="text-right" style={{ width: '220px' }}>
             <h1 
-              className="font-bold mb-2"
+              className="font-bold mb-3"
               style={{
                 fontSize: `${FONTS.h1}px`,
                 color: rgbToCSS(COLORS.text.primary)
               }}
             >
-              Invoice
+              INVOICE
             </h1>
             
             <h2 
-              className="font-bold mb-1"
+              className="font-bold mb-2"
               style={{
                 fontSize: `${FONTS.h2}px`,
                 color: rgbToCSS(COLORS.text.primary)
@@ -154,7 +148,7 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
               {currentCompany?.name || 'Square Blue Media'}
             </h2>
             
-            <div style={{ fontSize: `${FONTS.base}px`, color: rgbToCSS(COLORS.text.secondary) }}>
+            <div style={{ fontSize: `${FONTS.small}px`, color: rgbToCSS(COLORS.text.secondary), lineHeight: `${SPACING.lineHeight}px` }}>
               <p className="mb-1">H.NO. 8-3-224/11C/17.E-96,</p>
               <p className="mb-1">MADHURA NAGAR,</p>
               <p className="mb-1">HYDERABAD TELANGANA 500038</p>
@@ -167,22 +161,22 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
 
       {/* Bill Bar Band */}
       <div 
-        className="absolute"
+        className="absolute rounded"
         style={{
           top: `${positions.topOfBill}px`,
           left: `${PAGE.margin}px`,
           right: `${PAGE.margin}px`,
           height: `${BANDS.bill}px`,
           backgroundColor: rgbToCSS(COLORS.background.light),
-          padding: '20px'
+          padding: '25px'
         }}
       >
         <div className="flex justify-between h-full">
           <div>
             <p 
-              className="font-bold uppercase tracking-wide mb-2"
+              className="font-bold uppercase tracking-wide mb-3"
               style={{
-                fontSize: `${FONTS.base}px`,
+                fontSize: `${FONTS.medium}px`,
                 color: rgbToCSS(COLORS.text.muted)
               }}
             >
@@ -190,40 +184,46 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
             </p>
             
             <h3 
-              className="font-bold mb-1"
+              className="font-bold mb-2"
               style={{
-                fontSize: `${FONTS.medium}px`,
+                fontSize: `${FONTS.large}px`,
                 color: rgbToCSS(COLORS.text.primary)
               }}
             >
               {client?.name || 'SURESH PRODUCTIONS PVT LTD'}
             </h3>
             
-            <div style={{ fontSize: `${FONTS.base}px`, color: rgbToCSS(COLORS.text.secondary) }}>
+            <div style={{ fontSize: `${FONTS.base}px`, color: rgbToCSS(COLORS.text.secondary), lineHeight: `${SPACING.lineHeight}px` }}>
               <p className="mb-1">C/O RAMANAIDU STUDIOS, FILM NAGAR</p>
               <p className="mb-2">HYDERABAD TELANGANA 500096</p>
               <p>GSTIN : {client?.gstin || '36AADCS0841F1ZN'}</p>
             </div>
           </div>
           
-          <div>
-            <div className="space-y-2">
+          <div 
+            className="rounded px-4 py-3"
+            style={{
+              backgroundColor: rgbToCSS(COLORS.background.medium),
+              width: '160px'
+            }}
+          >
+            <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="font-bold mr-4" style={{ fontSize: `${FONTS.base}px` }}>Invoice #</span>
+                <span className="font-bold" style={{ fontSize: `${FONTS.base}px` }}>Invoice #</span>
                 <span style={{ fontSize: `${FONTS.base}px` }}>
                   {invoice?.invoice_code || invoice?.number || '25-26/02'}
                 </span>
               </div>
               
               <div className="flex justify-between">
-                <span className="font-bold mr-4" style={{ fontSize: `${FONTS.base}px` }}>Date</span>
+                <span className="font-bold" style={{ fontSize: `${FONTS.base}px` }}>Date</span>
                 <span style={{ fontSize: `${FONTS.base}px` }}>
                   {formatDate(invoice?.issue_date) || '23 Apr 2025'}
                 </span>
               </div>
               
               <div className="flex justify-between">
-                <span className="font-bold mr-4" style={{ fontSize: `${FONTS.base}px` }}>SAC/HSN CODE</span>
+                <span className="font-bold" style={{ fontSize: `${FONTS.base}px` }}>SAC/HSN</span>
                 <span style={{ fontSize: `${FONTS.base}px` }}>
                   {companySettings?.sac_code || '998387'}
                 </span>
@@ -237,7 +237,7 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
       <div 
         className="absolute"
         style={{
-          top: `${positions.topOfBill - 14}px`,
+          top: `${positions.topOfBill - SPACING.sectionGap}px`,
           left: `${PAGE.margin}px`,
           right: `${PAGE.margin}px`,
           bottom: `${positions.bottomOfTable}px`,
@@ -245,34 +245,44 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
         }}
       >
         {/* Table Header */}
-        <div className="grid grid-cols-12 gap-2 font-bold uppercase tracking-wide pb-2 border-b border-gray-300">
-          <div className="col-span-6" style={{ color: rgbToCSS(COLORS.text.primary) }}>EQUIPMENT</div>
-          <div className="col-span-1 text-center" style={{ color: rgbToCSS(COLORS.text.primary) }}>PKG</div>
-          <div className="col-span-2 text-right" style={{ color: rgbToCSS(COLORS.text.primary) }}>Rate</div>
-          <div className="col-span-3 text-right" style={{ color: rgbToCSS(COLORS.text.primary) }}>Amount</div>
+        <div 
+          className="rounded px-2 py-2 mb-2"
+          style={{
+            backgroundColor: rgbToCSS(COLORS.background.accent),
+            height: `${TABLE.headerH}px`,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <div className="grid grid-cols-12 gap-2 font-bold w-full">
+            <div className="col-span-5" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>EQUIPMENT</div>
+            <div className="col-span-1 text-center" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>PKG</div>
+            <div className="col-span-3 text-right" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>Rate</div>
+            <div className="col-span-3 text-right" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>Amount</div>
+          </div>
         </div>
 
         {/* Table Body */}
-        <div style={{ maxHeight: `${positions.topOfBill - 34 - positions.bottomOfTable}px`, overflow: 'hidden' }}>
+        <div style={{ maxHeight: `${positions.topOfBill - SPACING.sectionGap - TABLE.headerH - positions.bottomOfTable}px`, overflow: 'hidden' }}>
           {lines?.map((line, i) => (
-            <div key={i} className="border-b border-gray-200 py-2">
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-6">
-                  <div className="font-medium" style={{ color: rgbToCSS(COLORS.text.primary) }}>
+            <div 
+              key={i} 
+              className={`py-2 px-2 ${i % 2 === 1 ? 'rounded' : ''}`}
+              style={{
+                backgroundColor: i % 2 === 1 ? rgbToCSS([0.98, 0.98, 0.98]) : 'transparent',
+                minHeight: `${TABLE.rowH}px`,
+                borderBottom: i < lines.length - 1 ? `0.5px solid ${rgbToCSS(COLORS.lines.light)}` : 'none'
+              }}
+            >
+              <div className="grid grid-cols-12 gap-2 items-center">
+                <div className="col-span-5">
+                  <div style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     {line.description}
                   </div>
-                  {line.description.includes('ALEXA') && (
-                    <div 
-                      className="text-xs mt-1"
-                      style={{ color: rgbToCSS(COLORS.text.muted) }}
-                    >
-                      Dates : 17/04/25,19/04/25, 22/04/25
-                    </div>
-                  )}
                 </div>
-                <div className="col-span-1 text-center">{line.qty}</div>
-                <div className="col-span-2 text-right">{currency(Number(line.unit_price))}</div>
-                <div className="col-span-3 text-right">{currency(Number(line.amount))}</div>
+                <div className="col-span-1 text-center" style={{ fontSize: `${FONTS.base}px` }}>{line.qty}</div>
+                <div className="col-span-3 text-right" style={{ fontSize: `${FONTS.base}px` }}>{formatCurrency(Number(line.unit_price))}</div>
+                <div className="col-span-3 text-right" style={{ fontSize: `${FONTS.base}px` }}>{formatCurrency(Number(line.amount))}</div>
               </div>
             </div>
           ))}
@@ -293,72 +303,87 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
           {/* Payment Instructions */}
           <div>
             <p 
-              className="font-bold mb-3"
+              className="font-bold mb-4"
               style={{
-                fontSize: `${FONTS.medium}px`,
+                fontSize: `${FONTS.large}px`,
                 color: rgbToCSS(COLORS.text.primary)
               }}
             >
               Payment Instructions
             </p>
             
-            <p 
+            <div 
               style={{
                 fontSize: `${FONTS.small}px`,
-                color: rgbToCSS(COLORS.text.secondary)
+                color: rgbToCSS(COLORS.text.secondary),
+                lineHeight: `${SPACING.lineHeight}px`
               }}
             >
-              {companySettings?.payment_note || 
-                `SQUARE BLUE MEDIA, A/C NO. 50200048938831, HDFC BANK,
-                BRANCH: KALYAN NAGAR, HYDERABAD, IFSC: HDFC0004348,
-                PAN NO.FDBPK8518L`}
-            </p>
+              {companySettings?.payment_note ? (
+                companySettings.payment_note.split('\n').slice(0, 6).map((line: string, i: number) => (
+                  <p key={i} className="mb-1">{line.trim()}</p>
+                ))
+              ) : (
+                <>
+                  <p className="mb-1">SQUARE BLUE MEDIA, A/C NO. 50200048938831, HDFC BANK,</p>
+                  <p className="mb-1">BRANCH: KALYAN NAGAR, HYDERABAD, IFSC: HDFC0004348,</p>
+                  <p className="mb-1">PAN NO.FDBPK8518L</p>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Totals */}
           <div>
-            <div className="space-y-2">
-              <div className="flex justify-between py-1 border-b border-gray-200">
-                <span style={{ color: rgbToCSS(COLORS.text.primary) }}>Subtotal</span>
-                <span style={{ color: rgbToCSS(COLORS.text.primary) }}>{currency(Number(invoice?.subtotal || 214500))}</span>
+            <div 
+              className="rounded p-3 space-y-3"
+              style={{
+                backgroundColor: rgbToCSS(COLORS.background.light)
+              }}
+            >
+              <div className="flex justify-between py-1">
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>Subtotal</span>
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>{formatCurrency(Number(invoice?.subtotal || 214500))}</span>
               </div>
               
               {(!invoice?.use_igst && Number(invoice?.cgst_pct || 9) > 0) && (
-                <div className="flex justify-between py-1 border-b border-gray-200">
-                  <span style={{ color: rgbToCSS(COLORS.text.primary) }}>CGST ({invoice?.cgst_pct || 9}%)</span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary) }}>{currency(Number(invoice?.cgst || 19305))}</span>
+                <div className="flex justify-between py-1">
+                  <span style={{ color: rgbToCSS(COLORS.text.secondary), fontSize: `${FONTS.base}px` }}>CGST ({invoice?.cgst_pct || 9}%)</span>
+                  <span style={{ color: rgbToCSS(COLORS.text.secondary), fontSize: `${FONTS.base}px` }}>{formatCurrency(Number(invoice?.cgst || 19305))}</span>
                 </div>
               )}
               
               {(!invoice?.use_igst && Number(invoice?.sgst_pct || 9) > 0) && (
-                <div className="flex justify-between py-1 border-b border-gray-200">
-                  <span style={{ color: rgbToCSS(COLORS.text.primary) }}>SGST ({invoice?.sgst_pct || 9}%)</span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary) }}>{currency(Number(invoice?.sgst || 19305))}</span>
+                <div className="flex justify-between py-1">
+                  <span style={{ color: rgbToCSS(COLORS.text.secondary), fontSize: `${FONTS.base}px` }}>SGST ({invoice?.sgst_pct || 9}%)</span>
+                  <span style={{ color: rgbToCSS(COLORS.text.secondary), fontSize: `${FONTS.base}px` }}>{formatCurrency(Number(invoice?.sgst || 19305))}</span>
                 </div>
               )}
               
               {(invoice?.use_igst && Number(invoice?.igst_pct || 18) > 0) && (
-                <div className="flex justify-between py-1 border-b border-gray-200">
-                  <span style={{ color: rgbToCSS(COLORS.text.primary) }}>IGST ({invoice?.igst_pct || 18}%)</span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary) }}>{currency(Number(invoice?.igst || 38610))}</span>
+                <div className="flex justify-between py-1">
+                  <span style={{ color: rgbToCSS(COLORS.text.secondary), fontSize: `${FONTS.base}px` }}>IGST ({invoice?.igst_pct || 18}%)</span>
+                  <span style={{ color: rgbToCSS(COLORS.text.secondary), fontSize: `${FONTS.base}px` }}>{formatCurrency(Number(invoice?.igst || 38610))}</span>
                 </div>
               )}
               
-              <div className="flex justify-between py-1 border-b border-gray-200">
-                <span style={{ color: rgbToCSS(COLORS.text.primary) }}>Total</span>
-                <span style={{ color: rgbToCSS(COLORS.text.primary) }}>{currency(Number(invoice?.total || 253110))}</span>
+              <hr style={{ borderColor: rgbToCSS(COLORS.lines.medium) }} />
+              
+              <div className="flex justify-between py-1">
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>Total</span>
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>{formatCurrency(Number(invoice?.total || 253110))}</span>
               </div>
               
               <div 
-                className="flex justify-between py-3 px-3 font-bold"
+                className="flex justify-between py-3 px-3 font-bold rounded"
                 style={{
-                  backgroundColor: rgbToCSS(COLORS.background.light),
+                  backgroundColor: rgbToCSS(COLORS.background.accent),
                   fontSize: `${FONTS.large}px`,
                   color: rgbToCSS(COLORS.text.primary)
                 }}
               >
                 <span>GRAND TOTAL</span>
-                <span>{currency(Number(invoice?.total || 253110))}</span>
+                <span>{formatCurrency(Number(invoice?.total || 253110))}</span>
               </div>
             </div>
           </div>
@@ -373,14 +398,14 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
           left: `${PAGE.margin}px`,
           right: `${PAGE.margin}px`,
           height: `${BANDS.footer}px`,
-          borderTop: '1px solid #eee',
+          borderTop: `1px solid ${rgbToCSS(COLORS.lines.medium)}`,
           paddingTop: '20px'
         }}
       >
         <p 
           className="mb-2"
           style={{
-            fontSize: `${FONTS.base}px`,
+            fontSize: `${FONTS.medium}px`,
             color: rgbToCSS(COLORS.text.primary)
           }}
         >
@@ -390,7 +415,7 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
         <p 
           className="font-bold mb-4"
           style={{
-            fontSize: `${FONTS.base}px`,
+            fontSize: `${FONTS.medium}px`,
             color: rgbToCSS(COLORS.text.primary)
           }}
         >
@@ -415,7 +440,7 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
             
             <div 
               style={{
-                borderTop: `1px solid ${rgbToCSS(COLORS.text.primary)}`,
+                borderTop: `1px solid ${rgbToCSS(COLORS.lines.dark)}`,
                 width: `${SIGNATURE.lineWidth}px`,
                 marginBottom: '8px'
               }}
@@ -424,7 +449,7 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
             <p 
               style={{
                 fontSize: `${FONTS.small}px`,
-                color: rgbToCSS(COLORS.text.secondary)
+                color: rgbToCSS(COLORS.text.muted)
               }}
             >
               {formatDate(invoice?.issue_date) || '23 Apr 2025'}

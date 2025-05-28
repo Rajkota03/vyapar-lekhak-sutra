@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
@@ -10,7 +11,9 @@ import {
   COLORS, 
   SIGNATURE, 
   SPACING, 
-  getBandPositions 
+  getBandPositions,
+  formatCurrency,
+  formatDate
 } from './layout.ts'
 
 const corsHeaders = {
@@ -173,7 +176,7 @@ serve(async (req) => {
       unicodeFont = null
     }
     
-    // Helper function to draw text with Unicode support
+    // Helper function to draw text with Unicode support and better spacing
     const drawText = (text: string, x: number, y: number, options: any = {}) => {
       const useUnicodeFont = unicodeFont && text.includes('₹')
       const font = useUnicodeFont ? unicodeFont : (options.bold ? boldFont : fallbackFont)
@@ -185,7 +188,19 @@ serve(async (req) => {
         size: options.size || FONTS.base,
         font,
         color: options.color || rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2]),
+        lineHeight: options.lineHeight || SPACING.lineHeight,
         ...options
+      })
+    }
+    
+    // Helper function to draw a rounded rectangle
+    const drawRoundedRect = (x: number, y: number, width: number, height: number, color: number[], radius = 4) => {
+      page.drawRectangle({
+        x,
+        y,
+        width,
+        height,
+        color: rgb(color[0], color[1], color[2]),
       })
     }
     
@@ -193,16 +208,19 @@ serve(async (req) => {
     const positions = getBandPositions()
     
     // ===== HEADER BAND =====
-    let headerY = positions.topOfHeader + BANDS.header - 20
+    let headerY = positions.topOfHeader + BANDS.header - 25
     
-    // Logo positioning with proper scaling - only if logo_url exists
+    // Logo positioning with improved scaling and layout
     const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
     const logoScale = Math.min(Number(companySettings?.logo_scale || 0.25), 1.0)
-    const maxLogoSize = BANDS.header - 20
+    const maxLogoSize = BANDS.header - 30 // More space around logo
     
     console.log('Logo URL from settings:', companySettings?.logo_url)
     console.log('Logo URL from company:', invoice.companies?.logo_url) 
     console.log('Final logo URL:', logoUrl, 'Logo scale:', logoScale)
+    
+    let logoWidth = 0
+    let logoHeight = 0
     
     if (logoUrl) {
       try {
@@ -220,19 +238,19 @@ serve(async (req) => {
           }
           
           const originalDims = logo.size()
-          const scaledWidth = Math.min(originalDims.width * logoScale, maxLogoSize)
-          const scaledHeight = Math.min(originalDims.height * logoScale, maxLogoSize)
+          logoWidth = Math.min(originalDims.width * logoScale, maxLogoSize)
+          logoHeight = Math.min(originalDims.height * logoScale, maxLogoSize)
           
-          // Ensure logo fits within header band
-          const logoY = Math.max(positions.topOfHeader + 10, headerY - scaledHeight)
+          // Center logo vertically in header band
+          const logoY = positions.topOfHeader + (BANDS.header - logoHeight) / 2
           
           page.drawImage(logo, {
             x: PAGE.margin,
             y: logoY,
-            width: scaledWidth,
-            height: scaledHeight,
+            width: logoWidth,
+            height: logoHeight,
           })
-          console.log('Logo embedded with dimensions:', scaledWidth, 'x', scaledHeight)
+          console.log('Logo embedded with dimensions:', logoWidth, 'x', logoHeight)
         } else {
           console.log('Failed to fetch logo, HTTP status:', logoResponse.status)
         }
@@ -243,16 +261,27 @@ serve(async (req) => {
       console.log('No logo URL found, skipping logo embedding')
     }
 
-    // Company info on the right side of header
-    const rightX = PAGE.width - PAGE.margin - 200
-    let rightY = headerY
+    // Company info positioned better relative to logo
+    const companyInfoX = logoWidth > 0 ? PAGE.margin + logoWidth + 30 : PAGE.width - PAGE.margin - 220
+    let companyInfoY = headerY
     
-    drawText('Invoice', rightX, rightY, { size: FONTS.h1, bold: true })
-    rightY -= 18
+    // Invoice title
+    drawText('INVOICE', companyInfoX, companyInfoY, { 
+      size: FONTS.h1, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    companyInfoY -= 25
     
-    drawText(invoice.companies?.name || 'Square Blue Media', rightX, rightY, { size: FONTS.h2, bold: true })
-    rightY -= 14
+    // Company name
+    drawText(invoice.companies?.name || 'Square Blue Media', companyInfoX, companyInfoY, { 
+      size: FONTS.h2, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    companyInfoY -= 18
     
+    // Company address with better spacing
     const addressLines = [
       'H.NO. 8-3-224/11C/17.E-96,',
       'MADHURA NAGAR,',
@@ -260,132 +289,257 @@ serve(async (req) => {
     ]
     
     addressLines.forEach((line) => {
-      drawText(line, rightX, rightY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
-      rightY -= 12
+      drawText(line, companyInfoX, companyInfoY, { 
+        size: FONTS.small, 
+        color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+      })
+      companyInfoY -= SPACING.lineHeight
     })
     
-    drawText('squarebluemedia@gmail.com', rightX, rightY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
-    rightY -= 12
+    // Contact information
+    drawText('squarebluemedia@gmail.com', companyInfoX, companyInfoY, { 
+      size: FONTS.small, 
+      color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+    })
+    companyInfoY -= SPACING.lineHeight
     
     if (invoice.companies?.gstin) {
-      drawText(`GSTIN : ${invoice.companies.gstin}`, rightX, rightY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+      drawText(`GSTIN : ${invoice.companies.gstin}`, companyInfoX, companyInfoY, { 
+        size: FONTS.small, 
+        color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+      })
     }
     
     // ===== BILL BAR BAND =====
-    // Draw bill-to background rectangle
-    page.drawRectangle({
-      x: PAGE.margin,
-      y: positions.topOfBill,
-      width: PAGE.inner,
-      height: BANDS.bill,
-      color: rgb(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]),
+    // Enhanced bill-to background with rounded corners effect
+    drawRoundedRect(
+      PAGE.margin,
+      positions.topOfBill,
+      PAGE.inner,
+      BANDS.bill,
+      COLORS.background.light
+    )
+    
+    let billY = positions.topOfBill + BANDS.bill - 20
+    
+    // Bill To section with better typography
+    drawText('BILL TO', PAGE.margin + 25, billY, { 
+      size: FONTS.medium, 
+      bold: true, 
+      color: rgb(COLORS.text.muted[0], COLORS.text.muted[1], COLORS.text.muted[2]) 
     })
+    billY -= 20
     
-    let billY = positions.topOfBill + BANDS.bill - 15
+    drawText(invoice.clients?.name || 'Client Name', PAGE.margin + 25, billY, { 
+      size: FONTS.large, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    billY -= 16
     
-    // Bill To section
-    drawText('BILL TO', PAGE.margin + 20, billY, { size: FONTS.base, bold: true, color: rgb(COLORS.text.muted[0], COLORS.text.muted[1], COLORS.text.muted[2]) })
-    billY -= 15
-    
-    drawText(invoice.clients?.name || 'Client Name', PAGE.margin + 20, billY, { size: FONTS.medium, bold: true })
-    billY -= 12
-    
+    // Client address with improved formatting
     if (invoice.clients?.billing_address) {
-      const clientAddressLines = invoice.clients.billing_address.split('\n').slice(0, 2) // Limit to fit in band
+      const clientAddressLines = invoice.clients.billing_address.split('\n').slice(0, 3)
       clientAddressLines.forEach((line: string) => {
-        drawText(line, PAGE.margin + 20, billY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
-        billY -= 10
+        drawText(line.trim(), PAGE.margin + 25, billY, { 
+          size: FONTS.base, 
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+        })
+        billY -= SPACING.lineHeight
       })
     } else {
-      drawText('C/O RAMANAIDU STUDIOS, FILM NAGAR', PAGE.margin + 20, billY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
-      billY -= 10
-      drawText('HYDERABAD TELANGANA 500096', PAGE.margin + 20, billY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
-      billY -= 10
+      const defaultAddress = [
+        'C/O RAMANAIDU STUDIOS, FILM NAGAR',
+        'HYDERABAD TELANGANA 500096'
+      ]
+      defaultAddress.forEach((line) => {
+        drawText(line, PAGE.margin + 25, billY, { 
+          size: FONTS.base, 
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+        })
+        billY -= SPACING.lineHeight
+      })
     }
     
-    if (invoice.clients?.gstin && billY > positions.topOfBill + 10) {
-      drawText(`GSTIN : ${invoice.clients.gstin}`, PAGE.margin + 20, billY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+    if (invoice.clients?.gstin && billY > positions.topOfBill + 15) {
+      drawText(`GSTIN : ${invoice.clients.gstin}`, PAGE.margin + 25, billY, { 
+        size: FONTS.base, 
+        color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+      })
     }
     
-    // Invoice details on the right side of bill bar
-    let detailsY = positions.topOfBill + BANDS.bill - 15
-    const detailsX = PAGE.width - PAGE.margin - 150
+    // Invoice details box with improved layout
+    const detailsBoxX = PAGE.width - PAGE.margin - 180
+    const detailsBoxY = positions.topOfBill + 15
+    const detailsBoxWidth = 160
+    const detailsBoxHeight = BANDS.bill - 30
     
-    drawText('Invoice #', detailsX, detailsY, { size: FONTS.base, bold: true })
-    drawText(invoice.invoice_code || invoice.number || '25-26/02', detailsX + 60, detailsY, { size: FONTS.base })
-    detailsY -= 12
+    // Details background
+    drawRoundedRect(
+      detailsBoxX,
+      detailsBoxY,
+      detailsBoxWidth,
+      detailsBoxHeight,
+      COLORS.background.medium
+    )
     
-    drawText('Date', detailsX, detailsY, { size: FONTS.base, bold: true })
-    const formattedDate = new Date(invoice.issue_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    drawText(formattedDate, detailsX + 60, detailsY, { size: FONTS.base })
-    detailsY -= 12
+    let detailsY = positions.topOfBill + BANDS.bill - 25
+    const labelX = detailsBoxX + 15
+    const valueX = detailsBoxX + detailsBoxWidth - 15
     
-    drawText('SAC/HSN CODE', detailsX, detailsY, { size: FONTS.base, bold: true })
-    drawText(companySettings?.sac_code || '998387', detailsX + 60, detailsY, { size: FONTS.base })
+    // Invoice details with better alignment
+    const invoiceDetails = [
+      { label: 'Invoice #', value: invoice.invoice_code || invoice.number || '25-26/02' },
+      { label: 'Date', value: formatDate(invoice.issue_date) },
+      { label: 'SAC/HSN', value: companySettings?.sac_code || '998387' }
+    ]
+    
+    invoiceDetails.forEach(detail => {
+      drawText(detail.label, labelX, detailsY, { 
+        size: FONTS.base, 
+        bold: true,
+        color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+      })
+      drawText(detail.value, valueX, detailsY, { 
+        size: FONTS.base,
+        color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+      }, { textAlign: 'right' })
+      detailsY -= 18
+    })
     
     // ===== ITEMS TABLE BAND =====
-    let tableY = positions.topOfBill - 14
+    let tableY = positions.topOfBill - SPACING.sectionGap
     
-    // Table headers
+    // Enhanced table headers with better spacing
     const colWidths = TABLE.cols.map(ratio => PAGE.inner * ratio)
     let colX = PAGE.margin
     
-    drawText('EQUIPMENT', colX, tableY, { size: FONTS.base, bold: true })
-    colX += colWidths[0]
-    drawText('PKG', colX, tableY, { size: FONTS.base, bold: true })
-    colX += colWidths[1]
-    drawText('Rate', colX, tableY, { size: FONTS.base, bold: true })
-    colX += colWidths[2]
-    drawText('Amount', colX, tableY, { size: FONTS.base, bold: true })
+    // Table header background
+    drawRoundedRect(
+      PAGE.margin,
+      tableY - TABLE.headerH + 5,
+      PAGE.inner,
+      TABLE.headerH,
+      COLORS.background.accent
+    )
     
-    // Header underline
-    page.drawLine({
-      start: { x: PAGE.margin, y: tableY - 8 },
-      end: { x: PAGE.width - PAGE.margin, y: tableY - 8 },
-      thickness: 0.5,
-      color: rgb(0.8, 0.8, 0.8),
+    // Header text with improved positioning
+    const headerY = tableY - 8
+    drawText('EQUIPMENT', colX + TABLE.padding, headerY, { 
+      size: FONTS.medium, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    colX += colWidths[0]
+    
+    drawText('PKG', colX + TABLE.padding, headerY, { 
+      size: FONTS.medium, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    colX += colWidths[1]
+    
+    drawText('Rate', colX + TABLE.padding, headerY, { 
+      size: FONTS.medium, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    colX += colWidths[2]
+    
+    drawText('Amount', colX + TABLE.padding, headerY, { 
+      size: FONTS.medium, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
     })
     
-    tableY -= 20
+    tableY -= TABLE.headerH + SPACING.itemSpacing
     
-    // Table rows with overflow protection
-    const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+    // Table rows with improved formatting
     let rowIndex = 0
+    let isAlternateRow = false
     
     while (tableY - TABLE.rowH > positions.bottomOfTable && rowIndex < (lineItems?.length || 0)) {
       const item = lineItems![rowIndex]
       
-      colX = PAGE.margin
-      drawText(item.description, colX, tableY, { size: FONTS.base })
-      colX += colWidths[0]
-      drawText(item.qty.toString(), colX, tableY, { size: FONTS.base })
-      colX += colWidths[1]
-      drawText(currency(Number(item.unit_price)), colX, tableY, { size: FONTS.base })
-      colX += colWidths[2]
-      drawText(currency(Number(item.amount)), colX, tableY, { size: FONTS.base })
+      // Alternate row background
+      if (isAlternateRow) {
+        drawRoundedRect(
+          PAGE.margin,
+          tableY - TABLE.rowH + 2,
+          PAGE.inner,
+          TABLE.rowH,
+          [0.98, 0.98, 0.98]
+        )
+      }
       
-      // Row underline
-      page.drawLine({
-        start: { x: PAGE.margin, y: tableY - 6 },
-        end: { x: PAGE.width - PAGE.margin, y: tableY - 6 },
-        thickness: 0.3,
-        color: rgb(0.9, 0.9, 0.9),
+      colX = PAGE.margin
+      
+      // Equipment description
+      drawText(item.description, colX + TABLE.padding, tableY, { 
+        size: FONTS.base,
+        color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
       })
+      colX += colWidths[0]
+      
+      // Package quantity (centered)
+      const qtyX = colX + (colWidths[1] / 2) - 10
+      drawText(item.qty.toString(), qtyX, tableY, { 
+        size: FONTS.base,
+        color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+      })
+      colX += colWidths[1]
+      
+      // Rate (right-aligned)
+      const rateText = formatCurrency(Number(item.unit_price))
+      const rateX = colX + colWidths[2] - TABLE.padding - 40
+      drawText(rateText, rateX, tableY, { 
+        size: FONTS.base,
+        color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+      })
+      colX += colWidths[2]
+      
+      // Amount (right-aligned)
+      const amountText = formatCurrency(Number(item.amount))
+      const amountX = colX + colWidths[3] - TABLE.padding - 40
+      drawText(amountText, amountX, tableY, { 
+        size: FONTS.base,
+        color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+      })
+      
+      // Row separator line
+      if (rowIndex < (lineItems?.length || 0) - 1) {
+        page.drawLine({
+          start: { x: PAGE.margin + 10, y: tableY - TABLE.rowH + 2 },
+          end: { x: PAGE.width - PAGE.margin - 10, y: tableY - TABLE.rowH + 2 },
+          thickness: 0.5,
+          color: rgb(COLORS.lines.light[0], COLORS.lines.light[1], COLORS.lines.light[2]),
+        })
+      }
       
       tableY -= TABLE.rowH
       rowIndex++
+      isAlternateRow = !isAlternateRow
     }
     
     // ===== TOTALS BAND =====
-    // Payment instructions on the left
-    drawText('Payment Instructions', PAGE.margin, positions.yTotals, { size: FONTS.base, bold: true })
+    const totalsStartY = positions.yTotals + 10
     
-    let paymentY = positions.yTotals - 15
+    // Payment instructions with improved layout
+    drawText('Payment Instructions', PAGE.margin, totalsStartY, { 
+      size: FONTS.large, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    
+    let paymentY = totalsStartY - 20
     if (companySettings?.payment_note) {
-      const paymentLines = companySettings.payment_note.split('\n').slice(0, 5) // Limit lines to fit in band
+      const paymentLines = companySettings.payment_note.split('\n').slice(0, 6)
       paymentLines.forEach((line: string) => {
-        drawText(line, PAGE.margin, paymentY, { size: FONTS.small, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
-        paymentY -= 10
+        drawText(line.trim(), PAGE.margin, paymentY, { 
+          size: FONTS.small, 
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+        })
+        paymentY -= SPACING.lineHeight
       })
     } else {
       const defaultPayment = [
@@ -394,68 +548,134 @@ serve(async (req) => {
         'PAN NO.FDBPK8518L'
       ]
       defaultPayment.forEach((line) => {
-        drawText(line, PAGE.margin, paymentY, { size: FONTS.small, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
-        paymentY -= 10
+        drawText(line, PAGE.margin, paymentY, { 
+          size: FONTS.small, 
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) 
+        })
+        paymentY -= SPACING.lineHeight
       })
     }
     
-    // Totals on the right
+    // Enhanced totals section with better formatting
     const totalsX = PAGE.width - PAGE.margin - 200
-    let totalsY = positions.yTotals
+    let totalsY = totalsStartY
     
-    drawText('Subtotal', totalsX, totalsY, { size: FONTS.base })
-    drawText(currency(Number(invoice.subtotal || 0)), totalsX + 120, totalsY, { size: FONTS.base })
-    totalsY -= 15
+    // Totals background
+    drawRoundedRect(
+      totalsX - 10,
+      totalsY - 90,
+      210,
+      100,
+      COLORS.background.light
+    )
     
-    // Tax calculations
+    // Subtotal
+    drawText('Subtotal', totalsX, totalsY, { 
+      size: FONTS.base,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    drawText(formatCurrency(Number(invoice.subtotal || 0)), totalsX + 130, totalsY, { 
+      size: FONTS.base,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    totalsY -= 18
+    
+    // Tax calculations with improved spacing
     if (!invoice.use_igst) {
       if (Number(invoice.cgst_pct || 0) > 0) {
-        drawText(`CGST (${invoice.cgst_pct || 9}%)`, totalsX, totalsY, { size: FONTS.base })
-        drawText(currency(Number(invoice.cgst || 0)), totalsX + 120, totalsY, { size: FONTS.base })
-        totalsY -= 15
+        drawText(`CGST (${invoice.cgst_pct || 9}%)`, totalsX, totalsY, { 
+          size: FONTS.base,
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2])
+        })
+        drawText(formatCurrency(Number(invoice.cgst || 0)), totalsX + 130, totalsY, { 
+          size: FONTS.base,
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2])
+        })
+        totalsY -= 18
       }
       
       if (Number(invoice.sgst_pct || 0) > 0) {
-        drawText(`SGST (${invoice.sgst_pct || 9}%)`, totalsX, totalsY, { size: FONTS.base })
-        drawText(currency(Number(invoice.sgst || 0)), totalsX + 120, totalsY, { size: FONTS.base })
-        totalsY -= 15
+        drawText(`SGST (${invoice.sgst_pct || 9}%)`, totalsX, totalsY, { 
+          size: FONTS.base,
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2])
+        })
+        drawText(formatCurrency(Number(invoice.sgst || 0)), totalsX + 130, totalsY, { 
+          size: FONTS.base,
+          color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2])
+        })
+        totalsY -= 18
       }
     } else if (Number(invoice.igst_pct || 0) > 0) {
-      drawText(`IGST (${invoice.igst_pct || 18}%)`, totalsX, totalsY, { size: FONTS.base })
-      drawText(currency(Number(invoice.igst || 0)), totalsX + 120, totalsY, { size: FONTS.base })
-      totalsY -= 15
+      drawText(`IGST (${invoice.igst_pct || 18}%)`, totalsX, totalsY, { 
+        size: FONTS.base,
+        color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2])
+      })
+      drawText(formatCurrency(Number(invoice.igst || 0)), totalsX + 130, totalsY, { 
+        size: FONTS.base,
+        color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2])
+      })
+      totalsY -= 18
     }
     
-    drawText('Total', totalsX, totalsY, { size: FONTS.base })
-    drawText(currency(Number(invoice.total || 0)), totalsX + 120, totalsY, { size: FONTS.base })
-    totalsY -= 20
-    
-    // Grand Total with background
-    page.drawRectangle({
-      x: totalsX - 10,
-      y: totalsY - 5,
-      width: 200,
-      height: 20,
-      color: rgb(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]),
+    // Subtotal line
+    page.drawLine({
+      start: { x: totalsX, y: totalsY + 5 },
+      end: { x: totalsX + 180, y: totalsY + 5 },
+      thickness: 0.5,
+      color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
     })
     
-    drawText('GRAND TOTAL', totalsX, totalsY, { size: FONTS.large, bold: true })
-    drawText(currency(Number(invoice.total || 0)), totalsX + 120, totalsY, { size: FONTS.large, bold: true })
+    drawText('Total', totalsX, totalsY, { 
+      size: FONTS.base,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    drawText(formatCurrency(Number(invoice.total || 0)), totalsX + 130, totalsY, { 
+      size: FONTS.base,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    totalsY -= 25
+    
+    // Grand Total with enhanced styling
+    drawRoundedRect(
+      totalsX - 5,
+      totalsY - 5,
+      190,
+      25,
+      COLORS.background.accent
+    )
+    
+    drawText('GRAND TOTAL', totalsX, totalsY, { 
+      size: FONTS.large, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    drawText(formatCurrency(Number(invoice.total || 0)), totalsX + 130, totalsY, { 
+      size: FONTS.large, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
     
     // ===== FOOTER BAND =====
-    // Horizontal rule
+    // Enhanced footer with better spacing
     page.drawLine({
       start: { x: PAGE.margin, y: positions.footerRuleY },
       end: { x: PAGE.width - PAGE.margin, y: positions.footerRuleY },
-      thickness: 0.5,
-      color: rgb(0.8, 0.8, 0.8),
+      thickness: 1,
+      color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
     })
     
-    const footerY = PAGE.margin + 60
-    drawText('Thank you for your business!', PAGE.margin, footerY, { size: FONTS.base })
-    drawText(invoice.companies?.name || 'Square Blue Media', PAGE.margin, footerY - 15, { size: FONTS.base, bold: true })
+    const footerY = PAGE.margin + 70
+    drawText('Thank you for your business!', PAGE.margin, footerY, { 
+      size: FONTS.medium,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
+    drawText(invoice.companies?.name || 'Square Blue Media', PAGE.margin, footerY - 18, { 
+      size: FONTS.medium, 
+      bold: true,
+      color: rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    })
     
-    // Signature Section
+    // Enhanced signature section
     if (invoice.show_my_signature || invoice.require_client_signature) {
       const signatureUrl = companySettings?.signature_url
       if (signatureUrl) {
@@ -467,7 +687,7 @@ serve(async (req) => {
             
             page.drawImage(signature, {
               x: PAGE.margin,
-              y: PAGE.margin + 20,
+              y: PAGE.margin + 25,
               width: SIGNATURE.width,
               height: SIGNATURE.height,
             })
@@ -477,15 +697,18 @@ serve(async (req) => {
         }
       }
       
-      // Signature line
+      // Signature line with better styling
       page.drawLine({
-        start: { x: PAGE.margin, y: PAGE.margin + 15 },
-        end: { x: PAGE.margin + SIGNATURE.lineWidth, y: PAGE.margin + 15 },
-        thickness: 0.5,
-        color: rgb(0, 0, 0),
+        start: { x: PAGE.margin, y: PAGE.margin + 20 },
+        end: { x: PAGE.margin + SIGNATURE.lineWidth, y: PAGE.margin + 20 },
+        thickness: 1,
+        color: rgb(COLORS.lines.dark[0], COLORS.lines.dark[1], COLORS.lines.dark[2]),
       })
       
-      drawText(formattedDate, PAGE.margin, PAGE.margin + 5, { size: FONTS.small })
+      drawText(formatDate(invoice.issue_date), PAGE.margin, PAGE.margin + 8, { 
+        size: FONTS.small,
+        color: rgb(COLORS.text.muted[0], COLORS.text.muted[1], COLORS.text.muted[2])
+      })
     }
     
     // Generate PDF bytes
@@ -540,7 +763,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('PDF generated successfully with band-based layout')
+    console.log('PDF generated successfully with enhanced layout')
     
     return new Response(
       JSON.stringify({ pdf_url: pdfUrl }),
@@ -555,7 +778,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { 
-      status: 500, 
+        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
