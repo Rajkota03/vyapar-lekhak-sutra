@@ -1,111 +1,162 @@
-
-import { PAGE, BANDS, FONTS, COLORS, SPACING, getBandPositions, formatDate } from './layout.ts'
-import { drawRoundedRect } from './pdfUtils.ts'
-import type { InvoiceData, CompanySettings, DrawTextOptions } from './types.ts'
+import { BILL_BAR, COLORS, FONTS, POSITIONS, TEXT_HANDLING } from './layout.ts'
+import type { InvoiceData, CompanySettings, DrawTextFunction } from './types.ts'
 
 export function renderBillSection(
   page: any,
-  drawText: (text: string, x: number, y: number, options?: DrawTextOptions, extraOptions?: any) => void,
+  drawText: DrawTextFunction,
   invoice: InvoiceData,
-  companySettings: CompanySettings | null
+  companySettings: CompanySettings
 ) {
-  const positions = getBandPositions()
+  // Draw bill-to background rectangle
+  page.drawRectangle({
+    x: POSITIONS.billTo.x,
+    y: POSITIONS.billTo.y,
+    width: POSITIONS.billTo.width,
+    height: BILL_BAR.height,
+    color: rgb(BILL_BAR.bgGray, BILL_BAR.bgGray, BILL_BAR.bgGray),
+  })
   
-  // Enhanced bill-to background with rounded corners effect
-  drawRoundedRect(
-    page,
-    PAGE.margin,
-    positions.topOfBill,
-    PAGE.inner,
-    BANDS.bill,
-    COLORS.background.light
+  // Bill To header
+  drawText('BILL TO', POSITIONS.billTo.x + BILL_BAR.padding, POSITIONS.billTo.labelY, { 
+    size: FONTS.base, 
+    bold: true, 
+    color: COLORS.text.muted 
+  })
+  
+  // Client name - with overflow handling
+  const clientName = invoice.clients?.name || 'Client Name';
+  drawText(TEXT_HANDLING.truncateWithEllipsis(clientName, TEXT_HANDLING.maxClientNameLength), 
+    POSITIONS.billTo.x + BILL_BAR.padding, 
+    POSITIONS.billTo.contentStartY, 
+    { 
+      size: FONTS.medium, 
+      bold: true,
+      maxWidth: 200 // Limit width to prevent overflow
+    }
   )
   
-  let billY = positions.topOfBill + BANDS.bill - 20
-  
-  // Bill To section with better typography
-  drawText('BILL TO', PAGE.margin + 25, billY, { 
-    size: FONTS.medium, 
-    bold: true, 
-    color: COLORS.text.muted
-  })
-  billY -= 20
-  
-  drawText(invoice.clients?.name || 'Client Name', PAGE.margin + 25, billY, { 
-    size: FONTS.large, 
-    bold: true,
-    color: COLORS.text.primary
-  })
-  billY -= 16
-  
-  // Client address with improved formatting
+  // Client address
+  let addressY = POSITIONS.billTo.contentStartY - POSITIONS.billTo.lineSpacing;
   if (invoice.clients?.billing_address) {
-    const clientAddressLines = invoice.clients.billing_address.split('\n').slice(0, 3)
+    const clientAddressLines = invoice.clients.billing_address.split('\n')
     clientAddressLines.forEach((line: string) => {
-      drawText(line.trim(), PAGE.margin + 25, billY, { 
-        size: FONTS.base, 
-        color: COLORS.text.secondary
-      })
-      billY -= SPACING.lineHeight
+      drawText(TEXT_HANDLING.truncateWithEllipsis(line, TEXT_HANDLING.maxClientNameLength), 
+        POSITIONS.billTo.x + BILL_BAR.padding, 
+        addressY, 
+        { 
+          size: FONTS.base, 
+          color: COLORS.text.secondary,
+          maxWidth: 250 // Limit width to prevent overflow
+        }
+      )
+      addressY -= POSITIONS.billTo.lineSpacing;
     })
   } else {
-    const defaultAddress = [
-      'C/O RAMANAIDU STUDIOS, FILM NAGAR',
-      'HYDERABAD TELANGANA 500096'
-    ]
-    defaultAddress.forEach((line) => {
-      drawText(line, PAGE.margin + 25, billY, { 
+    // Default address if none provided
+    drawText('C/O RAMANAIDU STUDIOS, FILM NAGAR', 
+      POSITIONS.billTo.x + BILL_BAR.padding, 
+      addressY, 
+      { 
         size: FONTS.base, 
-        color: COLORS.text.secondary
-      })
-      billY -= SPACING.lineHeight
-    })
+        color: COLORS.text.secondary,
+        maxWidth: 250 // Limit width to prevent overflow
+      }
+    )
+    addressY -= POSITIONS.billTo.lineSpacing;
+    
+    drawText('HYDERABAD TELANGANA 500096', 
+      POSITIONS.billTo.x + BILL_BAR.padding, 
+      addressY, 
+      { 
+        size: FONTS.base, 
+        color: COLORS.text.secondary,
+        maxWidth: 250 // Limit width to prevent overflow
+      }
+    )
+    addressY -= POSITIONS.billTo.lineSpacing;
   }
   
-  if (invoice.clients?.gstin && billY > positions.topOfBill + 15) {
-    drawText(`GSTIN : ${invoice.clients.gstin}`, PAGE.margin + 25, billY, { 
+  // Client GSTIN
+  if (invoice.clients?.gstin) {
+    drawText(`GSTIN : ${invoice.clients.gstin}`, 
+      POSITIONS.billTo.x + BILL_BAR.padding, 
+      addressY, 
+      { 
+        size: FONTS.base, 
+        color: COLORS.text.secondary,
+        maxWidth: 250 // Limit width to prevent overflow
+      }
+    )
+    addressY -= POSITIONS.billTo.lineSpacing;
+  }
+  
+  // Project section
+  drawText('PROJECT', 
+    POSITIONS.billTo.x + BILL_BAR.padding, 
+    addressY, 
+    { 
       size: FONTS.base, 
-      color: COLORS.text.secondary
-    })
-  }
+      bold: true, 
+      color: COLORS.text.muted
+    }
+  )
+  addressY -= POSITIONS.billTo.lineSpacing;
   
-  // Invoice details box with proper positioning and sizing
-  const detailsBoxX = PAGE.width - PAGE.margin - 200  // Increased width
-  const detailsBoxY = positions.topOfBill + 15
-  const detailsBoxWidth = 180  // Increased from 160 to 180
-  const detailsBoxHeight = BANDS.bill - 30
-  
-  // Details background
-  drawRoundedRect(
-    page,
-    detailsBoxX,
-    detailsBoxY,
-    detailsBoxWidth,
-    detailsBoxHeight,
-    COLORS.background.medium
+  drawText('CHEEKATLO', 
+    POSITIONS.billTo.x + BILL_BAR.padding, 
+    addressY, 
+    { 
+      size: FONTS.base,
+      maxWidth: 250 // Limit width to prevent overflow
+    }
   )
   
-  let detailsY = positions.topOfBill + BANDS.bill - 25
-  const labelX = detailsBoxX + 15
-  const valueX = detailsBoxX + detailsBoxWidth - 20  // More padding from right edge
+  // Invoice details on the right side of bill-to section
+  // Calculate positions to ensure proper alignment
+  const detailsStartX = POSITIONS.billTo.x + POSITIONS.billTo.width - BILL_BAR.detailsWidth - BILL_BAR.detailsValueWidth;
+  const detailsValueX = POSITIONS.billTo.x + POSITIONS.billTo.width - BILL_BAR.detailsValueWidth - BILL_BAR.padding;
+  let detailsY = POSITIONS.billTo.contentStartY + 20;
   
-  // Invoice details with better alignment and spacing
-  const invoiceDetails = [
-    { label: 'Invoice #', value: invoice.invoice_code || '25-26/02' },
-    { label: 'Date', value: formatDate(invoice.issue_date) },
-    { label: 'SAC/HSN', value: companySettings?.sac_code || '998387' }
-  ]
-  
-  invoiceDetails.forEach(detail => {
-    drawText(detail.label, labelX, detailsY, { 
-      size: FONTS.base, 
-      bold: true,
-      color: COLORS.text.primary
-    })
-    drawText(detail.value, valueX, detailsY, { 
+  // Invoice number
+  drawText('Invoice #', detailsStartX, detailsY, { size: FONTS.base, bold: true })
+  const invoiceCode = invoice.invoice_code || invoice.number || '25-26/02';
+  drawText(TEXT_HANDLING.truncateWithEllipsis(invoiceCode, TEXT_HANDLING.maxInvoiceCodeLength), 
+    detailsValueX, 
+    detailsY, 
+    { 
       size: FONTS.base,
-      color: COLORS.text.primary
-    }, { textAlign: 'right' })
-    detailsY -= 22  // Increased spacing between rows
-  })
+      maxWidth: BILL_BAR.detailsValueWidth - 10 // Prevent overflow
+    }
+  )
+  detailsY -= 15;
+  
+  // Invoice date
+  drawText('Date', detailsStartX, detailsY, { size: FONTS.base, bold: true })
+  const formattedDate = new Date(invoice.issue_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  drawText(formattedDate, 
+    detailsValueX, 
+    detailsY, 
+    { 
+      size: FONTS.base,
+      maxWidth: BILL_BAR.detailsValueWidth - 10 // Prevent overflow
+    }
+  )
+  detailsY -= 15;
+  
+  // SAC/HSN code
+  drawText('SAC/HSN', detailsStartX, detailsY, { size: FONTS.base, bold: true })
+  const sacHsn = companySettings?.sac_hsn || '998387';
+  drawText(sacHsn, 
+    detailsValueX, 
+    detailsY, 
+    { 
+      size: FONTS.base,
+      maxWidth: BILL_BAR.detailsValueWidth - 10 // Prevent overflow
+    }
+  )
+}
+
+// Helper function to create RGB color
+function rgb(r: number, g: number, b: number) {
+  return { r, g, b };
 }
