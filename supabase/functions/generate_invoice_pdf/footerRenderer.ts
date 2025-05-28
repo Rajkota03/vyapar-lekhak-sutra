@@ -1,83 +1,113 @@
+/*  renderTotalsSection.ts
+ *  – widened totals column (220 pt)
+ *  – grey GRAND TOTAL bar fills full width
+ *  – consistent 12 pt inner padding
+ */
+
 import {
   PAGE,
   BANDS,
   FONTS,
   COLORS,
-  SIGNATURE,
   getBandPositions,
-  formatDate,
+  formatMoney,
 } from './layout.ts';
-import { embedImage } from './pdfUtils.ts';
-import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
-import type {
-  InvoiceData,
-  CompanySettings,
-  DrawTextOptions,
-} from './types.ts';
+import { drawRoundedRect } from './pdfUtils.ts';
+import type { InvoiceData, CompanySettings, DrawTextOptions } from './types.ts';
 
-export async function renderFooter(
-  pdfDoc: any,
+export function renderTotalsSection(
   page: any,
   drawText: (
     text: string,
     x: number,
     y: number,
     options?: DrawTextOptions,
+    extra?: any,
   ) => void,
   invoice: InvoiceData,
   companySettings: CompanySettings | null,
 ) {
-  /* ───── Spacer (we removed horizontal rule) ─── */
-  const footerY = PAGE.margin + 60; // was 70 → lifts block 10 pt
+  /* ─────────── BOX GEOMETRY ─────────── */
+  const pos = getBandPositions();
+  const totBox = {
+    width: 220,                                     // ⬅ widened from 200
+    x: PAGE.width - PAGE.margin - 220,              // keep right edge same
+    y: PAGE.margin + BANDS.footer + 40,             // height anchor
+  };
+  let cursor = totBox.y + BANDS.totals - 20;
 
-  drawText('Thank you for your business!', PAGE.margin, footerY, {
-    size: FONTS.medium,
-    color: COLORS.text.primary,
-  });
-
-  drawText(invoice.companies?.name || 'Square Blue Media', PAGE.margin, footerY - 18, {
+  /* ─────────── PAYMENT INSTRUCTIONS (left) ─────────── */
+  const noteLines = (companySettings?.payment_note || '').split('\n');
+  drawText('Payment Instructions', PAGE.margin, cursor, {
     size: FONTS.medium,
     bold: true,
     color: COLORS.text.primary,
   });
+  cursor -= 18;
+  noteLines.forEach((ln) => {
+    drawText(ln, PAGE.margin, cursor, { size: FONTS.base, color: COLORS.text.secondary });
+    cursor -= 14;
+  });
 
-  /* ───── Optional signature block ─── */
-  if (invoice.show_my_signature || invoice.require_client_signature) {
-    const signatureUrl = companySettings?.signature_url;
+  /* reset cursor for totals */
+  cursor = totBox.y + BANDS.totals - 20;
 
-    let embedded = null;
-    if (signatureUrl) {
-      embedded = await embedImage(pdfDoc, signatureUrl);
-      if (embedded) {
-        page.drawImage(embedded.image, {
-          x: PAGE.margin,
-          y: PAGE.margin + 25,
-          width: SIGNATURE.width,
-          height: SIGNATURE.height,
-        });
-      }
-    }
+  /* white background */
+  drawRoundedRect(
+    page,
+    totBox.x,
+    totBox.y,
+    totBox.width,
+    BANDS.totals,
+    COLORS.background.lightest,
+  );
 
-    // Only draw line if we actually placed a signature (or if you always want it)
-    if (embedded) {
-      page.drawLine({
-        start: { x: PAGE.margin, y: PAGE.margin + 20 },
-        end: {
-          x: PAGE.margin + SIGNATURE.lineWidth,
-          y: PAGE.margin + 20,
-        },
-        thickness: 1,
-        color: rgb(
-          COLORS.lines.dark[0],
-          COLORS.lines.dark[1],
-          COLORS.lines.dark[2],
-        ),
-      });
-
-      drawText(formatDate(invoice.issue_date), PAGE.margin, PAGE.margin + 8, {
-        size: FONTS.small,
-        color: COLORS.text.muted,
-      });
-    }
+  const rows: [string, string][] = [
+    ['Subtotal', formatMoney(invoice.subtotal)],
+    [`CGST (${invoice.cgst_pct} %)`, formatMoney(invoice.cgst_total)],
+    [`SGST (${invoice.sgst_pct} %)`, formatMoney(invoice.sgst_total)],
+  ];
+  if (invoice.use_igst) {
+    rows.push([`IGST (${invoice.igst_pct} %)`, formatMoney(invoice.igst_total)]);
   }
+
+  /* regular rows */
+  rows.forEach(([label, val]) => {
+    drawText(label, totBox.x + 12, cursor, {
+      size: FONTS.base,
+      color: COLORS.text.primary,
+    });
+    drawText(
+      val,
+      totBox.x + totBox.width - 12,
+      cursor,
+      { size: FONTS.base, color: COLORS.text.primary },
+      { textAlign: 'right' },
+    );
+    cursor -= 14;
+  });
+
+  /* ─────────── GRAND TOTAL HIGHLIGHT ─────────── */
+  const barHeight = 22;
+  const barY = cursor - 4;
+  page.drawRectangle({
+    x: totBox.x,
+    y: barY,
+    width: totBox.width,            // full 220 pt
+    height: barHeight,
+    color: COLORS.background.medium,
+  });
+
+  drawText('GRAND TOTAL', totBox.x + 12, barY + 6, {
+    size: FONTS.medium,
+    bold: true,
+    color: COLORS.text.primary,
+  });
+  drawText(
+    formatMoney(invoice.grand_total),
+    totBox.x + totBox.width - 12,
+    barY + 6,
+    { size: FONTS.medium, bold: true, color: COLORS.text.primary },
+    { textAlign: 'right' },
+  );
 }
