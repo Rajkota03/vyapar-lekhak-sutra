@@ -13,13 +13,13 @@ export async function renderFooter(
 ) {
   const positions = getBandPositions()
   
-  // Enhanced footer with better spacing
+ /* // Enhanced footer with better spacing
   page.drawLine({
     start: { x: PAGE.margin, y: positions.footerRuleY },
     end: { x: PAGE.width - PAGE.margin, y: positions.footerRuleY },
     thickness: 1,
     color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
-  })
+  })*/
   
   const footerY = PAGE.margin + 70
   drawText('Thank you for your business!', PAGE.margin, footerY, { 
