@@ -20,10 +20,21 @@ export const handleSharePdf = async (invoiceId: string) => {
     
     if (error) {
       console.error('Error generating PDF:', error);
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = 'Unknown error occurred';
+      if (error.message?.includes('Invalid color')) {
+        errorMessage = 'PDF generation failed due to formatting issue. Please try again.';
+      } else if (error.message?.includes('FunctionsHttpError')) {
+        errorMessage = 'Server error while generating PDF. Please try again in a moment.';
+      } else {
+        errorMessage = error.message || 'Failed to generate PDF';
+      }
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to generate PDF: ${error.message || 'Unknown error'}`,
+        description: errorMessage,
       });
       return;
     }

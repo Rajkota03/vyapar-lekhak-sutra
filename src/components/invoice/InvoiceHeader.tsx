@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, Eye, Download } from "lucide-react";
+import { ChevronLeft, MoreVertical, Eye, Download, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { handleDownloadPdf } from "@/utils/downloadPdf";
@@ -14,6 +14,7 @@ interface InvoiceHeaderProps {
   onPreview?: () => void;
   invoiceId?: string;
   invoiceCode?: string;
+  isGeneratingPreview?: boolean;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -24,6 +25,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   onPreview,
   invoiceId,
   invoiceCode,
+  isGeneratingPreview = false,
 }) => {
   const navigate = useNavigate();
 
@@ -92,9 +94,14 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                 onClick={onPreview}
                 variant="outline"
                 className="flex-1 h-10"
+                disabled={isGeneratingPreview}
               >
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
+                {isGeneratingPreview ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Eye className="h-4 w-4 mr-2" />
+                )}
+                {isGeneratingPreview ? "Generating..." : "Preview"}
               </Button>
             )}
             <Button

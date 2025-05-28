@@ -103,7 +103,7 @@ const InvoiceEdit = () => {
   // Generate invoice code for display
   const invoiceCode = existingInvoice?.invoice_code || "Will be generated on save";
 
-  // Handle preview with force regeneration
+  // Handle preview with force regeneration and better error handling
   const handlePreview = async () => {
     if (!existingInvoice?.id) {
       toast({
@@ -129,10 +129,21 @@ const InvoiceEdit = () => {
       
       if (error) {
         console.error('Error generating preview:', error);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Unknown error occurred';
+        if (error.message?.includes('Invalid color')) {
+          errorMessage = 'Preview generation failed due to formatting issue. Please try again.';
+        } else if (error.message?.includes('FunctionsHttpError')) {
+          errorMessage = 'Server error while generating preview. Please try again in a moment.';
+        } else {
+          errorMessage = error.message || 'Failed to generate preview';
+        }
+        
         toast({
           variant: "destructive",
           title: "Preview Error",
-          description: `Failed to generate preview: ${error.message || 'Unknown error'}`,
+          description: errorMessage,
         });
         return;
       }
@@ -207,6 +218,7 @@ const InvoiceEdit = () => {
             onPreview={isEditing ? handlePreview : undefined}
             invoiceId={existingInvoice?.id}
             invoiceCode={existingInvoice?.invoice_code}
+            isGeneratingPreview={isGeneratingPreview}
           />
 
           <div className="p-4 space-y-4 px-0 mx-0">

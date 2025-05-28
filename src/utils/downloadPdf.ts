@@ -27,10 +27,21 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
     
     if (error) {
       console.error('Error generating PDF:', error);
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = 'Unknown error occurred';
+      if (error.message?.includes('Invalid color')) {
+        errorMessage = 'PDF generation failed due to formatting issue. Please try again.';
+      } else if (error.message?.includes('FunctionsHttpError')) {
+        errorMessage = 'Server error while generating PDF. Please try again in a moment.';
+      } else {
+        errorMessage = error.message || 'Failed to generate PDF';
+      }
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to generate PDF: ${error.message || 'Unknown error'}`,
+        description: errorMessage,
       });
       return;
     }
@@ -65,6 +76,10 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
       // For other platforms, try to download
       try {
         const response = await fetch(cacheBustingUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const blob = await response.blob();
         
         // Create a download link and trigger it
