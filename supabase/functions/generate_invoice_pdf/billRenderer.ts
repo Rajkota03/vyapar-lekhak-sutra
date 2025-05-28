@@ -69,10 +69,10 @@ export function renderBillSection(
     })
   }
   
-  // Invoice details box with improved layout
-  const detailsBoxX = PAGE.width - PAGE.margin - 180
+  // Invoice details box with proper positioning and sizing
+  const detailsBoxX = PAGE.width - PAGE.margin - 200  // Increased width
   const detailsBoxY = positions.topOfBill + 15
-  const detailsBoxWidth = 160
+  const detailsBoxWidth = 180  // Increased from 160 to 180
   const detailsBoxHeight = BANDS.bill - 30
   
   // Details background
@@ -87,9 +87,9 @@ export function renderBillSection(
   
   let detailsY = positions.topOfBill + BANDS.bill - 25
   const labelX = detailsBoxX + 15
-  const valueX = detailsBoxX + detailsBoxWidth - 15
+  const valueX = detailsBoxX + detailsBoxWidth - 20  // More padding from right edge
   
-  // Invoice details with better alignment
+  // Invoice details with better alignment and spacing
   const invoiceDetails = [
     { label: 'Invoice #', value: invoice.invoice_code || '25-26/02' },
     { label: 'Date', value: formatDate(invoice.issue_date) },
@@ -106,6 +106,6 @@ export function renderBillSection(
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'right' })
-    detailsY -= 18
+    detailsY -= 22  // Increased spacing between rows
   })
 }
