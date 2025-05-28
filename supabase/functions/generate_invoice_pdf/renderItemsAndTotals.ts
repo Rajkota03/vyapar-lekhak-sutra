@@ -1,5 +1,6 @@
 
 import { PAGE, FONTS, COLORS, getBandPositions } from './layout.ts';
+import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
 
 /* money helper */
@@ -75,7 +76,7 @@ export function renderItemsAndTotals(
     start: { x: colX[2], y: yTot },
     end:   { x: colX[3] + colW[3], y: yTot },
     thickness: .5,
-    color: COLORS.lines.medium,
+    color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
   });
   yTot -= 12;
   
