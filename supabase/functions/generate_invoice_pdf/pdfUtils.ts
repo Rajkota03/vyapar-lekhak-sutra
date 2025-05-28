@@ -42,12 +42,23 @@ export function createDrawTextFunction(context: PDFContext) {
     const font = useUnicodeFont ? context.unicodeFont : (options.bold ? context.boldFont : context.fallbackFont)
     const displayText = useUnicodeFont ? text : text.replace(/₹/g, 'Rs.')
     
+    // Convert color from array format to rgb() function
+    let color = rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2])
+    if (options.color) {
+      if (Array.isArray(options.color) && options.color.length === 3) {
+        color = rgb(options.color[0], options.color[1], options.color[2])
+      } else if (typeof options.color === 'object' && 'r' in options.color) {
+        // Handle color objects with r,g,b properties
+        color = rgb(options.color.r, options.color.g, options.color.b)
+      }
+    }
+    
     context.page.drawText(displayText, {
       x,
       y,
       size: options.size || FONTS.base,
       font,
-      color: options.color || rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2]),
+      color,
       lineHeight: options.lineHeight || SPACING.lineHeight,
       ...options
     })

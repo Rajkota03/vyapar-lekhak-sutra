@@ -27,14 +27,14 @@ export function renderBillSection(
   drawText('BILL TO', PAGE.margin + 25, billY, { 
     size: FONTS.medium, 
     bold: true, 
-    color: { r: COLORS.text.muted[0], g: COLORS.text.muted[1], b: COLORS.text.muted[2] }
+    color: COLORS.text.muted
   })
   billY -= 20
   
   drawText(invoice.clients?.name || 'Client Name', PAGE.margin + 25, billY, { 
     size: FONTS.large, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+    color: COLORS.text.primary
   })
   billY -= 16
   
@@ -44,7 +44,7 @@ export function renderBillSection(
     clientAddressLines.forEach((line: string) => {
       drawText(line.trim(), PAGE.margin + 25, billY, { 
         size: FONTS.base, 
-        color: { r: COLORS.text.secondary[0], g: COLORS.text.secondary[1], b: COLORS.text.secondary[2] }
+        color: COLORS.text.secondary
       })
       billY -= SPACING.lineHeight
     })
@@ -56,7 +56,7 @@ export function renderBillSection(
     defaultAddress.forEach((line) => {
       drawText(line, PAGE.margin + 25, billY, { 
         size: FONTS.base, 
-        color: { r: COLORS.text.secondary[0], g: COLORS.text.secondary[1], b: COLORS.text.secondary[2] }
+        color: COLORS.text.secondary
       })
       billY -= SPACING.lineHeight
     })
@@ -65,7 +65,7 @@ export function renderBillSection(
   if (invoice.clients?.gstin && billY > positions.topOfBill + 15) {
     drawText(`GSTIN : ${invoice.clients.gstin}`, PAGE.margin + 25, billY, { 
       size: FONTS.base, 
-      color: { r: COLORS.text.secondary[0], g: COLORS.text.secondary[1], b: COLORS.text.secondary[2] }
+      color: COLORS.text.secondary
     })
   }
   
@@ -100,11 +100,11 @@ export function renderBillSection(
     drawText(detail.label, labelX, detailsY, { 
       size: FONTS.base, 
       bold: true,
-      color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+      color: COLORS.text.primary
     })
     drawText(detail.value, valueX, detailsY, { 
       size: FONTS.base,
-      color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+      color: COLORS.text.primary
     }, { textAlign: 'right' })
     detailsY -= 18
   })

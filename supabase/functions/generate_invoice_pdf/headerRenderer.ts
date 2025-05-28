@@ -50,11 +50,11 @@ export async function renderHeader(
   const companyInfoX = logoWidth > 0 ? PAGE.margin + logoWidth + 30 : PAGE.width - PAGE.margin - 220
   let companyInfoY = headerY
   
-  // Invoice title
+  // Invoice title - use array format for colors
   drawText('INVOICE', companyInfoX, companyInfoY, { 
     size: FONTS.h1, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+    color: COLORS.text.primary
   })
   companyInfoY -= 25
   
@@ -62,7 +62,7 @@ export async function renderHeader(
   drawText(invoice.companies?.name || 'Square Blue Media', companyInfoX, companyInfoY, { 
     size: FONTS.h2, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+    color: COLORS.text.primary
   })
   companyInfoY -= 18
   
@@ -76,7 +76,7 @@ export async function renderHeader(
   addressLines.forEach((line) => {
     drawText(line, companyInfoX, companyInfoY, { 
       size: FONTS.small, 
-      color: { r: COLORS.text.secondary[0], g: COLORS.text.secondary[1], b: COLORS.text.secondary[2] }
+      color: COLORS.text.secondary
     })
     companyInfoY -= 14
   })
@@ -84,14 +84,14 @@ export async function renderHeader(
   // Contact information
   drawText('squarebluemedia@gmail.com', companyInfoX, companyInfoY, { 
     size: FONTS.small, 
-    color: { r: COLORS.text.secondary[0], g: COLORS.text.secondary[1], b: COLORS.text.secondary[2] }
+    color: COLORS.text.secondary
   })
   companyInfoY -= 14
   
   if (invoice.companies?.gstin) {
     drawText(`GSTIN : ${invoice.companies.gstin}`, companyInfoX, companyInfoY, { 
       size: FONTS.small, 
-      color: { r: COLORS.text.secondary[0], g: COLORS.text.secondary[1], b: COLORS.text.secondary[2] }
+      color: COLORS.text.secondary
     })
   }
 }

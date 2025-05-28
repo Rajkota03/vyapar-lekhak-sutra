@@ -24,12 +24,12 @@ export async function renderFooter(
   const footerY = PAGE.margin + 70
   drawText('Thank you for your business!', PAGE.margin, footerY, { 
     size: FONTS.medium,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+    color: COLORS.text.primary
   })
   drawText(invoice.companies?.name || 'Square Blue Media', PAGE.margin, footerY - 18, { 
     size: FONTS.medium, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+    color: COLORS.text.primary
   })
   
   // Enhanced signature section
@@ -57,7 +57,7 @@ export async function renderFooter(
     
     drawText(formatDate(invoice.issue_date), PAGE.margin, PAGE.margin + 8, { 
       size: FONTS.small,
-      color: { r: COLORS.text.muted[0], g: COLORS.text.muted[1], b: COLORS.text.muted[2] }
+      color: COLORS.text.muted
     })
   }
 }
