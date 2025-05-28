@@ -1,4 +1,5 @@
 
+
 import { PAGE, FONTS, COLORS, getBandPositions } from './layout.ts';
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
@@ -16,7 +17,8 @@ export function renderItemsAndTotals(
   items: LineItem[],
 ) {
   const pos = getBandPositions();
-  let y = pos.topOfItems;
+  // Add spacing between Bill To and Items sections
+  let y = pos.topOfItems - 30; // Added 30pt spacing
 
   /* A. Column geometry - unified grid for items and totals */
   const grid = [0.45, 0.15, 0.15, 0.25];   // equipment / pkg / qty / amount
@@ -26,15 +28,18 @@ export function renderItemsAndTotals(
   }, []);
   const colW = grid.map(f => f * PAGE.inner);
 
-  /* header */
-  ['equipment', 'pkg', 'qty', 'amount'].forEach((h, i) => {
+  /* header - with capitalized column names */
+  ['EQUIPMENT', 'PKG', 'QTY', 'AMOUNT'].forEach((h, i) => {
     drawText(h, colX[i], y, { size: FONTS.base, bold: true },
       { textAlign: i === 3 ? 'right' : 'left' });
   });
   y -= 18;
 
-  /* item rows */
-  items.forEach(r => {
+  /* item rows - limit to match Bill To section height */
+  const maxRows = 3; // Limit items to match Bill To section height
+  const displayItems = items.slice(0, maxRows);
+  
+  displayItems.forEach(r => {
     drawText(r.description, colX[0], y, { size: FONTS.base });
     drawText(String(r.pkg ?? 1), colX[1], y, { size: FONTS.base });
     drawText(String(r.qty ?? 1), colX[2], y, { size: FONTS.base });
@@ -87,3 +92,4 @@ export function renderItemsAndTotals(
     { size: FONTS.medium, bold: true },
     { textAlign: 'right' });
 }
+

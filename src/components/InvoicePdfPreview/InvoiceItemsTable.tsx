@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { TABLE, FONTS, COLORS, SPACING, getBandPositions, formatCurrency } from '@/lib/pdf/layout';
 import { rgbToCSS, getAbsoluteStyles } from './invoicePreviewUtils';
@@ -12,18 +13,22 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
+  // Limit items to match Bill To section height
+  const maxRows = 3;
+  const displayLines = lines?.slice(0, maxRows) || [];
+
   return (
     <div 
       className="absolute"
       style={{
-        ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap),
+        ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
         bottom: `${positions.bottomOfTable}px`,
         overflow: 'hidden'
       }}
     >
       {/* Items Table */}
       <div style={{ width: '100%' }}>
-        {/* Table Header */}
+        {/* Table Header - with capitalized column names */}
         <div 
           className="py-2 mb-2"
           style={{
@@ -41,26 +46,26 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               PKG
             </div>
             <div style={{ width: '20%', textAlign: 'right', color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-              Rate
+              QTY
             </div>
             <div style={{ width: '23%', textAlign: 'right', color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-              Amount
+              AMOUNT
             </div>
           </div>
         </div>
 
-        {/* Table Body */}
+        {/* Table Body - limited rows to match Bill To height */}
         <div style={{ 
-          maxHeight: `${positions.topOfBill - SPACING.sectionGap - TABLE.headerH - positions.bottomOfTable - 150}px`, 
+          maxHeight: `${60}px`, // Fixed height to match Bill To section
           overflow: 'hidden' 
         }}>
-          {lines?.map((line, i) => (
+          {displayLines.map((line, i) => (
             <div 
               key={i} 
               className="py-2 px-2"
               style={{
                 minHeight: `${TABLE.rowH}px`,
-                borderBottom: i < lines.length - 1 ? `0.25px solid ${rgbToCSS(COLORS.lines.light)}` : 'none'
+                borderBottom: i < displayLines.length - 1 ? `0.25px solid ${rgbToCSS(COLORS.lines.light)}` : 'none'
               }}
             >
               <div className="flex items-center w-full">
@@ -73,7 +78,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   {line.qty}
                 </div>
                 <div style={{ width: '20%', textAlign: 'right', fontSize: `${FONTS.base}px` }}>
-                  {formatCurrency(Number(line.unit_price))}
+                  {line.qty}
                 </div>
                 <div style={{ width: '23%', textAlign: 'right', fontSize: `${FONTS.base}px` }}>
                   {formatCurrency(Number(line.amount))}
@@ -160,3 +165,4 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
     </div>
   );
 };
+
