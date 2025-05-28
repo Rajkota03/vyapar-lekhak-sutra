@@ -69,8 +69,8 @@ export function renderItemsAndTotals(
   totalsRows.forEach(([lbl, val]) => {
     // Label starts at QTY column (colX[2])
     drawText(lbl, colX[2], yTot, { size: FONTS.base });
-    // Value right-aligned within Amount column boundaries
-    drawText(fm(val), colX[3] + colW[3], yTot,
+    // Value positioned more to the left within Amount column - closer to center
+    drawText(fm(val), colX[3] + colW[3] * 0.6, yTot,
       { size: FONTS.base }, { textAlign: 'right' });
     yTot -= 16;
   });
@@ -89,7 +89,7 @@ export function renderItemsAndTotals(
   // GRAND TOTAL label and value - positioned same as other totals
   drawText('GRAND TOTAL', colX[2], yTot, 
     { size: FONTS.medium, bold: true });
-  drawText(fm(inv.total), colX[3] + colW[3], yTot,
+  drawText(fm(inv.total), colX[3] + colW[3] * 0.6, yTot,
     { size: FONTS.medium, bold: true },
     { textAlign: 'right' });
 }
