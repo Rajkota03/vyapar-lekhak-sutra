@@ -62,14 +62,14 @@ export async function renderFooter(
   /* reset cursor for totals */
   cursor = totBox.y + BANDS.totals - 20;
 
-  /* white background */
+  /* white background - using existing color */
   drawRoundedRect(
     page,
     totBox.x,
     totBox.y,
     totBox.width,
     BANDS.totals,
-    COLORS.background.lightest,
+    COLORS.background.light,
   );
 
   const rows: [string, string][] = [
