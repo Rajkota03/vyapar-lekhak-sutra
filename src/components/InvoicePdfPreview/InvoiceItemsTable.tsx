@@ -83,68 +83,76 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           ))}
         </div>
 
-        {/* Totals Section - Positioned under the Amount column */}
+        {/* Totals Section - Positioned exactly under the Amount column */}
         <div style={{ 
           marginTop: '20px',
-          marginLeft: '77%', // Position under the amount column (45% + 12% + 20% = 77%)
-          width: '23%' // Same width as amount column
+          position: 'relative',
+          width: '100%'
         }}>
-          <div className="space-y-3">
-            {/* Subtotal */}
-            <div className="flex justify-between py-1">
-              <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                Subtotal
-              </span>
-              <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                {formatCurrency(Number(invoice?.subtotal || 214500))}
-              </span>
-            </div>
-            
-            {/* Tax rows */}
-            {(!invoice?.use_igst && Number(invoice?.cgst_pct || 9) > 0) && (
+          {/* Container positioned to align with Amount column */}
+          <div style={{
+            position: 'absolute',
+            right: '0px', // Align to the right edge like the Amount column
+            width: '23%', // Same width as Amount column
+            paddingRight: '8px' // Match the table padding
+          }}>
+            <div className="space-y-3">
+              {/* Subtotal */}
               <div className="flex justify-between py-1">
                 <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  CGST ({invoice?.cgst_pct || 9}%)
+                  Subtotal
                 </span>
                 <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  {formatCurrency(Number(invoice?.cgst || 19305))}
+                  {formatCurrency(Number(invoice?.subtotal || 214500))}
                 </span>
               </div>
-            )}
-            
-            {(!invoice?.use_igst && Number(invoice?.sgst_pct || 9) > 0) && (
-              <div className="flex justify-between py-1">
-                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  SGST ({invoice?.sgst_pct || 9}%)
-                </span>
-                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  {formatCurrency(Number(invoice?.sgst || 19305))}
-                </span>
+              
+              {/* Tax rows */}
+              {(!invoice?.use_igst && Number(invoice?.cgst_pct || 9) > 0) && (
+                <div className="flex justify-between py-1">
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                    CGST ({invoice?.cgst_pct || 9}%)
+                  </span>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                    {formatCurrency(Number(invoice?.cgst || 19305))}
+                  </span>
+                </div>
+              )}
+              
+              {(!invoice?.use_igst && Number(invoice?.sgst_pct || 9) > 0) && (
+                <div className="flex justify-between py-1">
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                    SGST ({invoice?.sgst_pct || 9}%)
+                  </span>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                    {formatCurrency(Number(invoice?.sgst || 19305))}
+                  </span>
+                </div>
+              )}
+              
+              {(invoice?.use_igst && Number(invoice?.igst_pct || 18) > 0) && (
+                <div className="flex justify-between py-1">
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                    IGST ({invoice?.igst_pct || 18}%)
+                  </span>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                    {formatCurrency(Number(invoice?.igst || 38610))}
+                  </span>
+                </div>
+              )}
+              
+              {/* Grand Total with light background */}
+              <div 
+                className="flex justify-between py-3 px-3 font-bold rounded mt-2"
+                style={{
+                  backgroundColor: rgbToCSS(COLORS.background.light),
+                  fontSize: `${FONTS.medium}px`,
+                  color: rgbToCSS(COLORS.text.primary)
+                }}
+              >
+                <span>GRAND TOTAL</span>
+                <span>{formatCurrency(Number(invoice?.total || 253110))}</span>
               </div>
-            )}
-            
-            {(invoice?.use_igst && Number(invoice?.igst_pct || 18) > 0) && (
-              <div className="flex justify-between py-1">
-                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  IGST ({invoice?.igst_pct || 18}%)
-                </span>
-                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  {formatCurrency(Number(invoice?.igst || 38610))}
-                </span>
-              </div>
-            )}
-            
-            {/* Grand Total with light background */}
-            <div 
-              className="flex justify-between py-3 px-3 font-bold rounded mt-2"
-              style={{
-                backgroundColor: rgbToCSS(COLORS.background.light),
-                fontSize: `${FONTS.medium}px`,
-                color: rgbToCSS(COLORS.text.primary)
-              }}
-            >
-              <span>GRAND TOTAL</span>
-              <span>{formatCurrency(Number(invoice?.total || 253110))}</span>
             </div>
           </div>
         </div>

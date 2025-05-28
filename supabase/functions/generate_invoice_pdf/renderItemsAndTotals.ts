@@ -128,9 +128,13 @@ export function renderItemsAndTotals(
   /* ───── totals section under the amount column ───── */
   cursor -= 20; // Add space after items
   
-  // Position totals under the amount column
-  const totalsX = PAGE.margin + colW[0] + colW[1] + colW[2]; // Start of amount column
-  const totalsWidth = colW[3]; // Same width as amount column
+  // Calculate exact position to align with Amount column
+  const amountColumnStart = PAGE.margin + colW[0] + colW[1] + colW[2]; // Start of amount column
+  const amountColumnWidth = colW[3]; // Same width as amount column
+  
+  // Position totals to align perfectly with the Amount column
+  const totalsX = amountColumnStart + TABLE.padding; // Add padding like the table cells
+  const totalsWidth = amountColumnWidth - (TABLE.padding * 2); // Subtract padding from both sides
   let totalsY = cursor;
 
   const rows: [string, number][] = [
@@ -150,10 +154,10 @@ export function renderItemsAndTotals(
 
   /* ───── draw subtotal / tax rows ───── */
   rows.forEach(([lbl, val], index) => {
-    drawText(lbl, totalsX + 12, totalsY, { size: FONTS.base });
+    drawText(lbl, totalsX, totalsY, { size: FONTS.base });
     drawText(
       fm(val),
-      totalsX + totalsWidth - 12,
+      totalsX + totalsWidth - 40, // Right align within the totals area, matching amount column alignment
       totalsY,
       { size: FONTS.base },
       { textAlign: 'right' },
@@ -166,21 +170,21 @@ export function renderItemsAndTotals(
   
   drawRoundedRect(
     page,
-    totalsX,
+    totalsX - TABLE.padding, // Extend background slightly beyond text
     totalsY - 8,
-    totalsWidth,
+    totalsWidth + (TABLE.padding * 2), // Match the visual width
     20,
     COLORS.background.light,
   );
   
-  drawText('GRAND TOTAL', totalsX + 12, totalsY, { 
+  drawText('GRAND TOTAL', totalsX, totalsY, { 
     size: FONTS.medium, 
     bold: true,
     color: COLORS.text.primary,
   });
   drawText(
     fm(invoice.total),
-    totalsX + totalsWidth - 12,
+    totalsX + totalsWidth - 40, // Right align to match other amounts
     totalsY,
     { size: FONTS.medium, bold: true },
     { textAlign: 'right' },
