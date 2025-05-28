@@ -13,10 +13,10 @@ export const PAGE = {
 };
 
 export const BANDS = {
-  header: 140,            // Increased for better logo placement
-  bill: 100,              // Increased for better spacing
-  totals: 140,            // Increased for better payment note layout
-  footer: 100,            // Footer space
+  header: 120,
+  bill: 90,
+  payment: 110,
+  footer: 90,
 };
 
 export const TABLE = {
@@ -73,20 +73,18 @@ export const SPACING = {
   sectionGap: 20,           // Gap between sections
 };
 
-// Calculate band positions with improved spacing
+// Updated band positions with improved spacing
 export const getBandPositions = () => {
   const topOfHeader = PAGE.height - PAGE.margin - BANDS.header;
-  const topOfBill = topOfHeader - SPACING.sectionGap - BANDS.bill;
-  const bottomOfTable = PAGE.margin + BANDS.totals + BANDS.footer + SPACING.sectionGap;
-  const yTotals = PAGE.margin + BANDS.footer + BANDS.totals - 25;
-  const footerRuleY = PAGE.margin + BANDS.footer + 90;
+  const topOfBill = topOfHeader - 10 - BANDS.bill;
+  const topOfItems = topOfBill - 10;
+  const topOfPayment = PAGE.margin + BANDS.footer + BANDS.payment;
   
   return {
     topOfHeader,
     topOfBill,
-    bottomOfTable,
-    yTotals,
-    footerRuleY,
+    topOfItems,
+    topOfPayment,
   };
 };
 

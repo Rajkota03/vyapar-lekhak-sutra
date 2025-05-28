@@ -5,8 +5,8 @@ import { PAGE } from './layout.ts'
 import { createPDFContext, createDrawTextFunction } from './pdfUtils.ts'
 import { renderHeader } from './headerRenderer.ts'
 import { renderBillSection } from './billRenderer.ts'
-import { renderItemsTable } from './tableRenderer.ts'
-import { renderTotalsSection } from './totalsRenderer.ts'
+import { renderItemsAndTotals } from './renderItemsAndTotals.ts'
+import { renderPayment } from './renderPayment.ts'
 import { renderFooter } from './footerRenderer.ts'
 import type { InvoiceData, CompanySettings, LineItem } from './types.ts'
 
@@ -153,11 +153,11 @@ serve(async (req) => {
     
     const drawText = createDrawTextFunction(context)
     
-    // Render PDF sections
+    // Render PDF sections in new order
     await renderHeader(pdfDoc, page, drawText, invoice as InvoiceData, companySettings as CompanySettings)
     renderBillSection(page, drawText, invoice as InvoiceData, companySettings as CompanySettings)
-    renderItemsTable(page, drawText, lineItems as LineItem[])
-    renderTotalsSection(page, drawText, invoice as InvoiceData, companySettings as CompanySettings)
+    renderItemsAndTotals(page, drawText, invoice as InvoiceData, lineItems as LineItem[])
+    await renderPayment(pdfDoc, page, drawText, companySettings as CompanySettings)
     await renderFooter(pdfDoc, page, drawText, invoice as InvoiceData, companySettings as CompanySettings)
     
     // Generate PDF bytes
@@ -212,7 +212,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('PDF generated successfully with enhanced layout')
+    console.log('PDF generated successfully with refactored layout')
     
     return new Response(
       JSON.stringify({ pdf_url: pdfUrl }),

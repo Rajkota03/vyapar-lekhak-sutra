@@ -11,19 +11,8 @@ import {
   getBandPositions,
   formatDate,
 } from './layout.ts';
-import { drawRoundedRect } from './pdfUtils.ts';
-import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
+import { embedImage } from './pdfUtils.ts';
 import type { InvoiceData, CompanySettings, DrawTextOptions } from './types.ts';
-
-// Helper function to format money values
-function formatMoney(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export async function renderFooter(
   pdfDoc: any,
@@ -38,86 +27,52 @@ export async function renderFooter(
   invoice: InvoiceData,
   companySettings: CompanySettings | null,
 ) {
-  /* ─────────── BOX GEOMETRY ─────────── */
-  const pos = getBandPositions();
-  const totBox = {
-    width: 220,                                     // ⬅ widened from 200
-    x: PAGE.width - PAGE.margin - 220,              // keep right edge same
-    y: PAGE.margin + BANDS.footer + 40,             // height anchor
-  };
-  let cursor = totBox.y + BANDS.totals - 20;
+  const positions = getBandPositions();
+  let cursor = PAGE.margin + BANDS.footer - 20;
 
-  /* ─────────── PAYMENT INSTRUCTIONS (left) ─────────── */
-  const noteLines = (companySettings?.payment_note || '').split('\n');
-  drawText('Payment Instructions', PAGE.margin, cursor, {
-    size: FONTS.medium,
-    bold: true,
-    color: COLORS.text.primary,
-  });
-  cursor -= 18;
-  noteLines.forEach((ln) => {
-    drawText(ln, PAGE.margin, cursor, { size: FONTS.base, color: COLORS.text.secondary });
-    cursor -= 14;
-  });
-
-  /* reset cursor for totals */
-  cursor = totBox.y + BANDS.totals - 20;
-
-  /* white background - using rgb() conversion */
-  page.drawRectangle({
-    x: totBox.x,
-    y: totBox.y,
-    width: totBox.width,
-    height: BANDS.totals,
-    color: rgb(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]),
-  });
-
-  const rows: [string, string][] = [
-    ['Subtotal', formatMoney(invoice.subtotal)],
-    [`CGST (${invoice.cgst_pct} %)`, formatMoney(invoice.cgst)],
-    [`SGST (${invoice.sgst_pct} %)`, formatMoney(invoice.sgst)],
-  ];
-  if (invoice.use_igst) {
-    rows.push([`IGST (${invoice.igst_pct} %)`, formatMoney(invoice.igst)]);
+  /* ─────────── SIGNATURE SECTION ─────────── */
+  if (invoice.show_my_signature && companySettings?.signature_url) {
+    try {
+      const signatureResult = await embedImage(pdfDoc, companySettings.signature_url);
+      if (signatureResult) {
+        const sigWidth = 80;
+        const sigHeight = 40;
+        const sigX = PAGE.margin;
+        const sigY = cursor - sigHeight;
+        
+        page.drawImage(signatureResult.image, {
+          x: sigX,
+          y: sigY,
+          width: sigWidth,
+          height: sigHeight,
+        });
+        
+        drawText('Authorized Signature', sigX, sigY - 10, {
+          size: FONTS.small,
+          color: COLORS.text.secondary,
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to embed signature:', error);
+    }
   }
 
-  /* regular rows */
-  rows.forEach(([label, val]) => {
-    drawText(label, totBox.x + 12, cursor, {
-      size: FONTS.base,
-      color: COLORS.text.primary,
+  /* ─────────── CLIENT SIGNATURE (if required) ─────────── */
+  if (invoice.require_client_signature) {
+    const clientSigX = PAGE.width - PAGE.margin - 120;
+    const clientSigY = cursor - 40;
+    
+    // Draw signature line
+    page.drawLine({
+      start: { x: clientSigX, y: clientSigY },
+      end: { x: clientSigX + 100, y: clientSigY },
+      thickness: 1,
+      color: { r: COLORS.lines.medium[0], g: COLORS.lines.medium[1], b: COLORS.lines.medium[2] },
     });
-    drawText(
-      val,
-      totBox.x + totBox.width - 12,
-      cursor,
-      { size: FONTS.base, color: COLORS.text.primary },
-      { textAlign: 'right' },
-    );
-    cursor -= 14;
-  });
-
-  /* ─────────── GRAND TOTAL HIGHLIGHT ─────────── */
-  const barHeight = 22;
-  const barY = cursor - 4;
-  page.drawRectangle({
-    x: totBox.x,
-    y: barY,
-    width: totBox.width,            // full 220 pt
-    height: barHeight,
-    color: rgb(COLORS.background.medium[0], COLORS.background.medium[1], COLORS.background.medium[2]),
-  });
-
-  drawText('GRAND TOTAL', totBox.x + 12, barY + 6, {
-    size: FONTS.medium,
-    bold: true,
-    color: COLORS.text.primary,
-  });
-  drawText(
-    formatMoney(invoice.total),
-    totBox.x + totBox.width - 12,
-    barY + 6,
-    { size: FONTS.medium, bold: true, color: COLORS.text.primary },
-    { textAlign: 'right' },
-  );
+    
+    drawText('Client Signature', clientSigX, clientSigY - 10, {
+      size: FONTS.small,
+      color: COLORS.text.secondary,
+    });
+  }
 }
