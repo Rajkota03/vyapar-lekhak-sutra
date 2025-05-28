@@ -1,3 +1,4 @@
+
 /* ────────────────────────────────────────────
    renderItemsAndTotals.ts
    Draws: table header, line-items, white bg,
@@ -49,14 +50,15 @@ export function renderItemsAndTotals(
   const tableWidth = PAGE.inner - 220;          // 220 pt reserved for totals col
   const colW = TABLE.cols.map((f) => f * tableWidth);
 
-  drawRoundedRect(
-    page,
-    PAGE.margin,
-    cursor - TABLE.headerH,
-    tableWidth,
-    TABLE.headerH,
-    COLORS.background.medium,          // grey fill
-  );
+  // REMOVED: Grey header background
+  // drawRoundedRect(
+  //   page,
+  //   PAGE.margin,
+  //   cursor - TABLE.headerH,
+  //   tableWidth,
+  //   TABLE.headerH,
+  //   COLORS.background.medium,          // grey fill
+  // );
 
   ['Description', 'Qty', 'Rate', 'Amount'].forEach((h, i) => {
     const x =
