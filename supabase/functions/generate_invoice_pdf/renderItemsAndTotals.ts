@@ -1,8 +1,7 @@
-
 /* ────────────────────────────────────────────
    renderItemsAndTotals.ts
-   Draws: table header, line-items, clean design,
-          subtotal / tax rows under amount column, GRAND TOTAL bar
+   Draws: column header, line-items, totals inside
+          the Amount column, GRAND TOTAL grey bar
    ──────────────────────────────────────────── */
 
 import {
@@ -20,7 +19,7 @@ import type {
   DrawTextOptions,
 } from './types.ts';
 
-/* — money formatter with proper comma separators — */
+/* — money formatter — */
 const fm = (v: number) =>
   new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -43,150 +42,148 @@ export function renderItemsAndTotals(
 ) {
   /* ───── initial Y positions ───── */
   const pos = getBandPositions();
-  let cursor = pos.topOfItems;        // first row baseline
-  const startY = cursor;              // top of block for bg calc
+  let cursor = pos.topOfItems;           // first row
+  const startY = cursor;                 // top of white block
 
-  /* ───── table header - full width ───── */
+  /* ───── column widths (flex) ───── */
   const colW = [
-    PAGE.inner * 0.45,          // Equipment - 45%
-    PAGE.inner * 0.12,          // PKG - 12%
-    PAGE.inner * 0.20,          // Rate - 20%
-    PAGE.inner * 0.23,          // Amount - 23%
+    PAGE.inner * 0.45, // Equipment
+    PAGE.inner * 0.12, // PKG
+    PAGE.inner * 0.20, // Rate
+    PAGE.inner * 0.23, // Amount
   ];
 
-  // Clean header without background
+  /* ───── header text (no grey fill) ───── */
   const headers = ['EQUIPMENT', 'PKG', 'Rate', 'Amount'];
-  const headerAlignments = ['left', 'center', 'right', 'right'];
-  
+  const hdrAlign = ['left', 'center', 'right', 'right'];
+
   headers.forEach((h, i) => {
-    let x = PAGE.margin + colW.slice(0, i).reduce((a, b) => a + b, 0) + TABLE.padding;
-    
-    // Adjust x position for center and right alignment
-    if (headerAlignments[i] === 'center') {
-      x += (colW[i] - TABLE.padding * 2) / 2 - 10; // Approximate center adjustment
-    } else if (headerAlignments[i] === 'right') {
-      x += colW[i] - TABLE.padding * 2 - 20; // Right alignment
-    }
-    
-    drawText(h, x, cursor - 16, {
+    const colStart = PAGE.margin + colW.slice(0, i).reduce((a, b) => a + b, 0);
+    let x = colStart + TABLE.padding;
+
+    if (hdrAlign[i] === 'center') x = colStart + colW[i] / 2;
+    if (hdrAlign[i] === 'right')  x = colStart + colW[i] - TABLE.padding;
+
+    drawText(h, x, cursor - 12, {
       size: FONTS.base,
       bold: true,
       color: COLORS.text.primary,
-    });
+    }, { textAlign: hdrAlign[i] });
   });
 
-  cursor -= TABLE.headerH + 4;         // move below header
-  
-  // Draw header underline - full width
+  /* underline header */
   page.drawLine({
-    start: { x: PAGE.margin, y: cursor + 2 },
-    end: { x: PAGE.margin + PAGE.inner, y: cursor + 2 },
+    start: { x: PAGE.margin, y: cursor - TABLE.headerH + 2 },
+    end:   { x: PAGE.margin + PAGE.inner, y: cursor - TABLE.headerH + 2 },
     thickness: 0.5,
     color: rgb(...COLORS.lines.light),
   });
 
-  cursor -= 8; // Space after header line
+  cursor -= TABLE.headerH;
 
   /* ───── table rows ───── */
-  lines.forEach((l, index) => {
-    let x = PAGE.margin;
+  lines.forEach((l, idx) => {
+    let colStart = PAGE.margin;
 
-    // Equipment description
-    drawText(l.description, x + TABLE.padding, cursor, { size: FONTS.base });
-    x += colW[0];
+    /* Equipment (left) */
+    drawText(l.description, colStart + TABLE.padding, cursor, { size: FONTS.base });
 
-    // PKG (centered)
-    const qtyText = String(l.qty ?? 1);
-    const qtyX = x + (colW[1] / 2) - 5; // Center in column
-    drawText(qtyText, qtyX, cursor, { size: FONTS.base });
-    x += colW[1];
+    colStart += colW[0];
 
-    // Rate (right-aligned)
-    const rateText = fm(l.unit_price);
-    const rateX = x + colW[2] - TABLE.padding - 40; // Right align
-    drawText(rateText, rateX, cursor, { size: FONTS.base });
-    x += colW[2];
+    /* PKG (center) */
+    drawText(String(l.qty ?? 1), colStart + colW[1] / 2, cursor, { size: FONTS.base }, { textAlign: 'center' });
+    colStart += colW[1];
 
-    // Amount (right-aligned)
-    const amountText = fm(l.amount);
-    const amountX = x + colW[3] - TABLE.padding - 40; // Right align
-    drawText(amountText, amountX, cursor, { size: FONTS.base });
-    
+    /* Rate (right) */
+    drawText(fm(l.unit_price), colStart + colW[2] - TABLE.padding, cursor, { size: FONTS.base }, { textAlign: 'right' });
+    colStart += colW[2];
+
+    /* Amount (right) */
+    drawText(fm(l.amount), colStart + colW[3] - TABLE.padding, cursor, { size: FONTS.base }, { textAlign: 'right' });
+
     cursor -= TABLE.rowH;
-    
-    // Add subtle line between rows (except last)
-    if (index < lines.length - 1) {
+
+    /* optional row rule */
+    if (idx < lines.length - 1) {
       page.drawLine({
         start: { x: PAGE.margin, y: cursor + TABLE.rowH / 2 },
-        end: { x: PAGE.margin + PAGE.inner, y: cursor + TABLE.rowH / 2 },
+        end:   { x: PAGE.margin + PAGE.inner, y: cursor + TABLE.rowH / 2 },
         thickness: 0.25,
         color: rgb(...COLORS.lines.light),
       });
     }
   });
 
-  /* ───── totals section under the amount column ───── */
-  cursor -= 20; // Add space after items
-  
-  // Calculate exact position to align with Amount column
-  const amountColumnStart = PAGE.margin + colW[0] + colW[1] + colW[2]; // Start of amount column
-  const amountColumnWidth = colW[3]; // Same width as amount column
-  
-  // Position totals to align perfectly with the Amount column
-  const totalsX = amountColumnStart + TABLE.padding; // Add padding like the table cells
-  const totalsWidth = amountColumnWidth - (TABLE.padding * 2); // Subtract padding from both sides
-  let totalsY = cursor;
+  /* ───── totals block inside Amount column ───── */
+  cursor -= 20;                                      // gap after items
+
+  const amtColX = PAGE.margin + colW[0] + colW[1] + colW[2];
+  const amtColW = colW[3];
+  const totalsX = amtColX + TABLE.padding;
+  const totalsW = amtColW - TABLE.padding * 2;
+  let totalsY   = cursor;
 
   const rows: [string, number][] = [
     ['Subtotal', invoice.subtotal],
   ];
-  
+
   if (invoice.use_igst) {
-    rows.push([`IGST (${invoice.igst_pct}%)`, invoice.igst]);
+    rows.push([`IGST (${invoice.igst_pct} %)`, invoice.igst]);
   } else {
-    if (Number(invoice.cgst_pct) > 0) {
-      rows.push([`CGST (${invoice.cgst_pct}%)`, invoice.cgst]);
-    }
-    if (Number(invoice.sgst_pct) > 0) {
-      rows.push([`SGST (${invoice.sgst_pct}%)`, invoice.sgst]);
-    }
+    if (+invoice.cgst_pct) rows.push([`CGST (${invoice.cgst_pct} %)`, invoice.cgst]);
+    if (+invoice.sgst_pct) rows.push([`SGST (${invoice.sgst_pct} %)`, invoice.sgst]);
   }
 
-  /* ───── draw subtotal / tax rows ───── */
-  rows.forEach(([lbl, val], index) => {
-    drawText(lbl, totalsX, totalsY, { size: FONTS.base });
+  /* draw each row */
+  rows.forEach(([label, val]) => {
+    drawText(label, totalsX, totalsY, { size: FONTS.base });
+
     drawText(
       fm(val),
-      totalsX + totalsWidth - 50, // Right align within the totals area with more space
+      totalsX + totalsW,                 // right edge of amount column
       totalsY,
       { size: FONTS.base },
       { textAlign: 'right' },
     );
-    totalsY -= 20; // Increased spacing between rows
+    totalsY -= 16;                       // line spacing
   });
 
-  /* ───── GRAND TOTAL with background ───── */
-  totalsY -= 8; // Extra space before grand total
-  
+  /* ───── GRAND TOTAL BAR ───── */
+  totalsY -= 8;                          // extra space
+
+  const barH = 24;
   drawRoundedRect(
     page,
-    totalsX - TABLE.padding, // Extend background slightly beyond text
+    totalsX - TABLE.padding,
     totalsY - 10,
-    totalsWidth + (TABLE.padding * 2), // Match the visual width
-    26, // Increased height for better spacing
+    totalsW + TABLE.padding * 2,
+    barH,
     COLORS.background.light,
   );
-  
-  drawText('GRAND TOTAL', totalsX, totalsY, { 
-    size: FONTS.medium, 
+
+  drawText('GRAND TOTAL', totalsX, totalsY, {
+    size: FONTS.medium,
     bold: true,
-    color: COLORS.text.primary,
   });
+
   drawText(
     fm(invoice.total),
-    totalsX + totalsWidth - 50, // Right align to match other amounts with more space
+    totalsX + totalsW,
     totalsY,
     { size: FONTS.medium, bold: true },
     { textAlign: 'right' },
+  );
+
+  /* ───── white background behind entire block ───── */
+  const blockBottom = totalsY - 14;      // little padding below grand bar
+  const blockHeight = startY - blockBottom;
+
+  drawRoundedRect(
+    page,
+    PAGE.margin,
+    blockBottom,
+    PAGE.inner,
+    blockHeight,
+    COLORS.background.light,
   );
 }
