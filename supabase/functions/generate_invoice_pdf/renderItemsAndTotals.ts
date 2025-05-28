@@ -2,7 +2,7 @@
 /* ────────────────────────────────────────────
    renderItemsAndTotals.ts
    Draws: table header, line-items, clean design,
-          subtotal / tax rows, GRAND TOTAL bar
+          subtotal / tax rows under amount column, GRAND TOTAL bar
    ──────────────────────────────────────────── */
 
 import {
@@ -46,13 +46,12 @@ export function renderItemsAndTotals(
   let cursor = pos.topOfItems;        // first row baseline
   const startY = cursor;              // top of block for bg calc
 
-  /* ───── table header - items section only ───── */
-  const itemsTableWidth = 420;       // Fixed width for items table
+  /* ───── table header - full width ───── */
   const colW = [
-    itemsTableWidth * 0.45,          // Equipment - 45%
-    itemsTableWidth * 0.12,          // PKG - 12%
-    itemsTableWidth * 0.20,          // Rate - 20%
-    itemsTableWidth * 0.23,          // Amount - 23%
+    PAGE.inner * 0.45,          // Equipment - 45%
+    PAGE.inner * 0.12,          // PKG - 12%
+    PAGE.inner * 0.20,          // Rate - 20%
+    PAGE.inner * 0.23,          // Amount - 23%
   ];
 
   // Clean header without background
@@ -78,10 +77,10 @@ export function renderItemsAndTotals(
 
   cursor -= TABLE.headerH + 4;         // move below header
   
-  // Draw header underline - only for items table
+  // Draw header underline - full width
   page.drawLine({
     start: { x: PAGE.margin, y: cursor + 2 },
-    end: { x: PAGE.margin + itemsTableWidth, y: cursor + 2 },
+    end: { x: PAGE.margin + PAGE.inner, y: cursor + 2 },
     thickness: 0.5,
     color: rgb(...COLORS.lines.light),
   });
@@ -119,17 +118,20 @@ export function renderItemsAndTotals(
     if (index < lines.length - 1) {
       page.drawLine({
         start: { x: PAGE.margin, y: cursor + TABLE.rowH / 2 },
-        end: { x: PAGE.margin + itemsTableWidth, y: cursor + TABLE.rowH / 2 },
+        end: { x: PAGE.margin + PAGE.inner, y: cursor + TABLE.rowH / 2 },
         thickness: 0.25,
         color: rgb(...COLORS.lines.light),
       });
     }
   });
 
-  /* ───── totals section on the right ───── */
-  const totalsX = PAGE.margin + itemsTableWidth + 20; // Position to the right of items table
-  const totalsWidth = 220;
-  let totalsY = pos.topOfItems - TABLE.headerH - 20; // Start aligned with items
+  /* ───── totals section under the amount column ───── */
+  cursor -= 20; // Add space after items
+  
+  // Position totals under the amount column
+  const totalsX = PAGE.margin + colW[0] + colW[1] + colW[2]; // Start of amount column
+  const totalsWidth = colW[3]; // Same width as amount column
+  let totalsY = cursor;
 
   const rows: [string, number][] = [
     ['Subtotal', invoice.subtotal],

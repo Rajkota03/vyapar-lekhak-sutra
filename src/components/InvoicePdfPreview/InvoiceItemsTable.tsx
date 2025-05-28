@@ -5,9 +5,11 @@ import { rgbToCSS, getAbsoluteStyles } from './invoicePreviewUtils';
 
 interface InvoiceItemsTableProps {
   lines: any[];
+  invoice: any;
+  companySettings: any;
 }
 
-export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines }) => {
+export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
   return (
@@ -19,11 +21,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines }) =
         overflow: 'hidden'
       }}
     >
-      {/* Items Table - Left Side */}
-      <div 
-        className="float-left"
-        style={{ width: '420px' }} // Fixed width for items table
-      >
+      {/* Items Table */}
+      <div style={{ width: '100%' }}>
         {/* Table Header */}
         <div 
           className="py-2 mb-2"
@@ -52,7 +51,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines }) =
 
         {/* Table Body */}
         <div style={{ 
-          maxHeight: `${positions.topOfBill - SPACING.sectionGap - TABLE.headerH - positions.bottomOfTable}px`, 
+          maxHeight: `${positions.topOfBill - SPACING.sectionGap - TABLE.headerH - positions.bottomOfTable - 150}px`, 
           overflow: 'hidden' 
         }}>
           {lines?.map((line, i) => (
@@ -82,6 +81,72 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines }) =
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Totals Section - Positioned under the Amount column */}
+        <div style={{ 
+          marginTop: '20px',
+          marginLeft: '77%', // Position under the amount column (45% + 12% + 20% = 77%)
+          width: '23%' // Same width as amount column
+        }}>
+          <div className="space-y-3">
+            {/* Subtotal */}
+            <div className="flex justify-between py-1">
+              <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                Subtotal
+              </span>
+              <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                {formatCurrency(Number(invoice?.subtotal || 214500))}
+              </span>
+            </div>
+            
+            {/* Tax rows */}
+            {(!invoice?.use_igst && Number(invoice?.cgst_pct || 9) > 0) && (
+              <div className="flex justify-between py-1">
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  CGST ({invoice?.cgst_pct || 9}%)
+                </span>
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  {formatCurrency(Number(invoice?.cgst || 19305))}
+                </span>
+              </div>
+            )}
+            
+            {(!invoice?.use_igst && Number(invoice?.sgst_pct || 9) > 0) && (
+              <div className="flex justify-between py-1">
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  SGST ({invoice?.sgst_pct || 9}%)
+                </span>
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  {formatCurrency(Number(invoice?.sgst || 19305))}
+                </span>
+              </div>
+            )}
+            
+            {(invoice?.use_igst && Number(invoice?.igst_pct || 18) > 0) && (
+              <div className="flex justify-between py-1">
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  IGST ({invoice?.igst_pct || 18}%)
+                </span>
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  {formatCurrency(Number(invoice?.igst || 38610))}
+                </span>
+              </div>
+            )}
+            
+            {/* Grand Total with light background */}
+            <div 
+              className="flex justify-between py-3 px-3 font-bold rounded mt-2"
+              style={{
+                backgroundColor: rgbToCSS(COLORS.background.light),
+                fontSize: `${FONTS.medium}px`,
+                color: rgbToCSS(COLORS.text.primary)
+              }}
+            >
+              <span>GRAND TOTAL</span>
+              <span>{formatCurrency(Number(invoice?.total || 253110))}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -6,7 +6,6 @@ import { PAGE, FONTS } from '@/lib/pdf/layout';
 import { InvoiceHeader } from './InvoicePdfPreview/InvoiceHeader';
 import { InvoiceBillBar } from './InvoicePdfPreview/InvoiceBillBar';
 import { InvoiceItemsTable } from './InvoicePdfPreview/InvoiceItemsTable';
-import { InvoiceTotalsSection } from './InvoicePdfPreview/InvoiceTotalsSection';
 import { InvoiceFooter } from './InvoicePdfPreview/InvoiceFooter';
 
 interface InvoicePdfPreviewProps {
@@ -86,9 +85,8 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
         companySettings={companySettings} 
       />
       
-      <InvoiceItemsTable lines={lines} />
-      
-      <InvoiceTotalsSection 
+      <InvoiceItemsTable 
+        lines={lines} 
         invoice={invoice} 
         companySettings={companySettings} 
       />
