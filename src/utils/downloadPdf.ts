@@ -8,107 +8,69 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
     
     // Show loading toast
     toast({
-      title: "Generating PDF",
-      description: "Please wait while we generate your invoice PDF...",
+      title: "Preparing PDF",
+      description: "Getting your invoice PDF...",
     });
     
-    // Always force regeneration to ensure latest settings are applied
-    // and add a timestamp to bypass any potential caching
-    const { data, error } = await supabase.functions.invoke(
-      'generate_invoice_pdf',
+    // First, try to get existing PDF without regenerating
+    const { data: existingPdfData, error: existingError } = await supabase.functions.invoke(
+      'get_or_generate_pdf',
       { 
         body: { 
-          invoice_id: invoiceId, 
-          force_regenerate: true,
-          timestamp: Date.now() // Add timestamp to ensure unique request
+          invoice_id: invoiceId
         } 
       }
     );
     
-    if (error) {
-      console.error('Error generating PDF:', error);
+    if (existingError) {
+      console.error('Error getting existing PDF:', existingError);
       
-      // Provide more specific error messages based on error type
-      let errorMessage = 'Unknown error occurred';
-      if (error.message?.includes('Invalid color')) {
-        errorMessage = 'PDF generation failed due to formatting issue. Please try again.';
-      } else if (error.message?.includes('FunctionsHttpError')) {
-        errorMessage = 'Server error while generating PDF. Please try again in a moment.';
-      } else {
-        errorMessage = error.message || 'Failed to generate PDF';
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorMessage,
-      });
-      return;
-    }
-    
-    const url = data?.pdf_url;
-    console.log('PDF URL received for download:', url);
-    
-    if (!url) {
-      console.error('No PDF URL in response:', data);
-      toast({
-        variant: "destructive",
-        title: "Error", 
-        description: "PDF URL not available. Please try again.",
-      });
-      return;
-    }
-
-    // Add cache-busting parameter to the URL to ensure fresh download
-    const cacheBustingUrl = `${url}?v=${Date.now()}`;
-
-    // Detect if we're on iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    
-    if (isIOS) {
-      // On iOS, open PDF in new tab instead of trying to download
-      window.open(cacheBustingUrl, '_blank');
-      toast({
-        title: "PDF Opened",
-        description: "PDF opened in new tab. Use share button to save or print.",
-      });
-    } else {
-      // For other platforms, try to download
-      try {
-        const response = await fetch(cacheBustingUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Fallback to force regeneration if getting existing PDF fails
+      const { data, error } = await supabase.functions.invoke(
+        'generate_invoice_pdf',
+        { 
+          body: { 
+            invoice_id: invoiceId, 
+            force_regenerate: true,
+            timestamp: Date.now()
+          } 
         }
-        
-        const blob = await response.blob();
-        
-        // Create a download link and trigger it
-        const link = document.createElement('a');
-        const objectURL = URL.createObjectURL(blob);
-        link.href = objectURL;
-        link.download = `invoice-${invoiceCode || invoiceId}.pdf`;
-        
-        // Append to body, click, and remove
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up the object URL
-        URL.revokeObjectURL(objectURL);
-        
+      );
+      
+      if (error) {
+        console.error('Error generating PDF:', error);
         toast({
-          title: "Success",
-          description: "PDF download started",
+          variant: "destructive",
+          title: "Error",
+          description: error.message || 'Failed to generate PDF',
         });
-      } catch (downloadError) {
-        console.error('Download failed, opening in new tab:', downloadError);
-        // Fallback to opening in new tab
-        window.open(cacheBustingUrl, '_blank');
-        toast({
-          title: "PDF Opened",
-          description: "PDF opened in new tab. Use browser's save option to download.",
-        });
+        return;
       }
+      
+      if (!data?.pdf_url) {
+        toast({
+          variant: "destructive",
+          title: "Error", 
+          description: "PDF URL not available. Please try again.",
+        });
+        return;
+      }
+      
+      await downloadPdfFile(data.pdf_url, invoiceCode || invoiceId);
+    } else {
+      // Use existing PDF for faster download
+      const url = existingPdfData?.pdf_url;
+      
+      if (!url) {
+        toast({
+          variant: "destructive",
+          title: "Error", 
+          description: "PDF URL not available. Please try again.",
+        });
+        return;
+      }
+      
+      await downloadPdfFile(url, invoiceCode || invoiceId);
     }
     
   } catch (error) {
@@ -120,3 +82,54 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
     });
   }
 };
+
+async function downloadPdfFile(url: string, filename: string) {
+  // Detect if we're on iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  if (isIOS) {
+    // On iOS, open PDF in new tab instead of trying to download
+    window.open(url, '_blank');
+    toast({
+      title: "PDF Opened",
+      description: "PDF opened in new tab. Use share button to save or print.",
+    });
+  } else {
+    // For other platforms, try to download directly
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      
+      // Create a download link and trigger it
+      const link = document.createElement('a');
+      const objectURL = URL.createObjectURL(blob);
+      link.href = objectURL;
+      link.download = `invoice-${filename}.pdf`;
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the object URL
+      URL.revokeObjectURL(objectURL);
+      
+      toast({
+        title: "Success",
+        description: "PDF download started",
+      });
+    } catch (downloadError) {
+      console.error('Download failed, opening in new tab:', downloadError);
+      // Fallback to opening in new tab
+      window.open(url, '_blank');
+      toast({
+        title: "PDF Opened",
+        description: "PDF opened in new tab. Use browser's save option to download.",
+      });
+    }
+  }
+}

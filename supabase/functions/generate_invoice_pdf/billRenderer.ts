@@ -11,7 +11,7 @@ export function renderBillSection(
 ) {
   const positions = getBandPositions()
   
-  // Enhanced bill-to background with rounded corners effect
+  // Single unified grey background for the entire bill section
   drawRoundedRect(
     page,
     PAGE.margin,
@@ -69,27 +69,14 @@ export function renderBillSection(
     })
   }
   
-  // Invoice details box with proper positioning and sizing
-  const detailsBoxX = PAGE.width - PAGE.margin - 200  // Increased width
-  const detailsBoxY = positions.topOfBill + 15
-  const detailsBoxWidth = 180  // Increased from 160 to 180
-  const detailsBoxHeight = BANDS.bill - 30
+  // Invoice details section - positioned within the same grey box
+  const detailsStartY = positions.topOfBill + BANDS.bill - 25
+  const labelX = PAGE.width - PAGE.margin - 220  // Start further left
+  const valueX = PAGE.width - PAGE.margin - 25   // End with proper margin
   
-  // Details background
-  drawRoundedRect(
-    page,
-    detailsBoxX,
-    detailsBoxY,
-    detailsBoxWidth,
-    detailsBoxHeight,
-    COLORS.background.medium
-  )
+  let detailsY = detailsStartY
   
-  let detailsY = positions.topOfBill + BANDS.bill - 25
-  const labelX = detailsBoxX + 15
-  const valueX = detailsBoxX + detailsBoxWidth - 20  // More padding from right edge
-  
-  // Invoice details with better alignment and spacing
+  // Invoice details with better spacing and no separate background
   const invoiceDetails = [
     { label: 'Invoice #', value: invoice.invoice_code || '25-26/02' },
     { label: 'Date', value: formatDate(invoice.issue_date) },
@@ -106,6 +93,6 @@ export function renderBillSection(
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'right' })
-    detailsY -= 22  // Increased spacing between rows
+    detailsY -= 18  // Consistent spacing
   })
 }
