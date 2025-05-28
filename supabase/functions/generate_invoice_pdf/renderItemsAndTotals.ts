@@ -20,7 +20,7 @@ import type {
   DrawTextOptions,
 } from './types.ts';
 
-/* — money formatter — */
+/* — money formatter with proper comma separators — */
 const fm = (v: number) =>
   new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -157,23 +157,23 @@ export function renderItemsAndTotals(
     drawText(lbl, totalsX, totalsY, { size: FONTS.base });
     drawText(
       fm(val),
-      totalsX + totalsWidth - 40, // Right align within the totals area, matching amount column alignment
+      totalsX + totalsWidth - 50, // Right align within the totals area with more space
       totalsY,
       { size: FONTS.base },
       { textAlign: 'right' },
     );
-    totalsY -= 18;
+    totalsY -= 20; // Increased spacing between rows
   });
 
   /* ───── GRAND TOTAL with background ───── */
-  totalsY -= 6; // Extra space before grand total
+  totalsY -= 8; // Extra space before grand total
   
   drawRoundedRect(
     page,
     totalsX - TABLE.padding, // Extend background slightly beyond text
-    totalsY - 8,
+    totalsY - 10,
     totalsWidth + (TABLE.padding * 2), // Match the visual width
-    20,
+    26, // Increased height for better spacing
     COLORS.background.light,
   );
   
@@ -184,7 +184,7 @@ export function renderItemsAndTotals(
   });
   drawText(
     fm(invoice.total),
-    totalsX + totalsWidth - 40, // Right align to match other amounts
+    totalsX + totalsWidth - 50, // Right align to match other amounts with more space
     totalsY,
     { size: FONTS.medium, bold: true },
     { textAlign: 'right' },

@@ -96,13 +96,13 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             width: '23%', // Same width as Amount column
             paddingRight: '8px' // Match the table padding
           }}>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Subtotal */}
               <div className="flex justify-between py-1">
                 <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                   Subtotal
                 </span>
-                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
                   {formatCurrency(Number(invoice?.subtotal || 214500))}
                 </span>
               </div>
@@ -113,7 +113,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     CGST ({invoice?.cgst_pct || 9}%)
                   </span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
                     {formatCurrency(Number(invoice?.cgst || 19305))}
                   </span>
                 </div>
@@ -124,7 +124,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     SGST ({invoice?.sgst_pct || 9}%)
                   </span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
                     {formatCurrency(Number(invoice?.sgst || 19305))}
                   </span>
                 </div>
@@ -135,7 +135,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
                     IGST ({invoice?.igst_pct || 18}%)
                   </span>
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
+                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px`, marginLeft: '20px' }}>
                     {formatCurrency(Number(invoice?.igst || 38610))}
                   </span>
                 </div>
@@ -143,7 +143,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               
               {/* Grand Total with light background */}
               <div 
-                className="flex justify-between py-3 px-3 font-bold rounded mt-2"
+                className="flex justify-between py-3 px-3 font-bold rounded mt-3"
                 style={{
                   backgroundColor: rgbToCSS(COLORS.background.light),
                   fontSize: `${FONTS.medium}px`,
@@ -151,7 +151,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 }}
               >
                 <span>GRAND TOTAL</span>
-                <span>{formatCurrency(Number(invoice?.total || 253110))}</span>
+                <span style={{ marginLeft: '20px' }}>{formatCurrency(Number(invoice?.total || 253110))}</span>
               </div>
             </div>
           </div>
