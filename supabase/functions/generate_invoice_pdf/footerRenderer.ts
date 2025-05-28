@@ -1,3 +1,4 @@
+
 /*  renderTotalsSection.ts
  *  – widened totals column (220 pt)
  *  – grey GRAND TOTAL bar fills full width
@@ -10,10 +11,20 @@ import {
   FONTS,
   COLORS,
   getBandPositions,
-  formatMoney,
+  formatDate,
 } from './layout.ts';
 import { drawRoundedRect } from './pdfUtils.ts';
 import type { InvoiceData, CompanySettings, DrawTextOptions } from './types.ts';
+
+// Helper function to format money values
+function formatMoney(amount: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 export function renderTotalsSection(
   page: any,
