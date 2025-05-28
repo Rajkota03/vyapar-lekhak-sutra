@@ -119,11 +119,14 @@ const InvoiceEdit = () => {
     try {
       console.log('Generating preview for invoice:', existingInvoice.id);
       
+      // Always force regeneration for preview to get latest layout fixes
+      const timestamp = Date.now();
       const { data, error } = await supabase.functions.invoke('generate_invoice_pdf', {
         body: { 
           invoice_id: existingInvoice.id, 
           preview: true,
-          force_regenerate: true  // Force regeneration for preview
+          force_regenerate: true,
+          timestamp: timestamp
         }
       });
       
@@ -158,8 +161,10 @@ const InvoiceEdit = () => {
         return;
       }
       
-      console.log('Preview URL generated:', data.pdf_url);
-      setPdfUrl(data.pdf_url);
+      // Add cache busting parameter to ensure fresh preview
+      const freshPdfUrl = `${data.pdf_url}?v=${timestamp}`;
+      console.log('Preview URL generated:', freshPdfUrl);
+      setPdfUrl(freshPdfUrl);
       setPreviewOpen(true);
       
     } catch (error) {

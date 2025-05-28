@@ -21,32 +21,34 @@ export function renderBillSection(
     COLORS.background.light
   )
   
-  let billY = positions.topOfBill + BANDS.bill - 20
+  let billY = positions.topOfBill + BANDS.bill - 25
   
   // Bill To section with better typography
-  drawText('BILL TO', PAGE.margin + 25, billY, { 
+  drawText('BILL TO', PAGE.margin + 20, billY, { 
     size: FONTS.medium, 
     bold: true, 
     color: COLORS.text.muted
   })
-  billY -= 20
+  billY -= 18
   
-  drawText(invoice.clients?.name || 'Client Name', PAGE.margin + 25, billY, { 
+  drawText(invoice.clients?.name || 'Client Name', PAGE.margin + 20, billY, { 
     size: FONTS.large, 
     bold: true,
     color: COLORS.text.primary
   })
-  billY -= 16
+  billY -= 15
   
   // Client address with improved formatting
   if (invoice.clients?.billing_address) {
     const clientAddressLines = invoice.clients.billing_address.split('\n').slice(0, 3)
     clientAddressLines.forEach((line: string) => {
-      drawText(line.trim(), PAGE.margin + 25, billY, { 
-        size: FONTS.base, 
-        color: COLORS.text.secondary
-      })
-      billY -= SPACING.lineHeight
+      if (billY > positions.topOfBill + 15) {
+        drawText(line.trim(), PAGE.margin + 20, billY, { 
+          size: FONTS.base, 
+          color: COLORS.text.secondary
+        })
+        billY -= SPACING.lineHeight
+      }
     })
   } else {
     const defaultAddress = [
@@ -54,29 +56,44 @@ export function renderBillSection(
       'HYDERABAD TELANGANA 500096'
     ]
     defaultAddress.forEach((line) => {
-      drawText(line, PAGE.margin + 25, billY, { 
-        size: FONTS.base, 
-        color: COLORS.text.secondary
-      })
-      billY -= SPACING.lineHeight
+      if (billY > positions.topOfBill + 15) {
+        drawText(line, PAGE.margin + 20, billY, { 
+          size: FONTS.base, 
+          color: COLORS.text.secondary
+        })
+        billY -= SPACING.lineHeight
+      }
     })
   }
   
   if (invoice.clients?.gstin && billY > positions.topOfBill + 15) {
-    drawText(`GSTIN : ${invoice.clients.gstin}`, PAGE.margin + 25, billY, { 
+    drawText(`GSTIN : ${invoice.clients.gstin}`, PAGE.margin + 20, billY, { 
       size: FONTS.base, 
       color: COLORS.text.secondary
     })
   }
   
-  // Invoice details section - positioned within the same grey box
-  const detailsStartY = positions.topOfBill + BANDS.bill - 25
-  const labelX = PAGE.width - PAGE.margin - 220  // Start further left
-  const valueX = PAGE.width - PAGE.margin - 25   // End with proper margin
+  // Invoice details section - properly positioned with better spacing
+  const detailsBox = {
+    x: PAGE.width - PAGE.margin - 150,
+    y: positions.topOfBill + 20,
+    width: 130,
+    height: 60
+  }
   
-  let detailsY = detailsStartY
+  // Background for details box
+  drawRoundedRect(
+    page,
+    detailsBox.x,
+    detailsBox.y,
+    detailsBox.width,
+    detailsBox.height,
+    COLORS.background.medium
+  )
   
-  // Invoice details with better spacing and no separate background
+  let detailsY = detailsBox.y + detailsBox.height - 15
+  
+  // Invoice details with consistent spacing
   const invoiceDetails = [
     { label: 'Invoice #', value: invoice.invoice_code || '25-26/02' },
     { label: 'Date', value: formatDate(invoice.issue_date) },
@@ -84,15 +101,17 @@ export function renderBillSection(
   ]
   
   invoiceDetails.forEach(detail => {
-    drawText(detail.label, labelX, detailsY, { 
-      size: FONTS.base, 
-      bold: true,
-      color: COLORS.text.primary
-    })
-    drawText(detail.value, valueX, detailsY, { 
-      size: FONTS.base,
-      color: COLORS.text.primary
-    }, { textAlign: 'right' })
-    detailsY -= 18  // Consistent spacing
+    if (detailsY > detailsBox.y + 10) {
+      drawText(detail.label, detailsBox.x + 10, detailsY, { 
+        size: FONTS.small, 
+        bold: true,
+        color: COLORS.text.primary
+      })
+      drawText(detail.value, detailsBox.x + detailsBox.width - 10, detailsY, { 
+        size: FONTS.small,
+        color: COLORS.text.primary
+      }, { textAlign: 'right' })
+      detailsY -= 16
+    }
   })
 }
