@@ -12,10 +12,17 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
       description: "Please wait while we generate your invoice PDF...",
     });
     
-    // Force regeneration to ensure latest logo settings are applied
+    // Always force regeneration to ensure latest settings are applied
+    // and add a timestamp to bypass any potential caching
     const { data, error } = await supabase.functions.invoke(
       'generate_invoice_pdf',
-      { body: { invoice_id: invoiceId, force_regenerate: true } }
+      { 
+        body: { 
+          invoice_id: invoiceId, 
+          force_regenerate: true,
+          timestamp: Date.now() // Add timestamp to ensure unique request
+        } 
+      }
     );
     
     if (error) {
@@ -41,12 +48,15 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
       return;
     }
 
+    // Add cache-busting parameter to the URL to ensure fresh download
+    const cacheBustingUrl = `${url}?v=${Date.now()}`;
+
     // Detect if we're on iOS
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     
     if (isIOS) {
       // On iOS, open PDF in new tab instead of trying to download
-      window.open(url, '_blank');
+      window.open(cacheBustingUrl, '_blank');
       toast({
         title: "PDF Opened",
         description: "PDF opened in new tab. Use share button to save or print.",
@@ -54,7 +64,7 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
     } else {
       // For other platforms, try to download
       try {
-        const response = await fetch(url);
+        const response = await fetch(cacheBustingUrl);
         const blob = await response.blob();
         
         // Create a download link and trigger it
@@ -78,7 +88,7 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
       } catch (downloadError) {
         console.error('Download failed, opening in new tab:', downloadError);
         // Fallback to opening in new tab
-        window.open(url, '_blank');
+        window.open(cacheBustingUrl, '_blank');
         toast({
           title: "PDF Opened",
           description: "PDF opened in new tab. Use browser's save option to download.",

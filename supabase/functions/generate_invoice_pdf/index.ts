@@ -30,7 +30,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { invoice_id, preview = false, force_regenerate = false } = await req.json()
+    const { invoice_id, preview = false, force_regenerate = false, timestamp } = await req.json()
     
     if (!invoice_id) {
       return new Response(
@@ -42,7 +42,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Generating PDF for invoice:', invoice_id, 'Preview mode:', preview, 'Force regenerate:', force_regenerate)
+    console.log('Generating PDF for invoice:', invoice_id, 'Preview mode:', preview, 'Force regenerate:', force_regenerate, 'Timestamp:', timestamp)
 
     // Fetch invoice with related data
     const { data: invoice, error: invoiceError } = await supabase
@@ -96,8 +96,8 @@ serve(async (req) => {
     // Determine if we should regenerate PDF
     let shouldRegenerate = force_regenerate || preview
     
-    // Only check cache if not forcing regeneration and not preview
-    if (!shouldRegenerate && !preview) {
+    // Only check cache if NOT forcing regeneration and NOT preview
+    if (!force_regenerate && !preview) {
       console.log('Checking if PDF exists and if regeneration is needed...')
       
       const filePath = `company_${invoice.company_id}/${invoice.invoice_code}.pdf`
@@ -145,7 +145,8 @@ serve(async (req) => {
     }
 
     if (force_regenerate) {
-      console.log('Force regeneration requested, skipping all cache checks')
+      console.log('Force regeneration requested, bypassing all cache checks')
+      shouldRegenerate = true
     }
 
     // Create PDF using pdf-lib
@@ -513,12 +514,18 @@ serve(async (req) => {
       )
     }
 
-    // Get public URL
+    // Get public URL with cache busting parameter if force regenerated
     const { data: urlData } = supabase.storage
       .from('invoices')
       .getPublicUrl(data.path)
 
-    const pdfUrl = urlData.publicUrl
+    let pdfUrl = urlData.publicUrl
+    
+    // Add cache busting parameter for force regenerated PDFs
+    if (force_regenerate && timestamp) {
+      pdfUrl = `${pdfUrl}?v=${timestamp}`
+    }
+    
     console.log('PDF public URL:', pdfUrl)
 
     // Update invoice with PDF URL (only if not preview)
