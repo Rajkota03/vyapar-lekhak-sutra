@@ -1,3 +1,4 @@
+
 import {
   PAGE,
   TABLE,
@@ -85,6 +86,28 @@ export function renderItemsAndTotals(
   ];
   if (invoice.use_igst) rows.push([`IGST (${invoice.igst_pct} %)`, invoice.igst]);
 
+  /* -------- grand-total bar position calculation -------- */
+  let totalsCursor = cursor;
+  rows.forEach(() => {
+    totalsCursor -= 14;
+  });
+  
+  const barH = 22;
+  const barY = totalsCursor - 4;
+  
+  /* -------- white background BEFORE drawing totals -------- */
+  const blockBottom = barY - 6;
+  const blockHeight = startY - blockBottom + 6;
+  drawRoundedRect(
+    page,
+    PAGE.margin,
+    blockBottom,
+    PAGE.inner,
+    blockHeight,
+    COLORS.background.light,
+  );
+
+  /* -------- draw totals rows -------- */
   rows.forEach(([lbl, val]) => {
     drawText(lbl, tot.x + 12, cursor, { size: FONTS.base });
     drawText(fm(val), tot.x + tot.w - 12, cursor, { size: FONTS.base }, { textAlign: 'right' });
@@ -92,8 +115,6 @@ export function renderItemsAndTotals(
   });
 
   /* -------- grand-total bar -------- */
-  const barH = 22;
-  const barY = cursor - 4;
   page.drawRectangle({
     x: tot.x,
     y: barY,
@@ -108,16 +129,5 @@ export function renderItemsAndTotals(
     barY + 6,
     { size: FONTS.medium, bold: true },
     { textAlign: 'right' },
-  );
-
-  /* -------- white background just tall enough -------- */
-  const blockH = startY - (barY - 6) + barH;   // header→grand total bottom
-  drawRoundedRect(
-    page,
-    PAGE.margin,
-    barY - 10,               // extend 10 pt below bar
-    PAGE.inner,
-    blockH,
-    COLORS.background.light,
   );
 }
