@@ -12,6 +12,7 @@ import {
   formatDate,
 } from './layout.ts';
 import { drawRoundedRect } from './pdfUtils.ts';
+import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import type { InvoiceData, CompanySettings, DrawTextOptions } from './types.ts';
 
 // Helper function to format money values
@@ -62,15 +63,14 @@ export async function renderFooter(
   /* reset cursor for totals */
   cursor = totBox.y + BANDS.totals - 20;
 
-  /* white background - using existing color */
-  drawRoundedRect(
-    page,
-    totBox.x,
-    totBox.y,
-    totBox.width,
-    BANDS.totals,
-    COLORS.background.light,
-  );
+  /* white background - using rgb() conversion */
+  page.drawRectangle({
+    x: totBox.x,
+    y: totBox.y,
+    width: totBox.width,
+    height: BANDS.totals,
+    color: rgb(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]),
+  });
 
   const rows: [string, string][] = [
     ['Subtotal', formatMoney(invoice.subtotal)],
@@ -105,7 +105,7 @@ export async function renderFooter(
     y: barY,
     width: totBox.width,            // full 220 pt
     height: barHeight,
-    color: COLORS.background.medium,
+    color: rgb(COLORS.background.medium[0], COLORS.background.medium[1], COLORS.background.medium[2]),
   });
 
   drawText('GRAND TOTAL', totBox.x + 12, barY + 6, {
