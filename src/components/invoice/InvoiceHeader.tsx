@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, MoreVertical, Eye, Download, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -28,10 +28,11 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   isGeneratingPreview = false,
 }) => {
   const navigate = useNavigate();
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const handlePdfDownload = async () => {
     if (invoiceId) {
-      await handleDownloadPdf(invoiceId, invoiceCode);
+      await handleDownloadPdf(invoiceId, invoiceCode, setIsDownloadingPdf);
     }
   };
 
@@ -108,9 +109,14 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               onClick={handlePdfDownload}
               variant="default"
               className="flex-1 h-10"
+              disabled={isDownloadingPdf}
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
+              {isDownloadingPdf ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {isDownloadingPdf ? "Preparing..." : "Download PDF"}
             </Button>
           </div>
         </div>

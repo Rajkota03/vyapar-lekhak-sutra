@@ -104,7 +104,7 @@ export const InvoiceTotalsSection: React.FC<InvoiceTotalsSectionProps> = ({
               </div>
             )}
             
-            <hr style={{ borderColor: rgbToCSS(COLORS.lines.medium) }} />
+            {/* Removed the horizontal line here - no <hr> element */}
             
             <div className="flex justify-between py-1">
               <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>

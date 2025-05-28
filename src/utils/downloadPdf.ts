@@ -2,9 +2,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string) => {
+export const handleDownloadPdf = async (
+  invoiceId: string, 
+  invoiceCode?: string, 
+  onLoadingChange?: (loading: boolean) => void
+) => {
   try {
     console.log('Downloading PDF for invoice:', invoiceId);
+    
+    // Start loading animation
+    onLoadingChange?.(true);
     
     // Show loading toast
     toast({
@@ -55,6 +62,9 @@ export const handleDownloadPdf = async (invoiceId: string, invoiceCode?: string)
       title: "Error",
       description: `Failed to download PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
+  } finally {
+    // Stop loading animation
+    onLoadingChange?.(false);
   }
 };
 

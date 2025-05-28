@@ -107,13 +107,13 @@ export function renderTotalsSection(
     totalsY -= 18
   }
   
-  // Subtotal line
-  page.drawLine({
-    start: { x: totalsX, y: totalsY + 5 },
-    end: { x: totalsX + 180, y: totalsY + 5 },
-    thickness: 0.5,
-    color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
-  })
+  // Remove the horizontal line - commented out the line drawing code
+  // page.drawLine({
+  //   start: { x: totalsX, y: totalsY + 5 },
+  //   end: { x: totalsX + 180, y: totalsY + 5 },
+  //   thickness: 0.5,
+  //   color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
+  // })
   
   drawText('Total', totalsX, totalsY, { 
     size: FONTS.base,
