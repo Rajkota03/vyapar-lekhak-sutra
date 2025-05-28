@@ -74,11 +74,11 @@ export async function renderFooter(
 
   const rows: [string, string][] = [
     ['Subtotal', formatMoney(invoice.subtotal)],
-    [`CGST (${invoice.cgst_pct} %)`, formatMoney(invoice.cgst_total)],
-    [`SGST (${invoice.sgst_pct} %)`, formatMoney(invoice.sgst_total)],
+    [`CGST (${invoice.cgst_pct} %)`, formatMoney(invoice.cgst)],
+    [`SGST (${invoice.sgst_pct} %)`, formatMoney(invoice.sgst)],
   ];
   if (invoice.use_igst) {
-    rows.push([`IGST (${invoice.igst_pct} %)`, formatMoney(invoice.igst_total)]);
+    rows.push([`IGST (${invoice.igst_pct} %)`, formatMoney(invoice.igst)]);
   }
 
   /* regular rows */
@@ -114,7 +114,7 @@ export async function renderFooter(
     color: COLORS.text.primary,
   });
   drawText(
-    formatMoney(invoice.grand_total),
+    formatMoney(invoice.total),
     totBox.x + totBox.width - 12,
     barY + 6,
     { size: FONTS.medium, bold: true, color: COLORS.text.primary },
