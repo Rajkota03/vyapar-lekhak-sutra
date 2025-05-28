@@ -90,14 +90,14 @@ export function renderBillSection(
     height: 60,
   };
 
-  drawRoundedRect(
+  /*drawRoundedRect(
     page,
     detailsBox.x,
     detailsBox.y,
     detailsBox.width,
     detailsBox.height,
     COLORS.background.medium,
-  );
+  //);*/
 
   let detailsY = detailsBox.y + detailsBox.height - 15;
 
