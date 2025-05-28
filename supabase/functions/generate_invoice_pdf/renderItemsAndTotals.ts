@@ -1,4 +1,5 @@
 
+
 /* ────────────────────────────────────────────
    renderItemsAndTotals.ts
    Draws: table header, line-items, white bg,
@@ -134,13 +135,14 @@ export function renderItemsAndTotals(
   });
 
   /* ───── grand-total grey bar ───── */
-  page.drawRectangle({
-    x: totalsCol.x,
-    y: barY,
-    width: totalsCol.w,
-    height: barH,
-    color: rgb(...COLORS.background.medium),
-  });
+  // REMOVED: Grey grand total bar background
+  // page.drawRectangle({
+  //   x: totalsCol.x,
+  //   y: barY,
+  //   width: totalsCol.w,
+  //   height: barH,
+  //   color: rgb(...COLORS.background.medium),
+  // });
   drawText('GRAND TOTAL', totalsCol.x + 12, barY + 6, {
     size: FONTS.medium,
     bold: true,
@@ -153,3 +155,4 @@ export function renderItemsAndTotals(
     { textAlign: 'right' },
   );
 }
+
