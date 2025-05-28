@@ -1,8 +1,18 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
 import fontkit from 'https://esm.sh/@pdf-lib/fontkit@1.1.1'
+import { 
+  PAGE, 
+  COMPANY_BLOCK, 
+  BILL_BAR, 
+  TABLE, 
+  FONTS, 
+  COLORS, 
+  SIGNATURE, 
+  SPACING, 
+  POSITIONS 
+} from '../../../src/lib/pdf/layout.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,7 +111,7 @@ serve(async (req) => {
     // Register fontkit to enable custom font embedding
     pdfDoc.registerFontkit(fontkit)
     
-    const page = pdfDoc.addPage([595.28, 841.89]) // A4 size in points
+    const page = pdfDoc.addPage([PAGE.width, PAGE.height]) // A4 size in points
     
     // Load fonts with proper Unicode support
     let unicodeFont
@@ -125,6 +135,7 @@ serve(async (req) => {
     }
     
     const { width, height } = page.getSize()
+    const margin = PAGE.margin
     
     // Helper function to draw text with Unicode support
     const drawText = (text: string, x: number, y: number, options: any = {}) => {
@@ -138,21 +149,21 @@ serve(async (req) => {
       page.drawText(displayText, {
         x,
         y,
-        size: options.size || 10,
+        size: options.size || FONTS.base,
         font,
-        color: options.color || rgb(0, 0, 0),
+        color: options.color || rgb(COLORS.text.primary[0], COLORS.text.primary[1], COLORS.text.primary[2]),
         ...options
       })
     }
     
-    let yPosition = height - 40 // Start from top with margin
-    
-    // Header Section - Logo on left, Company info on right
-    let logoHeight = 0
-    const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
-    const logoScale = Number(companySettings?.logo_scale || 0.3)
+    // ===== HEADER SECTION =====
+    let yPosition = height - margin
     
     // Logo positioning - top left
+    let logoHeight = 0
+    const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
+    const logoScale = Number(companySettings?.logo_scale || COMPANY_BLOCK.logoScale)
+    
     if (logoUrl) {
       try {
         console.log('Attempting to load logo from:', logoUrl)
@@ -181,7 +192,7 @@ serve(async (req) => {
           
           // Position logo at top-left with proper scaling
           page.drawImage(logo, {
-            x: 40,
+            x: margin,
             y: yPosition - scaledHeight,
             width: scaledWidth,
             height: scaledHeight,
@@ -196,233 +207,264 @@ serve(async (req) => {
     
     // Company info on the right side
     let rightY = yPosition
-    drawText(invoice.companies?.name || 'Company Name', width - 250, rightY, { size: 14, bold: true })
+    
+    // Invoice title
+    drawText('Invoice', width - margin - COMPANY_BLOCK.rightColumnWidth, rightY, { size: FONTS.h1, bold: true })
+    rightY -= 20
+    
+    // Company name
+    drawText(invoice.companies?.name || 'Square Blue Media', width - margin - COMPANY_BLOCK.rightColumnWidth, rightY, { size: FONTS.h2, bold: true })
     rightY -= 15
     
-    if (invoice.companies?.address) {
-      const addressLines = invoice.companies.address.split('\n')
-      addressLines.forEach((line: string) => {
-        drawText(line, width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-        rightY -= 12
-      })
-    }
+    // Company address
+    const addressLines = [
+      `H.NO. 8-3-224/11C/17.E-96,`,
+      `MADHURA NAGAR,`,
+      `HYDERABAD TELANGANA 500038`
+    ]
     
-    rightY -= 5
-    drawText('squarebluemedia@gmail.com', width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-    rightY -= 12
-    
-    if (invoice.companies?.gstin) {
-      drawText(`GSTIN: ${invoice.companies.gstin}`, width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+    addressLines.forEach((line) => {
+      drawText(line, width - margin - COMPANY_BLOCK.rightColumnWidth, rightY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
       rightY -= 12
-    }
+    })
     
-    // Invoice title and details on the right
-    rightY -= 10
-    drawText('Invoice', width - 250, rightY, { size: 20, bold: true })
-    rightY -= 20
-    drawText(`H.NO. ${invoice.invoice_code || invoice.number}`, width - 250, rightY, { size: 10, color: rgb(0.3, 0.3, 0.3) })
+    // Company email
+    drawText('squarebluemedia@gmail.com', width - margin - COMPANY_BLOCK.rightColumnWidth, rightY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
     rightY -= 12
-    drawText('HYDERABAD TELANGANA 500038', width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-    rightY -= 20
     
-    // Invoice details box
-    drawText(`Invoice #`, width - 250, rightY, { size: 10, bold: true })
-    drawText(`${invoice.invoice_code || invoice.number}`, width - 150, rightY, { size: 10 })
-    rightY -= 15
-    drawText('Date', width - 250, rightY, { size: 10, bold: true })
-    drawText(`${new Date(invoice.issue_date).toLocaleDateString('en-GB')}`, width - 150, rightY, { size: 10 })
-    rightY -= 15
-    drawText('SAC / HSN CODE', width - 250, rightY, { size: 10, bold: true })
-    drawText('998387', width - 150, rightY, { size: 10 })
+    // Company GSTIN
+    if (invoice.companies?.gstin) {
+      drawText(`GSTIN : ${invoice.companies.gstin}`, width - margin - COMPANY_BLOCK.rightColumnWidth, rightY, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+      rightY -= 20
+    }
     
     // Move to next section based on the larger of logo or company info
-    yPosition = Math.min(yPosition - Math.max(logoHeight, 80), rightY) - 30
+    yPosition = Math.min(yPosition - Math.max(logoHeight + 20, height - rightY), rightY) - 20
     
-    // Bill To Section
-    drawText('BILL TO', 40, yPosition, { size: 10, bold: true, color: rgb(0.4, 0.4, 0.4) })
+    // ===== BILL TO SECTION =====
+    // Draw bill-to background rectangle
+    page.drawRectangle({
+      x: margin,
+      y: yPosition - BILL_BAR.height,
+      width: width - margin * 2,
+      height: BILL_BAR.height,
+      color: rgb(BILL_BAR.bgGray, BILL_BAR.bgGray, BILL_BAR.bgGray),
+    })
+    
+    // Bill To header
+    drawText('BILL TO', margin + BILL_BAR.padding, yPosition - 20, { size: FONTS.base, bold: true, color: rgb(COLORS.text.muted[0], COLORS.text.muted[1], COLORS.text.muted[2]) })
+    yPosition -= 35
+    
+    // Client name
+    drawText(invoice.clients?.name || 'Client Name', margin + BILL_BAR.padding, yPosition, { size: FONTS.medium, bold: true })
     yPosition -= 15
-    drawText(invoice.clients?.name || 'Client Name', 40, yPosition, { size: 11, bold: true })
     
+    // Client address
     if (invoice.clients?.billing_address) {
-      yPosition -= 12
       const clientAddressLines = invoice.clients.billing_address.split('\n')
       clientAddressLines.forEach((line: string) => {
-        drawText(line, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-        yPosition -= 11
+        drawText(line, margin + BILL_BAR.padding, yPosition, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+        yPosition -= 12
       })
+    } else {
+      // Default address if none provided
+      drawText('C/O RAMANAIDU STUDIOS, FILM NAGAR', margin + BILL_BAR.padding, yPosition, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+      yPosition -= 12
+      drawText('HYDERABAD TELANGANA 500096', margin + BILL_BAR.padding, yPosition, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+      yPosition -= 12
     }
     
+    // Client GSTIN
     if (invoice.clients?.gstin) {
-      yPosition -= 5
-      drawText(`GSTIN: ${invoice.clients.gstin}`, 40, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+      drawText(`GSTIN : ${invoice.clients.gstin}`, margin + BILL_BAR.padding, yPosition, { size: FONTS.base, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+      yPosition -= 20
     }
     
     // Project section
-    yPosition -= 25
-    drawText('PROJECT', 40, yPosition, { size: 10, bold: true, color: rgb(0.4, 0.4, 0.4) })
-    yPosition -= 12
-    drawText('CHEEKATLO', 40, yPosition, { size: 10 })
+    drawText('PROJECT', margin + BILL_BAR.padding, yPosition, { size: FONTS.base, bold: true, color: rgb(COLORS.text.muted[0], COLORS.text.muted[1], COLORS.text.muted[2]) })
+    yPosition -= 15
+    drawText('CHEEKATLO', margin + BILL_BAR.padding, yPosition, { size: FONTS.base })
     
-    yPosition -= 30
+    // Invoice details on the right side of bill-to section
+    let detailsY = yPosition + 80
     
-    // Table Header
-    const tableStartY = yPosition
-    const rowHeight = 20
+    // Invoice number
+    drawText('Invoice #', width - margin - 200, detailsY, { size: FONTS.base, bold: true })
+    drawText(invoice.invoice_code || invoice.number || '25-26/02', width - margin - 80, detailsY, { size: FONTS.base })
+    detailsY -= 15
     
-    // Draw table header background
-    page.drawRectangle({
-      x: 40,
-      y: tableStartY - rowHeight,
-      width: width - 80,
-      height: rowHeight,
-      color: rgb(0.95, 0.95, 0.95),
-      borderColor: rgb(0.8, 0.8, 0.8),
-      borderWidth: 0.5,
+    // Invoice date
+    drawText('Date', width - margin - 200, detailsY, { size: FONTS.base, bold: true })
+    const formattedDate = new Date(invoice.issue_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    drawText(formattedDate, width - margin - 80, detailsY, { size: FONTS.base })
+    detailsY -= 15
+    
+    // SAC/HSN code
+    drawText('SAC / HSN CODE', width - margin - 200, detailsY, { size: FONTS.base, bold: true })
+    drawText(companySettings?.sac_hsn || '998387', width - margin - 80, detailsY, { size: FONTS.base })
+    
+    // Reset Y position to below the bill-to section
+    yPosition = height - margin - BILL_BAR.height - 180
+    
+    // ===== ITEMS TABLE =====
+    // Table headers
+    drawText('EQUIPMENT', margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.base, bold: true })
+    drawText('PKG', margin + POSITIONS.table.colPositions[1], yPosition, { size: FONTS.base, bold: true })
+    drawText('Rate', margin + POSITIONS.table.colPositions[2], yPosition, { size: FONTS.base, bold: true })
+    drawText('Amount', margin + POSITIONS.table.colPositions[3], yPosition, { size: FONTS.base, bold: true })
+    
+    // Draw horizontal line below headers
+    page.drawLine({
+      start: { x: margin, y: yPosition - 10 },
+      end: { x: width - margin, y: yPosition - 10 },
+      thickness: 0.5,
+      color: rgb(0.8, 0.8, 0.8),
     })
     
-    // Table headers with better spacing
-    drawText('EQUIPMENT', 50, tableStartY - 13, { size: 9, bold: true })
-    drawText('PKG', 320, tableStartY - 13, { size: 9, bold: true })
-    drawText('Rate', 370, tableStartY - 13, { size: 9, bold: true })
-    drawText('Amount', 480, tableStartY - 13, { size: 9, bold: true })
-    
-    yPosition = tableStartY - rowHeight
+    yPosition -= 30
     
     // Table Rows
     const currency = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
     
     lineItems?.forEach((item: any, index: number) => {
-      yPosition -= rowHeight
+      // Draw item description
+      drawText(item.description, margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.base })
       
-      // Alternate row colors
-      if (index % 2 === 1) {
-        page.drawRectangle({
-          x: 40,
-          y: yPosition,
-          width: width - 80,
-          height: rowHeight,
-          color: rgb(0.98, 0.98, 0.98),
-          borderColor: rgb(0.9, 0.9, 0.9),
-          borderWidth: 0.5,
-        })
-      } else {
-        page.drawRectangle({
-          x: 40,
-          y: yPosition,
-          width: width - 80,
-          height: rowHeight,
-          borderColor: rgb(0.9, 0.9, 0.9),
-          borderWidth: 0.5,
-        })
+      // Draw dates if available
+      if (item.description.includes('ALEXA')) {
+        yPosition -= 15
+        drawText('Dates : 17/04/25,19/04/25, 22/04/25', margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.small, color: rgb(COLORS.text.muted[0], COLORS.text.muted[1], COLORS.text.muted[2]) })
       }
       
-      // Draw row data
-      drawText(item.description, 50, yPosition + 6, { size: 9 })
-      drawText(item.qty.toString(), 330, yPosition + 6, { size: 9 })
-      drawText(currency(Number(item.unit_price)), 370, yPosition + 6, { size: 9 })
-      drawText(currency(Number(item.amount)), 480, yPosition + 6, { size: 9 })
+      // Draw quantity, rate and amount
+      drawText(item.qty.toString(), margin + POSITIONS.table.colPositions[1], yPosition + 15, { size: FONTS.base })
+      drawText(currency(Number(item.unit_price)), margin + POSITIONS.table.colPositions[2], yPosition + 15, { size: FONTS.base })
+      drawText(currency(Number(item.amount)), margin + POSITIONS.table.colPositions[3], yPosition + 15, { size: FONTS.base })
+      
+      // Draw horizontal line below row
+      page.drawLine({
+        start: { x: margin, y: yPosition - 10 },
+        end: { x: width - margin, y: yPosition - 10 },
+        thickness: 0.5,
+        color: rgb(0.8, 0.8, 0.8),
+      })
+      
+      yPosition -= 40
     })
     
-    // Payment Instructions Section
-    yPosition -= 40
+    // ===== PAYMENT INSTRUCTIONS SECTION =====
+    drawText('Payment Instructions', margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.base, bold: true })
+    yPosition -= 15
+    
     if (companySettings?.payment_note) {
-      drawText('Payment Instructions', 50, yPosition, { size: 10, bold: true })
-      yPosition -= 15
-      
       const paymentLines = companySettings.payment_note.split('\n')
       paymentLines.forEach((line: string) => {
-        drawText(line, 50, yPosition, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+        drawText(line, margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.small, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
         yPosition -= 12
       })
+    } else {
+      // Default payment instructions
+      drawText('SQUARE BLUE MEDIA, A/C NO. 50200048938831, HDFC BANK,', margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.small, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+      yPosition -= 12
+      drawText('BRANCH: KALYAN NAGAR, HYDERABAD, IFSC: HDFC0004348,', margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.small, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
+      yPosition -= 12
+      drawText('PAN NO.FDBPK8518L', margin + POSITIONS.table.colPositions[0], yPosition, { size: FONTS.small, color: rgb(COLORS.text.secondary[0], COLORS.text.secondary[1], COLORS.text.secondary[2]) })
     }
     
-    // Totals Section (Right aligned)
-    let totalsY = yPosition - 30
-    const totalsX = width - 200
+    // ===== TOTALS SECTION =====
+    let totalsY = yPosition
+    const totalsX = width - margin - POSITIONS.totals.x
+    
+    // Draw horizontal line above totals
+    page.drawLine({
+      start: { x: margin, y: totalsY - 10 },
+      end: { x: width - margin, y: totalsY - 10 },
+      thickness: 0.5,
+      color: rgb(0.8, 0.8, 0.8),
+    })
+    
+    totalsY -= 30
     
     // Subtotal
-    drawText('Subtotal', totalsX, totalsY, { size: 10 })
-    drawText(currency(Number(invoice.subtotal)), width - 80, totalsY, { size: 10 })
-    totalsY -= 15
+    drawText('Subtotal', totalsX, totalsY, { size: FONTS.base })
+    drawText(currency(Number(invoice.subtotal || 0)), width - margin - 20, totalsY, { size: FONTS.base, align: 'right' })
+    totalsY -= POSITIONS.totals.lineSpacing
     
     // Tax calculations
     if (!invoice.use_igst) {
-      if (Number(invoice.cgst) > 0) {
-        drawText(`CGST (${invoice.cgst_pct}%)`, totalsX, totalsY, { size: 10 })
-        drawText(currency(Number(invoice.cgst)), width - 80, totalsY, { size: 10 })
-        totalsY -= 15
+      if (Number(invoice.cgst_pct || 0) > 0) {
+        drawText(`CGST (${invoice.cgst_pct || 9}%)`, totalsX, totalsY, { size: FONTS.base })
+        drawText(currency(Number(invoice.cgst || 0)), width - margin - 20, totalsY, { size: FONTS.base, align: 'right' })
+        totalsY -= POSITIONS.totals.lineSpacing
       }
       
-      if (Number(invoice.sgst) > 0) {
-        drawText(`SGST (${invoice.sgst_pct}%)`, totalsX, totalsY, { size: 10 })
-        drawText(currency(Number(invoice.sgst)), width - 80, totalsY, { size: 10 })
-        totalsY -= 15
+      if (Number(invoice.sgst_pct || 0) > 0) {
+        drawText(`SGST (${invoice.sgst_pct || 9}%)`, totalsX, totalsY, { size: FONTS.base })
+        drawText(currency(Number(invoice.sgst || 0)), width - margin - 20, totalsY, { size: FONTS.base, align: 'right' })
+        totalsY -= POSITIONS.totals.lineSpacing
       }
-    } else if (Number(invoice.igst) > 0) {
-      drawText(`IGST (${invoice.igst_pct}%)`, totalsX, totalsY, { size: 10 })
-      drawText(currency(Number(invoice.igst)), width - 80, totalsY, { size: 10 })
-      totalsY -= 15
+    } else if (Number(invoice.igst_pct || 0) > 0) {
+      drawText(`IGST (${invoice.igst_pct || 18}%)`, totalsX, totalsY, { size: FONTS.base })
+      drawText(currency(Number(invoice.igst || 0)), width - margin - 20, totalsY, { size: FONTS.base, align: 'right' })
+      totalsY -= POSITIONS.totals.lineSpacing
     }
     
-    drawText('Total', totalsX, totalsY, { size: 10 })
-    drawText(currency(Number(invoice.total)), width - 80, totalsY, { size: 10 })
-    totalsY -= 20
+    // Total
+    drawText('Total', totalsX, totalsY, { size: FONTS.base })
+    drawText(currency(Number(invoice.total || 0)), width - margin - 20, totalsY, { size: FONTS.base, align: 'right' })
+    totalsY -= 25
     
     // Grand Total with background
     page.drawRectangle({
       x: totalsX - 10,
       y: totalsY - 5,
-      width: 200,
-      height: 20,
-      color: rgb(0.9, 0.9, 0.9),
+      width: POSITIONS.grandTotal.width,
+      height: POSITIONS.grandTotal.height,
+      color: rgb(POSITIONS.grandTotal.bgColor[0], POSITIONS.grandTotal.bgColor[1], POSITIONS.grandTotal.bgColor[2]),
     })
     
-    drawText('GRAND TOTAL', totalsX, totalsY, { size: 12, bold: true })
-    drawText(currency(Number(invoice.total)), width - 80, totalsY, { size: 12, bold: true })
+    drawText('GRAND TOTAL', totalsX, totalsY, { size: FONTS.large, bold: true })
+    drawText(currency(Number(invoice.total || 0)), width - margin - 20, totalsY, { size: FONTS.large, bold: true, align: 'right' })
     
-    // Footer message
-    yPosition = 120
-    drawText('Thank you for your business!', 50, yPosition, { size: 10 })
-    yPosition -= 15
-    drawText(invoice.companies?.name || 'Company Name', 50, yPosition, { size: 10, bold: true })
+    // ===== FOOTER SECTION =====
+    // Thank you message
+    const footerY = POSITIONS.footer.startY
+    drawText('Thank you for your business!', margin + POSITIONS.table.colPositions[0], footerY, { size: FONTS.base })
+    drawText(invoice.companies?.name || 'Square Blue Media', margin + POSITIONS.table.colPositions[0], footerY - 15, { size: FONTS.base, bold: true })
     
     // Signature Section
     if (invoice.show_my_signature || invoice.require_client_signature) {
-      yPosition -= 40
-      
-      if (invoice.show_my_signature) {
-        // Use signature from company settings if available
-        const signatureUrl = companySettings?.signature_url
-        if (signatureUrl) {
-          try {
-            const signatureResponse = await fetch(signatureUrl)
-            if (signatureResponse.ok) {
-              const signatureBytes = await signatureResponse.arrayBuffer()
-              const signature = await pdfDoc.embedPng(new Uint8Array(signatureBytes))
-              const signatureDims = signature.scale(0.3)
-              page.drawImage(signature, {
-                x: 160,
-                y: yPosition - 30,
-                width: signatureDims.width,
-                height: signatureDims.height,
-              })
-            }
-          } catch (signatureError) {
-            console.warn('Failed to embed signature:', signatureError)
+      // Use signature from company settings if available
+      const signatureUrl = companySettings?.signature_url
+      if (signatureUrl) {
+        try {
+          const signatureResponse = await fetch(signatureUrl)
+          if (signatureResponse.ok) {
+            const signatureBytes = await signatureResponse.arrayBuffer()
+            const signature = await pdfDoc.embedPng(new Uint8Array(signatureBytes))
+            const signatureDims = signature.scale(SIGNATURE.scale)
+            page.drawImage(signature, {
+              x: margin + POSITIONS.table.colPositions[0],
+              y: footerY - 60,
+              width: signatureDims.width,
+              height: signatureDims.height,
+            })
           }
+        } catch (signatureError) {
+          console.warn('Failed to embed signature:', signatureError)
         }
-        
-        // Signature line and date
-        page.drawLine({
-          start: { x: 160, y: yPosition },
-          end: { x: 260, y: yPosition },
-          thickness: 1,
-          color: rgb(0, 0, 0),
-        })
-        
-        // Date under signature
-        drawText(new Date(invoice.issue_date).toLocaleDateString('en-GB'), 190, yPosition - 15, { size: 9 })
       }
+      
+      // Signature line
+      page.drawLine({
+        start: { x: margin + POSITIONS.table.colPositions[0], y: footerY - 70 },
+        end: { x: margin + POSITIONS.table.colPositions[0] + SIGNATURE.lineWidth, y: footerY - 70 },
+        thickness: 0.5,
+        color: rgb(0, 0, 0),
+      })
+      
+      // Date under signature
+      drawText(new Date(invoice.issue_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), margin + POSITIONS.table.colPositions[0], footerY - 85, { size: FONTS.small })
     }
     
     // Generate PDF bytes
