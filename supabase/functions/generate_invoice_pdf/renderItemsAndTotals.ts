@@ -1,3 +1,4 @@
+
 import { PAGE, FONTS, COLORS, getBandPositions } from './layout.ts';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
 
@@ -16,12 +17,13 @@ export function renderItemsAndTotals(
   const pos = getBandPositions();
   let y = pos.topOfItems;
 
-  /* column grid (fractions of PAGE.inner) */
-  const grid = [0.45, 0.15, 0.15, 0.25];   // equip / pkg / qty / amount
+  /* A. Column geometry - unified grid for items and totals */
+  const grid = [0.45, 0.15, 0.15, 0.25];   // equipment / pkg / qty / amount
   const colX = grid.reduce<number[]>((arr, f, i) => {
     arr.push(PAGE.margin + PAGE.inner * grid.slice(0, i).reduce((a, b) => a + b, 0));
     return arr;
   }, []);
+  const colW = grid.map(f => f * PAGE.inner);
 
   /* header */
   ['equipment', 'pkg', 'qty', 'amount'].forEach((h, i) => {
@@ -30,42 +32,57 @@ export function renderItemsAndTotals(
   });
   y -= 18;
 
-  /* rows */
+  /* item rows */
   items.forEach(r => {
     drawText(r.description, colX[0], y, { size: FONTS.base });
     drawText(String(r.pkg ?? 1), colX[1], y, { size: FONTS.base });
     drawText(String(r.qty ?? 1), colX[2], y, { size: FONTS.base });
-    drawText(fm(r.amount), colX[3] + PAGE.inner * grid[3], y, { size: FONTS.base },
+    // B. Amount values right-aligned to right edge of Amount column
+    drawText(fm(r.amount), colX[3] + colW[3], y, { size: FONTS.base },
       { textAlign: 'right' });
     y -= 16;
   });
 
-  y -= 10; // gap to totals
+  y -= 20; // gap before totals
 
-  /* totals */
-  const pushRow = (label: string, val: number, bold = false) => {
-    drawText(label, colX[2], y, { size: FONTS.base + (bold ? 1 : 0), bold });
-    drawText(fm(val), colX[3] + PAGE.inner * grid[3], y,
-      { size: FONTS.base + (bold ? 1 : 0), bold },
-      { textAlign: 'right' });
-    y -= 16;
-  };
+  /* C. Totals rows as part of the same grid */
+  const totalsRows: [string, number][] = [
+    ['subtotal', inv.subtotal]
+  ];
 
-  pushRow('subtotal', inv.subtotal);
-  if (inv.use_igst)  pushRow(`IGST (${inv.igst_pct} %)`, inv.igst);
-  else {
-    if (+inv.cgst) pushRow(`CGST (${inv.cgst_pct} %)`, inv.cgst);
-    if (+inv.sgst) pushRow(`SGST (${inv.sgst_pct} %)`, inv.sgst);
+  // Add tax rows based on tax type
+  if (inv.use_igst) {
+    if (+inv.igst) totalsRows.push([`IGST (${inv.igst_pct} %)`, inv.igst]);
+  } else {
+    if (+inv.cgst) totalsRows.push([`CGST (${inv.cgst_pct} %)`, inv.cgst]);
+    if (+inv.sgst) totalsRows.push([`SGST (${inv.sgst_pct} %)`, inv.sgst]);
   }
 
-  /* grand total */
-  y -= 4;
-  page.drawLine({                   // thin separator rule
-    start: { x: colX[2], y },
-    end:   { x: colX[3] + PAGE.inner * grid[3], y },
+  let yTot = y;
+  totalsRows.forEach(([lbl, val]) => {
+    // Label in Qty column (colX[2])
+    drawText(lbl, colX[2], yTot, { size: FONTS.base });
+    // Value right-aligned in Amount column
+    drawText(fm(val), colX[3] + colW[3], yTot,
+      { size: FONTS.base }, { textAlign: 'right' });
+    yTot -= 16;
+  });
+
+  /* D. GRAND TOTAL with separator line */
+  yTot -= 8;
+  // Thin separator rule from Qty column to right edge of Amount column
+  page.drawLine({
+    start: { x: colX[2], y: yTot },
+    end:   { x: colX[3] + colW[3], y: yTot },
     thickness: .5,
     color: COLORS.lines.medium,
   });
-  y -= 12;
-  pushRow('GRAND TOTAL', inv.total, true);
+  yTot -= 12;
+  
+  // GRAND TOTAL label and value
+  drawText('GRAND TOTAL', colX[2], yTot, 
+    { size: FONTS.medium, bold: true });
+  drawText(fm(inv.total), colX[3] + colW[3], yTot,
+    { size: FONTS.medium, bold: true },
+    { textAlign: 'right' });
 }
