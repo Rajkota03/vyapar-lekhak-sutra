@@ -17,6 +17,7 @@ export const BANDS = {
   bill: 90,
   payment: 110,
   footer: 90,
+  totals: 110,            // Added totals band for consistency
 };
 
 export const TABLE = {
@@ -73,18 +74,20 @@ export const SPACING = {
   sectionGap: 20,           // Gap between sections
 };
 
-// Updated band positions with improved spacing
+// Updated band positions with improved spacing and bottomOfTable calculation
 export const getBandPositions = () => {
   const topOfHeader = PAGE.height - PAGE.margin - BANDS.header;
   const topOfBill = topOfHeader - 10 - BANDS.bill;
   const topOfItems = topOfBill - 10;
   const topOfPayment = PAGE.margin + BANDS.footer + BANDS.payment;
+  const bottomOfTable = PAGE.margin + BANDS.footer + BANDS.totals + 20; // Added bottomOfTable calculation
   
   return {
     topOfHeader,
     topOfBill,
     topOfItems,
     topOfPayment,
+    bottomOfTable,          // Added bottomOfTable property
   };
 };
 
