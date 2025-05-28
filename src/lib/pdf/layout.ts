@@ -1,3 +1,4 @@
+
 /**
  * Shared layout constants for invoice PDF generation
  * 
@@ -10,37 +11,30 @@ export const PAGE = {
   width: 595.28,          // A4 portrait (pt)
   height: 841.89,
   margin: 40,
+  inner: 595.28 - 40 * 2, // Inner content width
 };
 
-export const COMPANY_BLOCK = {
-  rightColumnWidth: 200,  // width reserved for meta in header
-  logoMax: 120,           // px before scaling
-  logoScale: 0.25,        // default scale for logo
-};
-
-export const BILL_BAR = {
-  height: 160,
-  bgGray: 0.97,           // for pdf-lib rgb values (0-1)
-  padding: 20,
+export const BANDS = {
+  header: 120,            // Logo + company block
+  bill: 90,               // Bill-to + invoice meta grey bar
+  totals: 120,            // Payment note + totals table
+  footer: 100,            // Thank-you + signature
 };
 
 export const TABLE = {
-  startY: 430,
-  rowH: 30,
-  headerH: 40,
-  cols: [0.50, 0.10, 0.20, 0.20], // Description, Qty, Rate, Amount
-  headerBgColor: 1,      // White for header
-  altRowBgColor: 0.98,    // Alternate row background color
+  rowH: 16,               // Height per table row
+  headerH: 20,            // Table header height
+  cols: [0.48, 0.12, 0.20, 0.20], // Description, Qty, Rate, Amount percentages
   borderColor: 0.9,       // Border color for table cells
 };
 
 export const FONTS = {
-  base: 10,
-  small: 9,
-  medium: 11,
-  large: 12,
-  h1: 18,
-  h2: 14,
+  base: 9,
+  small: 8,
+  medium: 10,
+  large: 11,
+  h1: 14,
+  h2: 12,
   boldInc: 1,
 };
 
@@ -51,7 +45,7 @@ export const COLORS = {
     muted: [0.4, 0.4, 0.4],   // Medium gray
   },
   background: {
-    light: [0.97, 0.97, 0.97], // Very light gray
+    light: [0.94, 0.94, 0.94], // Very light gray for bill bar
     medium: [0.95, 0.95, 0.95], // Light gray
     dark: [0.9, 0.9, 0.9],     // Medium gray
   }
@@ -67,33 +61,22 @@ export const SIGNATURE = {
 export const SPACING = {
   paragraph: 15,
   section: 30,
-  lineHeight: 14,
+  lineHeight: 12,
 };
 
-// Positions for various sections
-export const POSITIONS = {
-  header: {
-    startY: PAGE.height - PAGE.margin,
-  },
-  billTo: {
-    labelY: 742,
-    contentStartY: 732,
-    lineSpacing: 12,
-  },
-  table: {
-    headerY: TABLE.startY - 13,
-    colPositions: [50, 320, 370, 480], // X positions for each column
-  },
-  totals: {
-    x: 200,
-    lineSpacing: 15,
-  },
-  footer: {
-    startY: 120,
-  },
-  grandTotal: {
-    width: 200,
-    height: 40,
-    bgColor: [0.97, 0.97, 0.97], // Light gray
-  }
+// Calculate band positions
+export const getBandPositions = () => {
+  const topOfHeader = PAGE.height - PAGE.margin - BANDS.header;
+  const topOfBill = topOfHeader - 10 - BANDS.bill;
+  const bottomOfTable = PAGE.margin + BANDS.totals + BANDS.footer + 20;
+  const yTotals = PAGE.margin + BANDS.footer + BANDS.totals - 18;
+  const footerRuleY = PAGE.margin + BANDS.footer + 90;
+  
+  return {
+    topOfHeader,
+    topOfBill,
+    bottomOfTable,
+    yTotals,
+    footerRuleY,
+  };
 };
