@@ -1,8 +1,7 @@
 
-
 /* ────────────────────────────────────────────
    renderItemsAndTotals.ts
-   Draws: table header, line-items, white bg,
+   Draws: table header, line-items, clean design,
           subtotal / tax rows, GRAND TOTAL bar
    ──────────────────────────────────────────── */
 
@@ -47,21 +46,12 @@ export function renderItemsAndTotals(
   let cursor = pos.topOfItems;        // first row baseline
   const startY = cursor;              // top of block for bg calc
 
-  /* ───── table header (grey) ───── */
+  /* ───── table header ───── */
   const tableWidth = PAGE.inner - 220;          // 220 pt reserved for totals col
   const colW = TABLE.cols.map((f) => f * tableWidth);
 
-  // REMOVED: Grey header background
-  // drawRoundedRect(
-  //   page,
-  //   PAGE.margin,
-  //   cursor - TABLE.headerH,
-  //   tableWidth,
-  //   TABLE.headerH,
-  //   COLORS.background.medium,          // grey fill
-  // );
-
-  ['Description', 'Qty', 'Rate', 'Amount'].forEach((h, i) => {
+  // Clean header without background
+  ['EQUIPMENT', 'PKG', 'Rate', 'Amount'].forEach((h, i) => {
     const x =
       PAGE.margin + colW.slice(0, i).reduce((a, b) => a + b, 0) + TABLE.padding;
     drawText(h, x, cursor - 16, {
@@ -72,10 +62,19 @@ export function renderItemsAndTotals(
   });
 
   cursor -= TABLE.headerH + 4;         // move below header
-  const headerBottom = cursor;         // record end-of-header Y
+  
+  // Draw header underline
+  page.drawLine({
+    start: { x: PAGE.margin, y: cursor + 2 },
+    end: { x: PAGE.margin + tableWidth, y: cursor + 2 },
+    thickness: 0.5,
+    color: rgb(...COLORS.lines.light),
+  });
+
+  cursor -= 8; // Space after header line
 
   /* ───── table rows ───── */
-  lines.forEach((l) => {
+  lines.forEach((l, index) => {
     let x = PAGE.margin;
 
     drawText(l.description, x + TABLE.padding, cursor, { size: FONTS.base });
@@ -88,71 +87,78 @@ export function renderItemsAndTotals(
     x += colW[2];
 
     drawText(fm(l.amount), x + TABLE.padding, cursor, { size: FONTS.base });
+    
     cursor -= TABLE.rowH;
+    
+    // Add subtle line between rows (except last)
+    if (index < lines.length - 1) {
+      page.drawLine({
+        start: { x: PAGE.margin, y: cursor + TABLE.rowH / 2 },
+        end: { x: PAGE.margin + tableWidth, y: cursor + TABLE.rowH / 2 },
+        thickness: 0.25,
+        color: rgb(...COLORS.lines.light),
+      });
+    }
   });
 
   /* ───── totals rows prep ───── */
-  cursor -= 14;                       // gap before totals
+  cursor -= 20;                       // gap before totals
 
   const totalsCol = { x: PAGE.width - PAGE.margin - 220, w: 220 };
   const rows: [string, number][] = [
     ['Subtotal', invoice.subtotal],
-    [`CGST (${invoice.cgst_pct} %)`, invoice.cgst],
-    [`SGST (${invoice.sgst_pct} %)`, invoice.sgst],
   ];
+  
   if (invoice.use_igst) {
-    rows.push([`IGST (${invoice.igst_pct} %)`, invoice.igst]);
+    rows.push([`IGST (${invoice.igst_pct}%)`, invoice.igst]);
+  } else {
+    if (Number(invoice.cgst_pct) > 0) {
+      rows.push([`CGST (${invoice.cgst_pct}%)`, invoice.cgst]);
+    }
+    if (Number(invoice.sgst_pct) > 0) {
+      rows.push([`SGST (${invoice.sgst_pct}%)`, invoice.sgst]);
+    }
   }
-
-  /* grand-total bar Y */
-  const barY = cursor - rows.length * 14 - 4;
-  const barH = 22;
-
-  /* ───── white background (covers header→bar) ───── */
-  const blockBottom = barY - 6;                     // a bit below grand bar
-  const blockHeight = headerBottom - blockBottom + 6;
-
-  drawRoundedRect(
-    page,
-    PAGE.margin,
-    blockBottom,
-    PAGE.inner,
-    blockHeight,
-    COLORS.background.light,
-  );
+  
+  rows.push(['Total', invoice.total]);
 
   /* ───── draw subtotal / tax rows ───── */
-  rows.forEach(([lbl, val]) => {
-    drawText(lbl, totalsCol.x + 12, cursor, { size: FONTS.base });
-    drawText(
-      fm(val),
-      totalsCol.x + totalsCol.w - 12,
-      cursor,
-      { size: FONTS.base },
-      { textAlign: 'right' },
-    );
-    cursor -= 14;
+  rows.forEach(([lbl, val], index) => {
+    const isGrandTotal = index === rows.length - 1;
+    
+    if (isGrandTotal) {
+      // Draw GRAND TOTAL with light background
+      drawRoundedRect(
+        page,
+        totalsCol.x,
+        cursor - 8,
+        totalsCol.w,
+        20,
+        COLORS.background.light,
+      );
+      
+      drawText('GRAND TOTAL', totalsCol.x + 12, cursor, { 
+        size: FONTS.medium, 
+        bold: true,
+        color: COLORS.text.primary,
+      });
+      drawText(
+        fm(val),
+        totalsCol.x + totalsCol.w - 12,
+        cursor,
+        { size: FONTS.medium, bold: true },
+        { textAlign: 'right' },
+      );
+    } else {
+      drawText(lbl, totalsCol.x + 12, cursor, { size: FONTS.base });
+      drawText(
+        fm(val),
+        totalsCol.x + totalsCol.w - 12,
+        cursor,
+        { size: FONTS.base },
+        { textAlign: 'right' },
+      );
+    }
+    cursor -= 18;
   });
-
-  /* ───── grand-total grey bar ───── */
-  // REMOVED: Grey grand total bar background
-  // page.drawRectangle({
-  //   x: totalsCol.x,
-  //   y: barY,
-  //   width: totalsCol.w,
-  //   height: barH,
-  //   color: rgb(...COLORS.background.medium),
-  // });
-  drawText('GRAND TOTAL', totalsCol.x + 12, barY + 6, {
-    size: FONTS.medium,
-    bold: true,
-  });
-  drawText(
-    fm(invoice.total),
-    totalsCol.x + totalsCol.w - 12,
-    barY + 6,
-    { size: FONTS.medium, bold: true },
-    { textAlign: 'right' },
-  );
 }
-

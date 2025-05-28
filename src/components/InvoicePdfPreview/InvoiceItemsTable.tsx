@@ -21,25 +21,25 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines }) =
     >
       {/* Table Header */}
       <div 
-        className="rounded px-2 py-2 mb-2"
+        className="py-2 mb-2"
         style={{
-          backgroundColor: rgbToCSS(COLORS.background.accent),
           height: `${TABLE.headerH}px`,
           display: 'flex',
-          alignItems: 'center'
+          alignItems: 'center',
+          borderBottom: `1px solid ${rgbToCSS(COLORS.lines.light)}`
         }}
       >
-        <div className="grid grid-cols-12 gap-2 font-bold w-full">
-          <div className="col-span-5" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>
+        <div className="grid grid-cols-12 gap-2 font-bold w-full px-2">
+          <div className="col-span-5" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
             EQUIPMENT
           </div>
-          <div className="col-span-1 text-center" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>
+          <div className="col-span-1 text-center" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
             PKG
           </div>
-          <div className="col-span-3 text-right" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>
+          <div className="col-span-3 text-right" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
             Rate
           </div>
-          <div className="col-span-3 text-right" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>
+          <div className="col-span-3 text-right" style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
             Amount
           </div>
         </div>
@@ -53,11 +53,10 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines }) =
         {lines?.map((line, i) => (
           <div 
             key={i} 
-            className={`py-2 px-2 ${i % 2 === 1 ? 'rounded' : ''}`}
+            className="py-2 px-2"
             style={{
-              backgroundColor: i % 2 === 1 ? rgbToCSS([0.98, 0.98, 0.98]) : 'transparent',
               minHeight: `${TABLE.rowH}px`,
-              borderBottom: i < lines.length - 1 ? `0.5px solid ${rgbToCSS(COLORS.lines.light)}` : 'none'
+              borderBottom: i < lines.length - 1 ? `0.25px solid ${rgbToCSS(COLORS.lines.light)}` : 'none'
             }}
           >
             <div className="grid grid-cols-12 gap-2 items-center">
