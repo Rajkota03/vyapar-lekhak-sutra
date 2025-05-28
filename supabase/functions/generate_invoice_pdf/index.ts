@@ -93,11 +93,13 @@ serve(async (req) => {
       )
     }
 
-    // Check if we need to regenerate PDF due to settings changes
+    // Determine if we should regenerate PDF
     let shouldRegenerate = force_regenerate || preview
     
+    // Only check cache if not forcing regeneration and not preview
     if (!shouldRegenerate && !preview) {
-      // Check if PDF exists and if company settings have been updated after PDF was generated
+      console.log('Checking if PDF exists and if regeneration is needed...')
+      
       const filePath = `company_${invoice.company_id}/${invoice.invoice_code}.pdf`
       
       try {
@@ -110,6 +112,9 @@ serve(async (req) => {
         if (existingFile && existingFile.length > 0) {
           const pdfCreatedAt = new Date(existingFile[0].created_at)
           const settingsUpdatedAt = companySettings?.updated_at ? new Date(companySettings.updated_at) : new Date(0)
+          
+          console.log('PDF created at:', pdfCreatedAt.toISOString())
+          console.log('Settings updated at:', settingsUpdatedAt.toISOString())
           
           // Regenerate if settings were updated after PDF was created
           if (settingsUpdatedAt > pdfCreatedAt) {
@@ -130,12 +135,17 @@ serve(async (req) => {
             )
           }
         } else {
+          console.log('No existing PDF found, will generate new one')
           shouldRegenerate = true
         }
       } catch (error) {
         console.log('Error checking existing PDF, will regenerate:', error)
         shouldRegenerate = true
       }
+    }
+
+    if (force_regenerate) {
+      console.log('Force regeneration requested, skipping all cache checks')
     }
 
     // Create PDF using pdf-lib
@@ -189,7 +199,9 @@ serve(async (req) => {
     const logoScale = Math.min(Number(companySettings?.logo_scale || 0.25), 1.0)
     const maxLogoSize = BANDS.header - 20
     
-    console.log('Logo URL:', logoUrl, 'Logo scale:', logoScale)
+    console.log('Logo URL from settings:', companySettings?.logo_url)
+    console.log('Logo URL from company:', invoice.companies?.logo_url) 
+    console.log('Final logo URL:', logoUrl, 'Logo scale:', logoScale)
     
     if (logoUrl) {
       try {
@@ -220,6 +232,8 @@ serve(async (req) => {
             height: scaledHeight,
           })
           console.log('Logo embedded with dimensions:', scaledWidth, 'x', scaledHeight)
+        } else {
+          console.log('Failed to fetch logo, HTTP status:', logoResponse.status)
         }
       } catch (logoError) {
         console.warn('Failed to embed logo:', logoError)
