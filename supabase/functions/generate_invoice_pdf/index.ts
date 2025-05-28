@@ -152,21 +152,42 @@ serve(async (req) => {
     const logoUrl = companySettings?.logo_url || invoice.companies?.logo_url
     const logoScale = Number(companySettings?.logo_scale || 0.3)
     
+    // Logo positioning - top left
     if (logoUrl) {
       try {
+        console.log('Attempting to load logo from:', logoUrl)
         const logoResponse = await fetch(logoUrl)
         if (logoResponse.ok) {
           const logoBytes = await logoResponse.arrayBuffer()
-          const logo = await pdfDoc.embedPng(new Uint8Array(logoBytes))
-          const logoDims = logo.scale(logoScale)
+          let logo
+          
+          // Try to determine the image type and embed accordingly
+          const contentType = logoResponse.headers.get('content-type') || ''
+          console.log('Logo content type:', contentType)
+          
+          if (contentType.includes('png') || logoUrl.toLowerCase().includes('.png')) {
+            logo = await pdfDoc.embedPng(new Uint8Array(logoBytes))
+          } else if (contentType.includes('jpeg') || contentType.includes('jpg') || logoUrl.toLowerCase().includes('.jpg') || logoUrl.toLowerCase().includes('.jpeg')) {
+            logo = await pdfDoc.embedJpg(new Uint8Array(logoBytes))
+          } else {
+            // Default to PNG
+            logo = await pdfDoc.embedPng(new Uint8Array(logoBytes))
+          }
+          
+          // Calculate proper logo dimensions using the scale
+          const originalDims = logo.size()
+          const scaledWidth = originalDims.width * logoScale
+          const scaledHeight = originalDims.height * logoScale
+          
+          // Position logo at top-left with proper scaling
           page.drawImage(logo, {
             x: 40,
-            y: yPosition - logoDims.height,
-            width: logoDims.width,
-            height: logoDims.height,
+            y: yPosition - scaledHeight,
+            width: scaledWidth,
+            height: scaledHeight,
           })
-          logoHeight = logoDims.height
-          console.log('Logo embedded with scale:', logoScale, 'Dimensions:', logoDims.width, 'x', logoDims.height)
+          logoHeight = scaledHeight
+          console.log('Logo embedded successfully with scale:', logoScale, 'Scaled dimensions:', scaledWidth, 'x', scaledHeight)
         }
       } catch (logoError) {
         console.warn('Failed to embed logo:', logoError)
@@ -175,49 +196,47 @@ serve(async (req) => {
     
     // Company info on the right side
     let rightY = yPosition
-    drawText(invoice.companies?.name || 'Company Name', width - 200, rightY, { size: 14, bold: true })
+    drawText(invoice.companies?.name || 'Company Name', width - 250, rightY, { size: 14, bold: true })
     rightY -= 15
     
     if (invoice.companies?.address) {
       const addressLines = invoice.companies.address.split('\n')
       addressLines.forEach((line: string) => {
-        drawText(line, width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+        drawText(line, width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
         rightY -= 12
       })
     }
     
-    if (invoice.companies?.name) {
-      rightY -= 5
-      drawText('squarebluemedia@gmail.com', width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
-      rightY -= 12
-    }
+    rightY -= 5
+    drawText('squarebluemedia@gmail.com', width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+    rightY -= 12
     
     if (invoice.companies?.gstin) {
-      drawText(`GSTIN: ${invoice.companies.gstin}`, width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+      drawText(`GSTIN: ${invoice.companies.gstin}`, width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
       rightY -= 12
     }
     
     // Invoice title and details on the right
     rightY -= 10
-    drawText('Invoice', width - 200, rightY, { size: 20, bold: true })
+    drawText('Invoice', width - 250, rightY, { size: 20, bold: true })
     rightY -= 20
-    drawText(`H.NO. ${invoice.invoice_code || invoice.number}`, width - 200, rightY, { size: 10, color: rgb(0.3, 0.3, 0.3) })
+    drawText(`H.NO. ${invoice.invoice_code || invoice.number}`, width - 250, rightY, { size: 10, color: rgb(0.3, 0.3, 0.3) })
     rightY -= 12
-    drawText('HYDERABAD TELANGANA 500038', width - 200, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
+    drawText('HYDERABAD TELANGANA 500038', width - 250, rightY, { size: 9, color: rgb(0.3, 0.3, 0.3) })
     rightY -= 20
     
     // Invoice details box
-    drawText(`Invoice #`, width - 200, rightY, { size: 10, bold: true })
-    drawText(`${invoice.invoice_code || invoice.number}`, width - 120, rightY, { size: 10 })
+    drawText(`Invoice #`, width - 250, rightY, { size: 10, bold: true })
+    drawText(`${invoice.invoice_code || invoice.number}`, width - 150, rightY, { size: 10 })
     rightY -= 15
-    drawText('Date', width - 200, rightY, { size: 10, bold: true })
-    drawText(`${new Date(invoice.issue_date).toLocaleDateString('en-GB')}`, width - 120, rightY, { size: 10 })
+    drawText('Date', width - 250, rightY, { size: 10, bold: true })
+    drawText(`${new Date(invoice.issue_date).toLocaleDateString('en-GB')}`, width - 150, rightY, { size: 10 })
     rightY -= 15
-    drawText('SAC / HSN CODE', width - 200, rightY, { size: 10, bold: true })
-    drawText('998387', width - 120, rightY, { size: 10 })
+    drawText('SAC / HSN CODE', width - 250, rightY, { size: 10, bold: true })
+    drawText('998387', width - 150, rightY, { size: 10 })
     
     // Move to next section based on the larger of logo or company info
-    yPosition = Math.min(yPosition - logoHeight, rightY) - 30
+    yPosition = Math.min(yPosition - Math.max(logoHeight, 80), rightY) - 30
     
     // Bill To Section
     drawText('BILL TO', 40, yPosition, { size: 10, bold: true, color: rgb(0.4, 0.4, 0.4) })
