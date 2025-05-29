@@ -16,8 +16,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
   const fractions = [0.08, 0.40, 0.14, 0.19, 0.19]; // S.NO, Equipment (squeezed), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   
-  // Calculate column positions - START AT 0px since container is positioned at 25px from left
-  const colX = [0]; // Start first column at 0px relative to container (container itself is offset 25px)
+  // Calculate column positions - START AT 0px since container is positioned at PAGE.margin from left
+  const colX = [0]; // Start first column at 0px relative to container (container itself is offset PAGE.margin)
   for (let i = 1; i < colWidths.length; i++) {
     colX.push(colX[i-1] + colWidths[i-1]);
   }
@@ -54,7 +54,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
       style={{
         ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
         bottom: `${positions.bottomOfTable}px`,
-        left: `25px`, // Position container 25px from left edge of page
+        left: `${PAGE.margin}px`, // Position container at proper page margin (60px) from left edge of page
         width: `${PAGE.inner}px`,
         overflow: 'hidden'
       }}
