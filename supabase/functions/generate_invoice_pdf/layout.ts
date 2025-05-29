@@ -1,4 +1,3 @@
-
 /**
  * PDF layout constants for invoice generation
  * This file contains the same constants as src/lib/pdf/layout.ts
@@ -8,8 +7,8 @@
 export const PAGE = {
   width: 595.28,          // A4 portrait (pt)
   height: 841.89,
-  margin: 40,
-  inner: 595.28 - 40 * 2, // Inner content width
+  margin: 60,             // Increased from 40 to 60 (reduces inner width by 40 points)
+  inner: 595.28 - 60 * 2, // Inner content width (now 475.28 instead of 515.28)
 };
 
 export const BANDS = {
