@@ -23,7 +23,7 @@ export function renderItemsAndTotals(
 
   /* A. Column geometry - Adjusted to squeeze equipment column and match grey bar margin */
   // Fractions define the proportion of width for each column
-  const fractions = [0.08, 0.40, 0.14, 0.19, 0.19]; // S.NO, Equipment (squeezed), Days, Rate, Amount
+  const fractions = [0.08, 0.35, 0.12, 0.22, 0.23]; // S.NO, Equipment (more squeezed), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner); // Calculate actual widths
 
   // Calculate the starting X coordinate for each column - START AT PAGE.margin for proper alignment
@@ -35,12 +35,16 @@ export function renderItemsAndTotals(
   console.log('Column positions:', colX);
   console.log('Column widths:', colWidths);
 
+  // Calculate table height based on content
+  const maxRowHeight = 18;
+  const totalTableHeight = TABLE.headerH + (items.length * maxRowHeight) + 20;
+
   // Draw table border (outer rectangle)
   page.drawRectangle({
     x: PAGE.margin,
-    y: cursor - TABLE.headerH - (items.length * 18) - 20, // Adjust height based on content
+    y: cursor - totalTableHeight,
     width: PAGE.inner,
-    height: TABLE.headerH + (items.length * 18) + 20,
+    height: totalTableHeight,
     borderColor: rgb(0, 0, 0),
     borderWidth: 1,
   });
@@ -49,7 +53,7 @@ export function renderItemsAndTotals(
   for (let i = 1; i < colX.length; i++) {
     page.drawLine({
       start: { x: colX[i], y: cursor },
-      end: { x: colX[i], y: cursor - TABLE.headerH - (items.length * 18) - 20 },
+      end: { x: colX[i], y: cursor - totalTableHeight },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
@@ -86,8 +90,8 @@ export function renderItemsAndTotals(
     const itemUnitPrice = r.unit_price || 0; // Default to 0 if price is missing
     const calculatedAmount = itemQty * itemUnitPrice;
     
-    // Handle equipment description with text wrapping
-    const maxEquipmentWidth = colWidths[1] - TABLE.padding * 2;
+    // Handle equipment description with text wrapping - use tighter constraints
+    const maxEquipmentWidth = colWidths[1] - TABLE.padding * 2 - 2; // Extra 2px margin
     const wrappedLines = wrapLines(r.description, maxEquipmentWidth, FONTS.base);
     const rowHeight = Math.max(16, wrappedLines.length * 12); // Adjust row height based on wrapped text
     
@@ -95,9 +99,18 @@ export function renderItemsAndTotals(
     drawText(String(idx + 1), colX[0] + colWidths[0] / 2, cursor, 
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'center' });
     
-    // Equipment (left-aligned with padding) - Handle wrapped text
+    // Equipment (left-aligned with padding) - Handle wrapped text with constraints
     wrappedLines.forEach((line, lineIdx) => {
-      drawText(line, colX[1] + TABLE.padding, cursor - (lineIdx * 12), 
+      // Ensure the line fits within the column by truncating if necessary
+      const maxLineWidth = colWidths[1] - TABLE.padding * 2;
+      let displayLine = line;
+      
+      // Simple truncation check - if line seems too long, truncate
+      if (line.length > 20) { // Approximate character limit
+        displayLine = line.substring(0, 17) + '...';
+      }
+      
+      drawText(displayLine, colX[1] + TABLE.padding, cursor - (lineIdx * 12), 
         { size: FONTS.base, color: rgb(0,0,0) });
     });
     
@@ -106,14 +119,16 @@ export function renderItemsAndTotals(
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'center' });
     
     // Rate (right-aligned with padding and rupee symbol)
-    drawText(fm(itemUnitPrice), colX[3] + colWidths[3] - TABLE.padding, cursor, 
+    const rateText = fm(itemUnitPrice);
+    drawText(rateText, colX[3] + colWidths[3] - TABLE.padding, cursor, 
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'right' });
     
     // Amount (right-aligned with padding and rupee symbol)
-    drawText(fm(calculatedAmount), colX[4] + colWidths[4] - TABLE.padding, cursor, 
+    const amountText = fm(calculatedAmount);
+    drawText(amountText, colX[4] + colWidths[4] - TABLE.padding, cursor, 
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'right' });
     
-    cursor -= rowHeight; // Move cursor down for next item, accounting for wrapped text
+    cursor -= maxRowHeight; // Use consistent row height
     
     // Draw horizontal line after each row (except last)
     if (idx < items.length - 1) {

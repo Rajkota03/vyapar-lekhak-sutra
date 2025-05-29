@@ -12,8 +12,8 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Match the exact column proportions from PDF generation - adjusted to squeeze equipment column
-  const fractions = [0.08, 0.40, 0.14, 0.19, 0.19]; // S.NO, Equipment (squeezed), Days, Rate, Amount
+  // Match the exact column proportions from PDF generation - adjusted to squeeze equipment column more
+  const fractions = [0.08, 0.35, 0.12, 0.22, 0.23]; // S.NO, Equipment (more squeezed), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   
   // Calculate column positions - START AT 0px since container is positioned at PAGE.margin from left
@@ -47,6 +47,12 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
   const grandTotal = subtotal + cgstAmount + sgstAmount + igstAmount;
 
   console.log('React totals calculation:', { subtotal, cgstAmount, sgstAmount, igstAmount, grandTotal });
+
+  // Helper function to truncate text that's too long
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength - 3) + '...';
+  };
 
   return (
     <div 
@@ -96,7 +102,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             textAlign: 'center',
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            padding: '0 2px',
+            overflow: 'hidden'
           }}>
             S.NO
           </div>
@@ -108,7 +116,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             width: `${colWidths[1] - TABLE.padding * 2}px`,
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap'
           }}>
             EQUIPMENT
           </div>
@@ -121,7 +131,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             textAlign: 'center',
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            padding: '0 2px',
+            overflow: 'hidden'
           }}>
             DAYS
           </div>
@@ -134,7 +146,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             textAlign: 'right',
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            padding: '0 2px',
+            overflow: 'hidden'
           }}>
             RATE
           </div>
@@ -147,7 +161,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             textAlign: 'right',
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            padding: '0 2px',
+            overflow: 'hidden'
           }}>
             AMOUNT
           </div>
@@ -165,7 +181,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               <div 
                 key={i} 
                 style={{
-                  minHeight: `${TABLE.rowH}px`,
+                  height: `${TABLE.rowH}px`,
                   position: 'relative',
                   marginBottom: '0px',
                   borderBottom: i < lines.length - 1 ? '0.5px solid #b3b3b3' : 'none', // Row separators (light gray)
@@ -194,23 +210,26 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   textAlign: 'center',
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`,
-                  top: '2px'
+                  top: '2px',
+                  overflow: 'hidden',
+                  padding: '0 2px'
                 }}>
                   {i + 1}
                 </div>
                 
-                {/* Equipment - with text wrapping */}
+                {/* Equipment - with text constraints */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[1] + TABLE.padding}px`,
                   width: `${colWidths[1] - TABLE.padding * 2}px`,
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`,
-                  wordWrap: 'break-word',
+                  top: '2px',
                   overflow: 'hidden',
-                  top: '2px'
+                  whiteSpace: 'nowrap',
+                  textOverflow: 'ellipsis'
                 }}>
-                  {line.description}
+                  {truncateText(line.description, 17)}
                 </div>
                 
                 {/* Days - ensure it's never empty */}
@@ -221,7 +240,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   textAlign: 'center',
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`,
-                  top: '2px'
+                  top: '2px',
+                  overflow: 'hidden',
+                  padding: '0 2px'
                 }}>
                   {qty}
                 </div>
@@ -234,7 +255,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   textAlign: 'right',
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`,
-                  top: '2px'
+                  top: '2px',
+                  overflow: 'hidden',
+                  padding: '0 2px'
                 }}>
                   ₹{unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                 </div>
@@ -247,7 +270,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   textAlign: 'right',
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`,
-                  top: '2px'
+                  top: '2px',
+                  overflow: 'hidden',
+                  padding: '0 2px'
                 }}>
                   ₹{calculatedAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                 </div>
@@ -286,7 +311,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               width: `${colWidths[4] - TABLE.padding}px`,
               textAlign: 'right',
               color: rgbToCSS(COLORS.text.primary), 
-              fontSize: `${FONTS.base}px`
+              fontSize: `${FONTS.base}px`,
+              padding: '0 2px'
             }}>
               ₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
             </div>
@@ -313,7 +339,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 width: `${colWidths[4] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
+                fontSize: `${FONTS.base}px`,
+                padding: '0 2px'
               }}>
                 ₹{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
               </div>
@@ -340,7 +367,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 width: `${colWidths[4] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
+                fontSize: `${FONTS.base}px`,
+                padding: '0 2px'
               }}>
                 ₹{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
               </div>
@@ -367,7 +395,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 width: `${colWidths[4] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
+                fontSize: `${FONTS.base}px`,
+                padding: '0 2px'
               }}>
                 ₹{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
               </div>
@@ -396,7 +425,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               textAlign: 'right',
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.medium}px`,
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              padding: '0 2px'
             }}>
               ₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
             </div>
