@@ -16,7 +16,24 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
   const fractions = [0.05, 0.50, 0.10, 0.15, 0.20]; // S.NO, Equipment, Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   const colX = colWidths.reduce((acc, w, i) => 
-    i === 0 ? [25] : [...acc, acc[i-1] + w], [] as number[]); // Start at 25px margin
+    i === 0 ? [0] : [...acc, acc[i-1] + w], [] as number[]); // Start at 0, relative to container
+
+  // Calculate totals from actual line items
+  const subtotal = lines?.reduce((sum, line) => sum + (Number(line.amount) || 0), 0) || 0;
+  
+  // Calculate taxes based on invoice tax configuration
+  let cgstAmount = 0;
+  let sgstAmount = 0;
+  let igstAmount = 0;
+  
+  if (invoice?.use_igst) {
+    igstAmount = subtotal * ((Number(invoice?.igst_pct) || 18) / 100);
+  } else {
+    cgstAmount = subtotal * ((Number(invoice?.cgst_pct) || 9) / 100);
+    sgstAmount = subtotal * ((Number(invoice?.sgst_pct) || 9) / 100);
+  }
+  
+  const grandTotal = subtotal + cgstAmount + sgstAmount + igstAmount;
 
   return (
     <div 
@@ -30,7 +47,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
       }}
     >
       {/* Items Grid */}
-      <div style={{ width: '100%' }}>
+      <div style={{ width: '100%', position: 'relative' }}>
         {/* Grid Header */}
         <div 
           className="py-2 mb-2"
@@ -179,6 +196,13 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           ))}
         </div>
 
+        {/* Separator line before totals */}
+        <div style={{
+          height: '0.5px',
+          backgroundColor: rgbToCSS(COLORS.lines.light),
+          marginBottom: '12px'
+        }} />
+
         {/* Totals Section as additional grid rows */}
         <div style={{ marginTop: '20px' }}>
           {/* Subtotal */}
@@ -189,7 +213,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           }}>
             <div style={{ 
               position: 'absolute',
-              left: `${colX[1] + TABLE.padding}px`,
+              left: `${colX[2] + TABLE.padding}px`,
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.base}px`
             }}>
@@ -203,7 +227,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.base}px`
             }}>
-              {formatCurrency(Number(invoice?.subtotal || 214500))}
+              {formatCurrency(subtotal)}
             </div>
           </div>
           
@@ -216,7 +240,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             }}>
               <div style={{ 
                 position: 'absolute',
-                left: `${colX[1] + TABLE.padding}px`,
+                left: `${colX[2] + TABLE.padding}px`,
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
@@ -230,7 +254,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
-                {formatCurrency(Number(invoice?.cgst || 19305))}
+                {formatCurrency(cgstAmount)}
               </div>
             </div>
           )}
@@ -243,7 +267,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             }}>
               <div style={{ 
                 position: 'absolute',
-                left: `${colX[1] + TABLE.padding}px`,
+                left: `${colX[2] + TABLE.padding}px`,
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
@@ -257,7 +281,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
-                {formatCurrency(Number(invoice?.sgst || 19305))}
+                {formatCurrency(sgstAmount)}
               </div>
             </div>
           )}
@@ -270,7 +294,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             }}>
               <div style={{ 
                 position: 'absolute',
-                left: `${colX[1] + TABLE.padding}px`,
+                left: `${colX[2] + TABLE.padding}px`,
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
@@ -284,32 +308,20 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
-                {formatCurrency(Number(invoice?.igst || 38610))}
+                {formatCurrency(igstAmount)}
               </div>
             </div>
           )}
-          
-          {/* Grand Total with separator line */}
-          <div style={{ marginTop: '8px', marginBottom: '12px' }}>
-            {/* Separator line spanning Equipment to Amount columns */}
-            <div style={{
-              position: 'absolute',
-              left: `${colX[1]}px`,
-              width: `${colX[4] + colWidths[4] - colX[1]}px`,
-              height: '0.5px',
-              backgroundColor: rgbToCSS(COLORS.lines.medium)
-            }} />
-          </div>
           
           {/* Grand Total */}
           <div style={{
             minHeight: `${TABLE.rowH}px`,
             position: 'relative',
-            marginTop: '16px'
+            marginTop: '8px'
           }}>
             <div style={{ 
               position: 'absolute',
-              left: `${colX[1] + TABLE.padding}px`,
+              left: `${colX[2] + TABLE.padding}px`,
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.medium}px`,
               fontWeight: 'bold'
@@ -325,7 +337,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               fontSize: `${FONTS.medium}px`,
               fontWeight: 'bold'
             }}>
-              {formatCurrency(Number(invoice?.total || 253110))}
+              {formatCurrency(grandTotal)}
             </div>
           </div>
         </div>
