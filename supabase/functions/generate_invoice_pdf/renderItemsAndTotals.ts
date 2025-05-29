@@ -1,5 +1,5 @@
 
-import { PAGE, FONTS, COLORS, getBandPositions } from './layout.ts';
+import { PAGE, FONTS, COLORS, getBandPositions, TABLE } from './layout.ts';
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
 
@@ -17,7 +17,7 @@ export function renderItemsAndTotals(
 ) {
   const pos = getBandPositions();
   // Add spacing between Bill To and Items sections, align with Bill To content
-  let y = pos.topOfItems - 30; // Added 30pt spacing
+  let cursor = pos.topOfItems - 30; // Added 30pt spacing
 
   /* A. Column geometry - 5-column spreadsheet grid */
   const fractions = [0.05, 0.50, 0.10, 0.15, 0.20]; // S.NO, Equipment, Days, Rate, Amount
@@ -25,42 +25,45 @@ export function renderItemsAndTotals(
   const colX = colWidths.reduce((acc, w, i) => 
     i === 0 ? [PAGE.margin] : [...acc, acc[i-1] + w], [] as number[]);
 
-  /* Header row */
-  ['S.NO', 'EQUIPMENT', 'DAYS', 'RATE', 'AMOUNT'].forEach((h, i) => {
-    const align = i === 0 || i === 2 ? 'center' : i >= 3 ? 'right' : 'left';
-    const xPos = align === 'center' ? colX[i] + colWidths[i] / 2 :
-                 align === 'right' ? colX[i] + colWidths[i] - 4 : colX[i] + 4;
-    
-    drawText(h, xPos, y, { size: FONTS.base, bold: true },
-      { textAlign: align });
+  /* Header row using the improved approach */
+  const headers = ['S.NO','EQUIPMENT','DAYS','RATE','AMOUNT'];
+  const align   = ['center','left','center','right','right'];
+  headers.forEach((h,i)=>{
+    drawText(h, 
+      align[i]==='left'   ? colX[i] + TABLE.padding
+    : align[i]==='center' ? colX[i] + colWidths[i]/2
+    :                       colX[i] + colWidths[i] - TABLE.padding,
+    cursor - 6,
+    { size:FONTS.base, bold:true },
+    { textAlign: align[i] });
   });
-  y -= 18;
+  cursor -= TABLE.headerH;
 
   /* Item rows */
   items.forEach((r, idx) => {
     // S.NO (centered)
-    drawText(String(idx + 1), colX[0] + colWidths[0] / 2, y, { size: FONTS.base },
+    drawText(String(idx + 1), colX[0] + colWidths[0] / 2, cursor, { size: FONTS.base },
       { textAlign: 'center' });
     
     // Equipment (left-aligned with padding)
-    drawText(r.description, colX[1] + 4, y, { size: FONTS.base });
+    drawText(r.description, colX[1] + TABLE.padding, cursor, { size: FONTS.base });
     
     // Days (centered) - using qty as days
-    drawText(String(r.qty ?? 1), colX[2] + colWidths[2] / 2, y, { size: FONTS.base },
+    drawText(String(r.qty ?? 1), colX[2] + colWidths[2] / 2, cursor, { size: FONTS.base },
       { textAlign: 'center' });
     
     // Rate (right-aligned with padding)
-    drawText(fm(r.unit_price || 0), colX[3] + colWidths[3] - 4, y, { size: FONTS.base },
+    drawText(fm(r.unit_price || 0), colX[3] + colWidths[3] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
     // Amount (right-aligned with padding)
-    drawText(fm(r.amount), colX[4] + colWidths[4] - 4, y, { size: FONTS.base },
+    drawText(fm(r.amount), colX[4] + colWidths[4] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
-    y -= 16;
+    cursor -= 16;
   });
 
-  y -= 20; // gap before totals
+  cursor -= 20; // gap before totals
 
   /* Totals rows as additional grid rows */
   const totalsRows: [string, number][] = [
@@ -78,30 +81,30 @@ export function renderItemsAndTotals(
   // Render totals rows spanning columns 2-5
   totalsRows.forEach(([lbl, val]) => {
     // Label in Equipment column (left-aligned with padding)
-    drawText(lbl, colX[1] + 4, y, { size: FONTS.base });
+    drawText(lbl, colX[1] + TABLE.padding, cursor, { size: FONTS.base });
     
     // Value in Amount column (right-aligned with padding)
-    drawText(fm(val), colX[4] + colWidths[4] - 4, y, { size: FONTS.base },
+    drawText(fm(val), colX[4] + colWidths[4] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
-    y -= 16;
+    cursor -= 16;
   });
 
   /* Grand Total with separator line */
-  y -= 8;
+  cursor -= 8;
   
   // Separator line spanning from Equipment to Amount columns
   page.drawLine({
-    start: { x: colX[1], y: y },
-    end: { x: colX[4] + colWidths[4], y: y },
+    start: { x: colX[1], y: cursor },
+    end: { x: colX[4] + colWidths[4], y: cursor },
     thickness: 0.5,
     color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
   });
   
-  y -= 12;
+  cursor -= 12;
   
   // GRAND TOTAL label and value
-  drawText('GRAND TOTAL', colX[1] + 4, y, { size: FONTS.medium, bold: true });
-  drawText(fm(inv.total), colX[4] + colWidths[4] - 4, y,
+  drawText('GRAND TOTAL', colX[1] + TABLE.padding, cursor, { size: FONTS.medium, bold: true });
+  drawText(fm(inv.total), colX[4] + colWidths[4] - TABLE.padding, cursor,
     { size: FONTS.medium, bold: true }, { textAlign: 'right' });
 }

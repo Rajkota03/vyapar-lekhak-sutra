@@ -57,8 +57,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           {/* Equipment Column */}
           <div style={{ 
             position: 'absolute',
-            left: `${colX[1] + 4}px`,
-            width: `${colWidths[1] - 8}px`,
+            left: `${colX[1] + TABLE.padding}px`,
+            width: `${colWidths[1] - TABLE.padding * 2}px`,
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
             fontWeight: 'bold'
@@ -83,7 +83,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           <div style={{ 
             position: 'absolute',
             left: `${colX[3]}px`,
-            width: `${colWidths[3] - 4}px`,
+            width: `${colWidths[3] - TABLE.padding}px`,
             textAlign: 'right',
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
@@ -96,7 +96,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           <div style={{ 
             position: 'absolute',
             left: `${colX[4]}px`,
-            width: `${colWidths[4] - 4}px`,
+            width: `${colWidths[4] - TABLE.padding}px`,
             textAlign: 'right',
             color: rgbToCSS(COLORS.text.primary), 
             fontSize: `${FONTS.base}px`,
@@ -132,8 +132,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               {/* Equipment */}
               <div style={{ 
                 position: 'absolute',
-                left: `${colX[1] + 4}px`,
-                width: `${colWidths[1] - 8}px`,
+                left: `${colX[1] + TABLE.padding}px`,
+                width: `${colWidths[1] - TABLE.padding * 2}px`,
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
@@ -156,7 +156,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               <div style={{ 
                 position: 'absolute',
                 left: `${colX[3]}px`,
-                width: `${colWidths[3] - 4}px`,
+                width: `${colWidths[3] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
@@ -168,7 +168,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               <div style={{ 
                 position: 'absolute',
                 left: `${colX[4]}px`,
-                width: `${colWidths[4] - 4}px`,
+                width: `${colWidths[4] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
@@ -189,7 +189,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           }}>
             <div style={{ 
               position: 'absolute',
-              left: `${colX[1] + 4}px`,
+              left: `${colX[1] + TABLE.padding}px`,
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.base}px`
             }}>
@@ -198,7 +198,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             <div style={{ 
               position: 'absolute',
               left: `${colX[4]}px`,
-              width: `${colWidths[4] - 4}px`,
+              width: `${colWidths[4] - TABLE.padding}px`,
               textAlign: 'right',
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.base}px`
@@ -216,7 +216,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             }}>
               <div style={{ 
                 position: 'absolute',
-                left: `${colX[1] + 4}px`,
+                left: `${colX[1] + TABLE.padding}px`,
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
@@ -225,7 +225,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               <div style={{ 
                 position: 'absolute',
                 left: `${colX[4]}px`,
-                width: `${colWidths[4] - 4}px`,
+                width: `${colWidths[4] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
@@ -243,7 +243,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             }}>
               <div style={{ 
                 position: 'absolute',
-                left: `${colX[1] + 4}px`,
+                left: `${colX[1] + TABLE.padding}px`,
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
@@ -252,7 +252,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               <div style={{ 
                 position: 'absolute',
                 left: `${colX[4]}px`,
-                width: `${colWidths[4] - 4}px`,
+                width: `${colWidths[4] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
@@ -270,7 +270,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             }}>
               <div style={{ 
                 position: 'absolute',
-                left: `${colX[1] + 4}px`,
+                left: `${colX[1] + TABLE.padding}px`,
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
@@ -279,7 +279,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               <div style={{ 
                 position: 'absolute',
                 left: `${colX[4]}px`,
-                width: `${colWidths[4] - 4}px`,
+                width: `${colWidths[4] - TABLE.padding}px`,
                 textAlign: 'right',
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
@@ -309,7 +309,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           }}>
             <div style={{ 
               position: 'absolute',
-              left: `${colX[1] + 4}px`,
+              left: `${colX[1] + TABLE.padding}px`,
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.medium}px`,
               fontWeight: 'bold'
@@ -319,7 +319,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             <div style={{ 
               position: 'absolute',
               left: `${colX[4]}px`,
-              width: `${colWidths[4] - 4}px`,
+              width: `${colWidths[4] - TABLE.padding}px`,
               textAlign: 'right',
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.medium}px`,
