@@ -12,19 +12,11 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Limit items to match Bill To section height
-  const maxRows = 3;
-  const displayLines = lines?.slice(0, maxRows) || [];
-
-  // Calculate column positions to match the PDF layout
-  const billToContentInset = 25; // Match the 25px inset from Bill To section
-  const availableWidth = PAGE.inner - billToContentInset;
-  const grid = [0.45, 0.15, 0.15, 0.25]; // equipment / pkg / qty / amount
-  const colX = grid.reduce<number[]>((arr, f, i) => {
-    arr.push(billToContentInset + availableWidth * grid.slice(0, i).reduce((a, b) => a + b, 0));
-    return arr;
-  }, []);
-  const colW = grid.map(f => f * availableWidth);
+  // Calculate 5-column spreadsheet grid
+  const fractions = [0.05, 0.50, 0.10, 0.15, 0.20]; // S.NO, Equipment, Days, Rate, Amount
+  const colWidths = fractions.map(f => f * PAGE.inner);
+  const colX = colWidths.reduce((acc, w, i) => 
+    i === 0 ? [25] : [...acc, acc[i-1] + w], [] as number[]); // Start at 25px margin
 
   return (
     <div 
@@ -32,171 +24,308 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
       style={{
         ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
         bottom: `${positions.bottomOfTable}px`,
-        left: `${PAGE.margin + 25}px`, // Align with Bill To content (25px inset)
-        width: `${PAGE.inner - 25}px`, // Adjust width to account for left inset
+        left: `${PAGE.margin + 25}px`, // Align with Bill To content
+        width: `${PAGE.inner}px`,
         overflow: 'hidden'
       }}
     >
-      {/* Items Table */}
+      {/* Items Grid */}
       <div style={{ width: '100%' }}>
-        {/* Table Header - with capitalized column names */}
+        {/* Grid Header */}
         <div 
           className="py-2 mb-2"
           style={{
             height: `${TABLE.headerH}px`,
             display: 'flex',
             alignItems: 'center',
-            borderBottom: `1px solid ${rgbToCSS(COLORS.lines.light)}`
+            position: 'relative'
           }}
         >
-          <div className="flex w-full px-2 font-bold">
-            <div style={{ width: '45%', color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-              EQUIPMENT
-            </div>
-            <div style={{ width: '12%', textAlign: 'center', color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-              PKG
-            </div>
-            <div style={{ width: '20%', textAlign: 'right', color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-              QTY
-            </div>
-            <div style={{ width: '23%', textAlign: 'right', color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-              AMOUNT
-            </div>
+          {/* S.NO Column */}
+          <div style={{ 
+            position: 'absolute',
+            left: `${colX[0]}px`,
+            width: `${colWidths[0]}px`,
+            textAlign: 'center',
+            color: rgbToCSS(COLORS.text.primary), 
+            fontSize: `${FONTS.base}px`,
+            fontWeight: 'bold'
+          }}>
+            S.NO
+          </div>
+          
+          {/* Equipment Column */}
+          <div style={{ 
+            position: 'absolute',
+            left: `${colX[1] + 4}px`,
+            width: `${colWidths[1] - 8}px`,
+            color: rgbToCSS(COLORS.text.primary), 
+            fontSize: `${FONTS.base}px`,
+            fontWeight: 'bold'
+          }}>
+            EQUIPMENT
+          </div>
+          
+          {/* Days Column */}
+          <div style={{ 
+            position: 'absolute',
+            left: `${colX[2]}px`,
+            width: `${colWidths[2]}px`,
+            textAlign: 'center',
+            color: rgbToCSS(COLORS.text.primary), 
+            fontSize: `${FONTS.base}px`,
+            fontWeight: 'bold'
+          }}>
+            DAYS
+          </div>
+          
+          {/* Rate Column */}
+          <div style={{ 
+            position: 'absolute',
+            left: `${colX[3]}px`,
+            width: `${colWidths[3] - 4}px`,
+            textAlign: 'right',
+            color: rgbToCSS(COLORS.text.primary), 
+            fontSize: `${FONTS.base}px`,
+            fontWeight: 'bold'
+          }}>
+            RATE
+          </div>
+          
+          {/* Amount Column */}
+          <div style={{ 
+            position: 'absolute',
+            left: `${colX[4]}px`,
+            width: `${colWidths[4] - 4}px`,
+            textAlign: 'right',
+            color: rgbToCSS(COLORS.text.primary), 
+            fontSize: `${FONTS.base}px`,
+            fontWeight: 'bold'
+          }}>
+            AMOUNT
           </div>
         </div>
 
-        {/* Table Body - limited rows to match Bill To height */}
-        <div style={{ 
-          maxHeight: `${60}px`, // Fixed height to match Bill To section
-          overflow: 'hidden' 
-        }}>
-          {displayLines.map((line, i) => (
+        {/* Grid Body - Item rows */}
+        <div style={{ marginBottom: '20px' }}>
+          {lines?.map((line, i) => (
             <div 
               key={i} 
-              className="py-2 px-2"
               style={{
                 minHeight: `${TABLE.rowH}px`,
-                borderBottom: i < displayLines.length - 1 ? `0.25px solid ${rgbToCSS(COLORS.lines.light)}` : 'none'
+                position: 'relative',
+                marginBottom: '4px'
               }}
             >
-              <div className="flex items-center w-full">
-                <div style={{ width: '45%' }}>
-                  <div style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                    {line.description}
-                  </div>
-                </div>
-                <div style={{ width: '12%', textAlign: 'center', fontSize: `${FONTS.base}px` }}>
-                  {line.qty}
-                </div>
-                <div style={{ width: '20%', textAlign: 'right', fontSize: `${FONTS.base}px` }}>
-                  {line.qty}
-                </div>
-                <div style={{ width: '23%', textAlign: 'right', fontSize: `${FONTS.base}px` }}>
-                  {formatCurrency(Number(line.amount))}
-                </div>
+              {/* S.NO */}
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[0]}px`,
+                width: `${colWidths[0]}px`,
+                textAlign: 'center',
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {i + 1}
+              </div>
+              
+              {/* Equipment */}
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[1] + 4}px`,
+                width: `${colWidths[1] - 8}px`,
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {line.description}
+              </div>
+              
+              {/* Days */}
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[2]}px`,
+                width: `${colWidths[2]}px`,
+                textAlign: 'center',
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {line.qty || 1}
+              </div>
+              
+              {/* Rate */}
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[3]}px`,
+                width: `${colWidths[3] - 4}px`,
+                textAlign: 'right',
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {formatCurrency(Number(line.unit_price || 0))}
+              </div>
+              
+              {/* Amount */}
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[4]}px`,
+                width: `${colWidths[4] - 4}px`,
+                textAlign: 'right',
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {formatCurrency(Number(line.amount))}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Totals Section - Positioned exactly within the Amount column boundaries */}
-        <div style={{ 
-          marginTop: '20px',
-          position: 'relative',
-          width: '100%'
-        }}>
-          {/* Container positioned to align exactly with Amount column */}
+        {/* Totals Section as additional grid rows */}
+        <div style={{ marginTop: '20px' }}>
+          {/* Subtotal */}
           <div style={{
-            position: 'absolute',
-            left: `${colX[2] - billToContentInset}px`, // Start at QTY column position
-            width: `${colW[2] + colW[3]}px`, // Span QTY and Amount columns
-            paddingLeft: '8px',
-            paddingRight: '8px'
+            minHeight: `${TABLE.rowH}px`,
+            position: 'relative',
+            marginBottom: '4px'
           }}>
-            <div className="space-y-4">
-              {/* Subtotal */}
-              <div className="flex justify-between py-1">
-                <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                  subtotal
-                </span>
-                <span style={{ 
-                  color: rgbToCSS(COLORS.text.primary), 
-                  fontSize: `${FONTS.base}px`,
-                  paddingLeft: '80px' // Move values further to the left
-                }}>
-                  {formatCurrency(Number(invoice?.subtotal || 214500))}
-                </span>
+            <div style={{ 
+              position: 'absolute',
+              left: `${colX[1] + 4}px`,
+              color: rgbToCSS(COLORS.text.primary), 
+              fontSize: `${FONTS.base}px`
+            }}>
+              Subtotal
+            </div>
+            <div style={{ 
+              position: 'absolute',
+              left: `${colX[4]}px`,
+              width: `${colWidths[4] - 4}px`,
+              textAlign: 'right',
+              color: rgbToCSS(COLORS.text.primary), 
+              fontSize: `${FONTS.base}px`
+            }}>
+              {formatCurrency(Number(invoice?.subtotal || 214500))}
+            </div>
+          </div>
+          
+          {/* Tax rows */}
+          {(!invoice?.use_igst && Number(invoice?.cgst_pct || 9) > 0) && (
+            <div style={{
+              minHeight: `${TABLE.rowH}px`,
+              position: 'relative',
+              marginBottom: '4px'
+            }}>
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[1] + 4}px`,
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                CGST ({invoice?.cgst_pct || 9}%)
               </div>
-              
-              {/* Tax rows */}
-              {(!invoice?.use_igst && Number(invoice?.cgst_pct || 9) > 0) && (
-                <div className="flex justify-between py-1">
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                    CGST ({invoice?.cgst_pct || 9}%)
-                  </span>
-                  <span style={{ 
-                    color: rgbToCSS(COLORS.text.primary), 
-                    fontSize: `${FONTS.base}px`,
-                    paddingLeft: '80px' // Move values further to the left
-                  }}>
-                    {formatCurrency(Number(invoice?.cgst || 19305))}
-                  </span>
-                </div>
-              )}
-              
-              {(!invoice?.use_igst && Number(invoice?.sgst_pct || 9) > 0) && (
-                <div className="flex justify-between py-1">
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                    SGST ({invoice?.sgst_pct || 9}%)
-                  </span>
-                  <span style={{ 
-                    color: rgbToCSS(COLORS.text.primary), 
-                    fontSize: `${FONTS.base}px`,
-                    paddingLeft: '80px' // Move values further to the left
-                  }}>
-                    {formatCurrency(Number(invoice?.sgst || 19305))}
-                  </span>
-                </div>
-              )}
-              
-              {(invoice?.use_igst && Number(invoice?.igst_pct || 18) > 0) && (
-                <div className="flex justify-between py-1">
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.base}px` }}>
-                    IGST ({invoice?.igst_pct || 18}%)
-                  </span>
-                  <span style={{ 
-                    color: rgbToCSS(COLORS.text.primary), 
-                    fontSize: `${FONTS.base}px`,
-                    paddingLeft: '80px' // Move values further to the left
-                  }}>
-                    {formatCurrency(Number(invoice?.igst || 38610))}
-                  </span>
-                </div>
-              )}
-              
-              {/* Grand Total with separator line and proper styling */}
-              <div style={{ marginTop: '8px' }}>
-                {/* Separator line */}
-                <div style={{
-                  height: '0.5px',
-                  backgroundColor: rgbToCSS(COLORS.lines.medium),
-                  marginBottom: '12px'
-                }} />
-                
-                {/* Grand Total */}
-                <div className="flex justify-between py-1 font-bold">
-                  <span style={{ color: rgbToCSS(COLORS.text.primary), fontSize: `${FONTS.medium}px` }}>
-                    GRAND TOTAL
-                  </span>
-                  <span style={{ 
-                    color: rgbToCSS(COLORS.text.primary), 
-                    fontSize: `${FONTS.medium}px`,
-                    paddingLeft: '80px' // Move values further to the left
-                  }}>
-                    {formatCurrency(Number(invoice?.total || 253110))}
-                  </span>
-                </div>
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[4]}px`,
+                width: `${colWidths[4] - 4}px`,
+                textAlign: 'right',
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {formatCurrency(Number(invoice?.cgst || 19305))}
               </div>
+            </div>
+          )}
+          
+          {(!invoice?.use_igst && Number(invoice?.sgst_pct || 9) > 0) && (
+            <div style={{
+              minHeight: `${TABLE.rowH}px`,
+              position: 'relative',
+              marginBottom: '4px'
+            }}>
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[1] + 4}px`,
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                SGST ({invoice?.sgst_pct || 9}%)
+              </div>
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[4]}px`,
+                width: `${colWidths[4] - 4}px`,
+                textAlign: 'right',
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {formatCurrency(Number(invoice?.sgst || 19305))}
+              </div>
+            </div>
+          )}
+          
+          {(invoice?.use_igst && Number(invoice?.igst_pct || 18) > 0) && (
+            <div style={{
+              minHeight: `${TABLE.rowH}px`,
+              position: 'relative',
+              marginBottom: '4px'
+            }}>
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[1] + 4}px`,
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                IGST ({invoice?.igst_pct || 18}%)
+              </div>
+              <div style={{ 
+                position: 'absolute',
+                left: `${colX[4]}px`,
+                width: `${colWidths[4] - 4}px`,
+                textAlign: 'right',
+                color: rgbToCSS(COLORS.text.primary), 
+                fontSize: `${FONTS.base}px`
+              }}>
+                {formatCurrency(Number(invoice?.igst || 38610))}
+              </div>
+            </div>
+          )}
+          
+          {/* Grand Total with separator line */}
+          <div style={{ marginTop: '8px', marginBottom: '12px' }}>
+            {/* Separator line spanning Equipment to Amount columns */}
+            <div style={{
+              position: 'absolute',
+              left: `${colX[1]}px`,
+              width: `${colX[4] + colWidths[4] - colX[1]}px`,
+              height: '0.5px',
+              backgroundColor: rgbToCSS(COLORS.lines.medium)
+            }} />
+          </div>
+          
+          {/* Grand Total */}
+          <div style={{
+            minHeight: `${TABLE.rowH}px`,
+            position: 'relative',
+            marginTop: '16px'
+          }}>
+            <div style={{ 
+              position: 'absolute',
+              left: `${colX[1] + 4}px`,
+              color: rgbToCSS(COLORS.text.primary), 
+              fontSize: `${FONTS.medium}px`,
+              fontWeight: 'bold'
+            }}>
+              GRAND TOTAL
+            </div>
+            <div style={{ 
+              position: 'absolute',
+              left: `${colX[4]}px`,
+              width: `${colWidths[4] - 4}px`,
+              textAlign: 'right',
+              color: rgbToCSS(COLORS.text.primary), 
+              fontSize: `${FONTS.medium}px`,
+              fontWeight: 'bold'
+            }}>
+              {formatCurrency(Number(invoice?.total || 253110))}
             </div>
           </div>
         </div>

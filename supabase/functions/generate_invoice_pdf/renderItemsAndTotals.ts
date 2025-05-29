@@ -19,42 +19,52 @@ export function renderItemsAndTotals(
   // Add spacing between Bill To and Items sections, align with Bill To content
   let y = pos.topOfItems - 30; // Added 30pt spacing
 
-  /* A. Column geometry - unified grid for items and totals, starting with Bill To content inset */
-  const billToContentInset = 20; // Match the 20pt inset from Bill To section
-  const availableWidth = PAGE.inner - billToContentInset; // Reduce available width by inset
-  const grid = [0.45, 0.15, 0.15, 0.25];   // equipment / pkg / qty / amount
-  const colX = grid.reduce<number[]>((arr, f, i) => {
-    arr.push(PAGE.margin + billToContentInset + availableWidth * grid.slice(0, i).reduce((a, b) => a + b, 0));
-    return arr;
-  }, []);
-  const colW = grid.map(f => f * availableWidth);
+  /* A. Column geometry - 5-column spreadsheet grid */
+  const fractions = [0.05, 0.50, 0.10, 0.15, 0.20]; // S.NO, Equipment, Days, Rate, Amount
+  const colWidths = fractions.map(f => f * PAGE.inner);
+  const colX = colWidths.reduce((acc, w, i) => 
+    i === 0 ? [PAGE.margin] : [...acc, acc[i-1] + w], [] as number[]);
 
-  /* header - with capitalized column names */
-  ['EQUIPMENT', 'PKG', 'QTY', 'AMOUNT'].forEach((h, i) => {
-    drawText(h, colX[i], y, { size: FONTS.base, bold: true },
-      { textAlign: i === 3 ? 'right' : 'left' });
+  /* Header row */
+  ['S.NO', 'EQUIPMENT', 'DAYS', 'RATE', 'AMOUNT'].forEach((h, i) => {
+    const align = i === 0 || i === 2 ? 'center' : i >= 3 ? 'right' : 'left';
+    const xPos = align === 'center' ? colX[i] + colWidths[i] / 2 :
+                 align === 'right' ? colX[i] + colWidths[i] - 4 : colX[i] + 4;
+    
+    drawText(h, xPos, y, { size: FONTS.base, bold: true },
+      { textAlign: align });
   });
   y -= 18;
 
-  /* item rows - limit to match Bill To section height */
-  const maxRows = 3; // Limit items to match Bill To section height
-  const displayItems = items.slice(0, maxRows);
-  
-  displayItems.forEach(r => {
-    drawText(r.description, colX[0], y, { size: FONTS.base });
-    drawText(String(r.pkg ?? 1), colX[1], y, { size: FONTS.base });
-    drawText(String(r.qty ?? 1), colX[2], y, { size: FONTS.base });
-    // B. Amount values right-aligned to right edge of Amount column
-    drawText(fm(r.amount), colX[3] + colW[3], y, { size: FONTS.base },
+  /* Item rows */
+  items.forEach((r, idx) => {
+    // S.NO (centered)
+    drawText(String(idx + 1), colX[0] + colWidths[0] / 2, y, { size: FONTS.base },
+      { textAlign: 'center' });
+    
+    // Equipment (left-aligned with padding)
+    drawText(r.description, colX[1] + 4, y, { size: FONTS.base });
+    
+    // Days (centered) - using qty as days
+    drawText(String(r.qty ?? 1), colX[2] + colWidths[2] / 2, y, { size: FONTS.base },
+      { textAlign: 'center' });
+    
+    // Rate (right-aligned with padding)
+    drawText(fm(r.unit_price || 0), colX[3] + colWidths[3] - 4, y, { size: FONTS.base },
       { textAlign: 'right' });
+    
+    // Amount (right-aligned with padding)
+    drawText(fm(r.amount), colX[4] + colWidths[4] - 4, y, { size: FONTS.base },
+      { textAlign: 'right' });
+    
     y -= 16;
   });
 
   y -= 20; // gap before totals
 
-  /* C. Totals rows positioned within the QTY and AMOUNT columns only */
+  /* Totals rows as additional grid rows */
   const totalsRows: [string, number][] = [
-    ['subtotal', inv.subtotal]
+    ['Subtotal', inv.subtotal]
   ];
 
   // Add tax rows based on tax type
@@ -65,31 +75,33 @@ export function renderItemsAndTotals(
     if (+inv.sgst) totalsRows.push([`SGST (${inv.sgst_pct} %)`, inv.sgst]);
   }
 
-  let yTot = y;
+  // Render totals rows spanning columns 2-5
   totalsRows.forEach(([lbl, val]) => {
-    // Label starts at QTY column (colX[2])
-    drawText(lbl, colX[2], yTot, { size: FONTS.base });
-    // Value positioned more to the left within Amount column - moved further left
-    drawText(fm(val), colX[3] + colW[3] * 0.3, yTot,
-      { size: FONTS.base }, { textAlign: 'right' });
-    yTot -= 16;
+    // Label in Equipment column (left-aligned with padding)
+    drawText(lbl, colX[1] + 4, y, { size: FONTS.base });
+    
+    // Value in Amount column (right-aligned with padding)
+    drawText(fm(val), colX[4] + colWidths[4] - 4, y, { size: FONTS.base },
+      { textAlign: 'right' });
+    
+    y -= 16;
   });
 
-  /* D. GRAND TOTAL with separator line - contained within QTY and AMOUNT columns */
-  yTot -= 8;
-  // Thin separator rule from QTY column start to right edge of Amount column
+  /* Grand Total with separator line */
+  y -= 8;
+  
+  // Separator line spanning from Equipment to Amount columns
   page.drawLine({
-    start: { x: colX[2], y: yTot },
-    end:   { x: colX[3] + colW[3], y: yTot },
-    thickness: .5,
+    start: { x: colX[1], y: y },
+    end: { x: colX[4] + colWidths[4], y: y },
+    thickness: 0.5,
     color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
   });
-  yTot -= 12;
   
-  // GRAND TOTAL label and value - positioned same as other totals
-  drawText('GRAND TOTAL', colX[2], yTot, 
-    { size: FONTS.medium, bold: true });
-  drawText(fm(inv.total), colX[3] + colW[3] * 0.3, yTot,
-    { size: FONTS.medium, bold: true },
-    { textAlign: 'right' });
+  y -= 12;
+  
+  // GRAND TOTAL label and value
+  drawText('GRAND TOTAL', colX[1] + 4, y, { size: FONTS.medium, bold: true });
+  drawText(fm(inv.total), colX[4] + colWidths[4] - 4, y,
+    { size: FONTS.medium, bold: true }, { textAlign: 'right' });
 }
