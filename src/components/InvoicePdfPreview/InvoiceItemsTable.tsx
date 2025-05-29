@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TABLE, FONTS, COLORS, SPACING, getBandPositions, formatCurrency, PAGE } from '@/lib/pdf/layout';
+import { TABLE, FONTS, COLORS, SPACING, getBandPositions, PAGE } from '@/lib/pdf/layout';
 import { rgbToCSS, getAbsoluteStyles } from './invoicePreviewUtils';
 
 interface InvoiceItemsTableProps {
@@ -9,15 +9,69 @@ interface InvoiceItemsTableProps {
   companySettings: any;
 }
 
+// Enhanced text clipping utility that matches PDF behavior
+const clipText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+};
+
+// Calculate text width approximation (matching PDF font metrics)
+const getTextWidth = (text: string, fontSize: number, isBold: boolean = false): number => {
+  const avgCharWidth = isBold ? fontSize * 0.62 : fontSize * 0.58;
+  const spaceWidth = fontSize * 0.28;
+  
+  const charCount = text.replace(/\s/g, '').length;
+  const spaceCount = (text.match(/\s/g) || []).length;
+  
+  return (charCount * avgCharWidth) + (spaceCount * spaceWidth);
+};
+
+// Clip text to fit within pixel width (matching PDF clipping logic)
+const clipTextToWidth = (text: string, maxWidth: number, fontSize: number, isBold: boolean = false): string => {
+  const textWidth = getTextWidth(text, fontSize, isBold);
+  
+  if (textWidth <= maxWidth) {
+    return text;
+  }
+  
+  const ellipsis = '...';
+  const ellipsisWidth = getTextWidth(ellipsis, fontSize, isBold);
+  const availableWidth = maxWidth - ellipsisWidth;
+  
+  if (availableWidth <= 0) {
+    return ellipsis;
+  }
+  
+  // Binary search for optimal length
+  let left = 0;
+  let right = text.length;
+  let result = text;
+  
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const truncated = text.substring(0, mid);
+    const truncatedWidth = getTextWidth(truncated, fontSize, isBold);
+    
+    if (truncatedWidth <= availableWidth) {
+      result = truncated + ellipsis;
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+  
+  return result;
+};
+
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Match the exact column proportions from PDF generation - adjusted to squeeze equipment column more
-  const fractions = [0.08, 0.35, 0.12, 0.22, 0.23]; // S.NO, Equipment (more squeezed), Days, Rate, Amount
+  // Match exact column proportions from PDF generation
+  const fractions = [0.08, 0.35, 0.12, 0.22, 0.23]; // S.NO, Equipment, Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   
-  // Calculate column positions - START AT 0px since container is positioned at PAGE.margin from left
-  const colX = [0]; // Start first column at 0px relative to container (container itself is offset PAGE.margin)
+  // Calculate column positions
+  const colX = [0];
   for (let i = 1; i < colWidths.length; i++) {
     colX.push(colX[i-1] + colWidths[i-1]);
   }
@@ -25,14 +79,14 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
   console.log('React column positions:', colX);
   console.log('React column widths:', colWidths);
 
-  // Calculate subtotal from calculated line item amounts (not stored amounts)
+  // Calculate totals from line items
   const subtotal = lines?.reduce((sum, line) => {
     const qty = Number(line.qty) || 1;
     const unitPrice = Number(line.unit_price) || 0;
     return sum + (qty * unitPrice);
   }, 0) || 0;
   
-  // Use the tax configuration from the invoice to calculate taxes
+  // Calculate taxes
   let cgstAmount = 0;
   let sgstAmount = 0;
   let igstAmount = 0;
@@ -48,25 +102,18 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
 
   console.log('React totals calculation:', { subtotal, cgstAmount, sgstAmount, igstAmount, grandTotal });
 
-  // Helper function to truncate text that's too long
-  const truncateText = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength - 3) + '...';
-  };
-
   return (
     <div 
       className="absolute"
       style={{
-        ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
+        ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30),
         bottom: `${positions.bottomOfTable}px`,
-        left: `${PAGE.margin}px`, // Position container at proper page margin (60px) from left edge of page
+        left: `${PAGE.margin}px`,
         width: `${PAGE.inner}px`,
         overflow: 'hidden',
-        border: '1px solid black', // Outer table border
+        border: '1px solid black',
       }}
     >
-      {/* Items Grid */}
       <div style={{ width: '100%', position: 'relative' }}>
         {/* Grid Header */}
         <div 
@@ -76,10 +123,10 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             display: 'flex',
             alignItems: 'center',
             position: 'relative',
-            borderBottom: '1px solid black', // Header separator line
+            borderBottom: '1px solid black',
           }}
         >
-          {/* Vertical column separators for header */}
+          {/* Vertical column separators */}
           {colX.slice(1).map((x, i) => (
             <div
               key={i}
@@ -94,7 +141,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             />
           ))}
           
-          {/* S.NO Column */}
+          {/* Header columns with proper text clipping */}
           <div style={{ 
             position: 'absolute',
             left: `${colX[0]}px`,
@@ -109,7 +156,6 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             S.NO
           </div>
           
-          {/* Equipment Column */}
           <div style={{ 
             position: 'absolute',
             left: `${colX[1] + TABLE.padding}px`,
@@ -118,12 +164,12 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             fontSize: `${FONTS.base}px`,
             fontWeight: 'bold',
             overflow: 'hidden',
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis'
           }}>
             EQUIPMENT
           </div>
           
-          {/* Days Column */}
           <div style={{ 
             position: 'absolute',
             left: `${colX[2]}px`,
@@ -138,7 +184,6 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             DAYS
           </div>
           
-          {/* Rate Column */}
           <div style={{ 
             position: 'absolute',
             left: `${colX[3]}px`,
@@ -153,7 +198,6 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
             RATE
           </div>
           
-          {/* Amount Column */}
           <div style={{ 
             position: 'absolute',
             left: `${colX[4]}px`,
@@ -169,13 +213,16 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           </div>
         </div>
 
-        {/* Grid Body - Item rows */}
+        {/* Grid Body - Item rows with enhanced text clipping */}
         <div style={{ marginBottom: '20px' }}>
           {lines?.map((line, i) => {
-            // Calculate amount properly: Days/Qty * Rate
             const qty = Number(line.qty) || 1;
             const unitPrice = Number(line.unit_price) || 0;
             const calculatedAmount = qty * unitPrice;
+            
+            // Calculate available width for equipment column and clip text accordingly
+            const equipmentMaxWidth = colWidths[1] - TABLE.padding * 2;
+            const clippedDescription = clipTextToWidth(line.description, equipmentMaxWidth, FONTS.base, false);
             
             return (
               <div 
@@ -184,10 +231,10 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   height: `${TABLE.rowH}px`,
                   position: 'relative',
                   marginBottom: '0px',
-                  borderBottom: i < lines.length - 1 ? '0.5px solid #b3b3b3' : 'none', // Row separators (light gray)
+                  borderBottom: i < lines.length - 1 ? '0.5px solid #b3b3b3' : 'none',
                 }}
               >
-                {/* Vertical column separators for data rows */}
+                {/* Vertical column separators */}
                 {colX.slice(1).map((x, idx) => (
                   <div
                     key={idx}
@@ -217,7 +264,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   {i + 1}
                 </div>
                 
-                {/* Equipment - with text constraints */}
+                {/* Equipment - with enhanced text clipping */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[1] + TABLE.padding}px`,
@@ -226,13 +273,12 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   fontSize: `${FONTS.base}px`,
                   top: '2px',
                   overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis'
+                  whiteSpace: 'nowrap'
                 }}>
-                  {truncateText(line.description, 17)}
+                  {clippedDescription}
                 </div>
                 
-                {/* Days - ensure it's never empty */}
+                {/* Days */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[2]}px`,
@@ -247,7 +293,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   {qty}
                 </div>
                 
-                {/* Rate with rupee symbol and right alignment */}
+                {/* Rate */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[3]}px`,
@@ -262,7 +308,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   ₹{unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                 </div>
                 
-                {/* Amount with rupee symbol and right alignment for units consistency */}
+                {/* Amount */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[4]}px`,
@@ -286,10 +332,9 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           height: '0.5px',
           backgroundColor: rgbToCSS(COLORS.lines.light),
           marginBottom: '12px',
-          marginLeft: '0px' // No margin since container is already positioned correctly
         }} />
 
-        {/* Totals Section - Updated positioning to align with new column layout */}
+        {/* Totals Section */}
         <div style={{ marginTop: '20px' }}>
           {/* Subtotal */}
           <div style={{
@@ -299,7 +344,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           }}>
             <div style={{ 
               position: 'absolute',
-              left: `${colX[2] + TABLE.padding}px`, // Start of Days column
+              left: `${colX[2] + TABLE.padding}px`,
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.base}px`
             }}>

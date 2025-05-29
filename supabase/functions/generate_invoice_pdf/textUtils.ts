@@ -1,6 +1,6 @@
 
 /**
- * Utility functions for text handling in PDF generation
+ * Enhanced text utilities for PDF generation with proper font metrics and clipping
  */
 
 export interface TextMeasurement {
@@ -8,14 +8,39 @@ export interface TextMeasurement {
   height: number;
 }
 
+export interface FontMetrics {
+  avgCharWidth: number;
+  spaceWidth: number;
+  lineHeight: number;
+}
+
 /**
- * Measure text width using a simple character-based approximation
- * This is a fallback when we don't have access to font metrics
+ * Get font metrics for different font types
+ * These are approximate values based on common font characteristics
  */
-export function measureText(text: string, fontSize: number): TextMeasurement {
-  // Approximate character width as 60% of font size for most fonts
-  const avgCharWidth = fontSize * 0.6;
-  const width = text.length * avgCharWidth;
+export function getFontMetrics(fontSize: number, isBold: boolean = false): FontMetrics {
+  // Helvetica character width approximations
+  const baseCharWidth = isBold ? fontSize * 0.62 : fontSize * 0.58;
+  const spaceWidth = fontSize * 0.28;
+  
+  return {
+    avgCharWidth: baseCharWidth,
+    spaceWidth,
+    lineHeight: fontSize * 1.2
+  };
+}
+
+/**
+ * Measure text width with improved accuracy using font metrics
+ */
+export function measureText(text: string, fontSize: number, isBold: boolean = false): TextMeasurement {
+  const metrics = getFontMetrics(fontSize, isBold);
+  
+  // Count characters and spaces for more accurate measurement
+  const charCount = text.replace(/\s/g, '').length;
+  const spaceCount = (text.match(/\s/g) || []).length;
+  
+  const width = (charCount * metrics.avgCharWidth) + (spaceCount * metrics.spaceWidth);
   
   return {
     width,
@@ -24,11 +49,54 @@ export function measureText(text: string, fontSize: number): TextMeasurement {
 }
 
 /**
- * Wrap text to fit within a maximum width
- * Returns an array of lines that fit within the specified width
+ * Clip text to fit within a maximum width with proper ellipsis handling
  */
-export function wrapLines(text: string, maxWidth: number, fontSize: number): string[] {
-  console.log('wrapLines called with:', { text, maxWidth, fontSize })
+export function clipText(text: string, maxWidth: number, fontSize: number, isBold: boolean = false): string {
+  console.log('clipText called with:', { text, maxWidth, fontSize, isBold });
+  
+  const { width } = measureText(text, fontSize, isBold);
+  
+  if (width <= maxWidth) {
+    console.log('clipText: text fits, returning original:', text);
+    return text;
+  }
+  
+  // Binary search for the optimal length with ellipsis
+  const ellipsis = '...';
+  const ellipsisWidth = measureText(ellipsis, fontSize, isBold).width;
+  const availableWidth = maxWidth - ellipsisWidth;
+  
+  if (availableWidth <= 0) {
+    console.log('clipText: no space for ellipsis, returning ellipsis only');
+    return ellipsis;
+  }
+  
+  let left = 0;
+  let right = text.length;
+  let result = text;
+  
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const truncated = text.substring(0, mid);
+    const truncatedWidth = measureText(truncated, fontSize, isBold).width;
+    
+    if (truncatedWidth <= availableWidth) {
+      result = truncated + ellipsis;
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+  
+  console.log('clipText result:', result);
+  return result;
+}
+
+/**
+ * Wrap text to fit within a maximum width (legacy function, kept for compatibility)
+ */
+export function wrapLines(text: string, maxWidth: number, fontSize: number, isBold: boolean = false): string[] {
+  console.log('wrapLines called with:', { text, maxWidth, fontSize, isBold });
   
   const words = text.split(' ');
   const lines: string[] = [];
@@ -36,7 +104,7 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
   
   for (const word of words) {
     const testLine = currentLine ? `${currentLine} ${word}` : word;
-    const { width } = measureText(testLine, fontSize);
+    const { width } = measureText(testLine, fontSize, isBold);
     
     if (width <= maxWidth) {
       currentLine = testLine;
@@ -45,8 +113,8 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
         lines.push(currentLine);
         currentLine = word;
       } else {
-        // Handle single word that's too long - force it on its own line
-        lines.push(word);
+        // Single word too long - clip it
+        lines.push(clipText(word, maxWidth, fontSize, isBold));
         currentLine = '';
       }
     }
@@ -56,40 +124,16 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
     lines.push(currentLine);
   }
   
-  console.log('wrapLines result:', lines)
+  console.log('wrapLines result:', lines);
   return lines;
 }
 
 /**
- * Truncate text with ellipsis if it exceeds maximum width
+ * Create a clipped text drawing function for PDF
  */
-export function truncateText(text: string, maxWidth: number, fontSize: number): string {
-  console.log('truncateText called with:', { text, maxWidth, fontSize })
-  
-  const { width } = measureText(text, fontSize);
-  
-  if (width <= maxWidth) {
-    return text;
-  }
-  
-  // Binary search for the right length
-  let left = 0;
-  let right = text.length;
-  let result = text;
-  
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    const truncated = text.substring(0, mid) + '...';
-    const { width: truncatedWidth } = measureText(truncated, fontSize);
-    
-    if (truncatedWidth <= maxWidth) {
-      result = truncated;
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-  
-  console.log('truncateText result:', result)
-  return result;
+export function createClippedDrawText(page: any, drawText: Function) {
+  return (text: string, x: number, y: number, maxWidth: number, options: any = {}, extraOptions: any = {}) => {
+    const clippedText = clipText(text, maxWidth, options.size || 9, options.bold || false);
+    drawText(clippedText, x, y, options, extraOptions);
+  };
 }
