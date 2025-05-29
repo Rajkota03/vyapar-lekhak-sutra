@@ -35,6 +35,34 @@ export function renderItemsAndTotals(
   console.log('Column positions:', colX);
   console.log('Column widths:', colWidths);
 
+  // Draw table border (outer rectangle)
+  page.drawRectangle({
+    x: PAGE.margin,
+    y: cursor - TABLE.headerH - (items.length * 18) - 20, // Adjust height based on content
+    width: PAGE.inner,
+    height: TABLE.headerH + (items.length * 18) + 20,
+    borderColor: rgb(0, 0, 0),
+    borderWidth: 1,
+  });
+
+  // Draw vertical column separators
+  for (let i = 1; i < colX.length; i++) {
+    page.drawLine({
+      start: { x: colX[i], y: cursor },
+      end: { x: colX[i], y: cursor - TABLE.headerH - (items.length * 18) - 20 },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+  }
+
+  // Draw horizontal line after header
+  page.drawLine({
+    start: { x: PAGE.margin, y: cursor - TABLE.headerH },
+    end: { x: PAGE.margin + PAGE.inner, y: cursor - TABLE.headerH },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
+
   /* Header row */
   const headers = ['S.NO','EQUIPMENT','DAYS','RATE','AMOUNT'];
   const align   = ['center','left','center','right','right']; // Text alignment for each header
@@ -52,7 +80,7 @@ export function renderItemsAndTotals(
   });
   cursor -= TABLE.headerH; // Move cursor down past header height
 
-  /* Item rows with text wrapping */
+  /* Item rows with text wrapping and horizontal separators */
   items.forEach((r, idx) => {
     const itemQty = r.qty || 1; // Default to 1 if qty is missing, but data should be complete
     const itemUnitPrice = r.unit_price || 0; // Default to 0 if price is missing
@@ -86,6 +114,16 @@ export function renderItemsAndTotals(
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'right' });
     
     cursor -= rowHeight; // Move cursor down for next item, accounting for wrapped text
+    
+    // Draw horizontal line after each row (except last)
+    if (idx < items.length - 1) {
+      page.drawLine({
+        start: { x: PAGE.margin, y: cursor },
+        end: { x: PAGE.margin + PAGE.inner, y: cursor },
+        thickness: 0.5,
+        color: rgb(0.7, 0.7, 0.7), // Light gray for row separators
+      });
+    }
   });
 
   cursor -= 20; // Gap before totals section

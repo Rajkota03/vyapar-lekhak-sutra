@@ -56,21 +56,38 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
         bottom: `${positions.bottomOfTable}px`,
         left: `${PAGE.margin}px`, // Position container at proper page margin (60px) from left edge of page
         width: `${PAGE.inner}px`,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        border: '1px solid black', // Outer table border
       }}
     >
       {/* Items Grid */}
       <div style={{ width: '100%', position: 'relative' }}>
         {/* Grid Header */}
         <div 
-          className="py-2 mb-2"
+          className="py-2 mb-0"
           style={{
             height: `${TABLE.headerH}px`,
             display: 'flex',
             alignItems: 'center',
-            position: 'relative'
+            position: 'relative',
+            borderBottom: '1px solid black', // Header separator line
           }}
         >
+          {/* Vertical column separators for header */}
+          {colX.slice(1).map((x, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: `${x}px`,
+                top: 0,
+                bottom: 0,
+                width: '1px',
+                backgroundColor: 'black',
+              }}
+            />
+          ))}
+          
           {/* S.NO Column */}
           <div style={{ 
             position: 'absolute',
@@ -150,9 +167,25 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 style={{
                   minHeight: `${TABLE.rowH}px`,
                   position: 'relative',
-                  marginBottom: '4px'
+                  marginBottom: '0px',
+                  borderBottom: i < lines.length - 1 ? '0.5px solid #b3b3b3' : 'none', // Row separators (light gray)
                 }}
               >
+                {/* Vertical column separators for data rows */}
+                {colX.slice(1).map((x, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      position: 'absolute',
+                      left: `${x}px`,
+                      top: 0,
+                      bottom: 0,
+                      width: '1px',
+                      backgroundColor: 'black',
+                    }}
+                  />
+                ))}
+                
                 {/* S.NO */}
                 <div style={{ 
                   position: 'absolute',
@@ -160,7 +193,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   width: `${colWidths[0]}px`,
                   textAlign: 'center',
                   color: rgbToCSS(COLORS.text.primary), 
-                  fontSize: `${FONTS.base}px`
+                  fontSize: `${FONTS.base}px`,
+                  top: '2px'
                 }}>
                   {i + 1}
                 </div>
@@ -173,7 +207,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`,
                   wordWrap: 'break-word',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  top: '2px'
                 }}>
                   {line.description}
                 </div>
@@ -185,7 +220,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   width: `${colWidths[2]}px`,
                   textAlign: 'center',
                   color: rgbToCSS(COLORS.text.primary), 
-                  fontSize: `${FONTS.base}px`
+                  fontSize: `${FONTS.base}px`,
+                  top: '2px'
                 }}>
                   {qty}
                 </div>
@@ -197,7 +233,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   width: `${colWidths[3] - TABLE.padding}px`,
                   textAlign: 'right',
                   color: rgbToCSS(COLORS.text.primary), 
-                  fontSize: `${FONTS.base}px`
+                  fontSize: `${FONTS.base}px`,
+                  top: '2px'
                 }}>
                   ₹{unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                 </div>
@@ -209,7 +246,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   width: `${colWidths[4] - TABLE.padding}px`,
                   textAlign: 'right',
                   color: rgbToCSS(COLORS.text.primary), 
-                  fontSize: `${FONTS.base}px`
+                  fontSize: `${FONTS.base}px`,
+                  top: '2px'
                 }}>
                   ₹{calculatedAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                 </div>
