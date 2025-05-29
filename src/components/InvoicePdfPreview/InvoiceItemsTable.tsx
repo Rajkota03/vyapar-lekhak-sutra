@@ -12,11 +12,15 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Match the exact column proportions from PDF generation - updated with improved spacing
+  // Match the exact column proportions from PDF generation - aligned with grey bar
   const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
-  const colX = colWidths.reduce((acc, w, i) => 
-    i === 0 ? [0] : [...acc, acc[i-1] + w], [] as number[]); // Start at 0, relative to container
+  
+  // Calculate column positions - START AT 0 (relative to container which is already positioned at PAGE.margin)
+  const colX = [0]; // Start first column at 0 relative to container
+  for (let i = 1; i < colWidths.length; i++) {
+    colX.push(colX[i-1] + colWidths[i-1]);
+  }
 
   console.log('React column positions:', colX);
   console.log('React column widths:', colWidths);
@@ -50,7 +54,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
       style={{
         ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
         bottom: `${positions.bottomOfTable}px`,
-        left: `${PAGE.margin}px`, // Align with page margin, not offset
+        left: `${PAGE.margin}px`, // Align with page margin to match grey bar
         width: `${PAGE.inner}px`,
         overflow: 'hidden'
       }}

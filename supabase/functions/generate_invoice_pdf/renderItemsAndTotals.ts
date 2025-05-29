@@ -21,16 +21,16 @@ export function renderItemsAndTotals(
   const pos = getBandPositions(); // Assuming this provides key Y positions
   let cursor = pos.topOfItems - 30; // Start Y cursor below a certain point
 
-  /* A. Column geometry - Updated with improved proportions for better spacing */
+  /* A. Column geometry - Aligned with grey bar */
   // Fractions define the proportion of width for each column
   const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner); // Calculate actual widths
 
-  // Calculate the starting X coordinate for each column
-  const colX = colWidths.reduce((acc, _w, i) => {
-    if (i === 0) return [PAGE.margin];
-    return [...acc, acc[i-1] + colWidths[i-1]];
-  }, [] as number[]);
+  // Calculate the starting X coordinate for each column - START AT PAGE.margin (no offset)
+  const colX = [PAGE.margin]; // Start first column exactly at page margin
+  for (let i = 1; i < colWidths.length; i++) {
+    colX.push(colX[i-1] + colWidths[i-1]);
+  }
 
   console.log('Column positions:', colX);
   console.log('Column widths:', colWidths);
