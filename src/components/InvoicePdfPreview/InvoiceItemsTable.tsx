@@ -18,10 +18,10 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
   const colX = colWidths.reduce((acc, w, i) => 
     i === 0 ? [0] : [...acc, acc[i-1] + w], [] as number[]); // Start at 0, relative to container
 
-  // Calculate totals from actual line items
+  // Calculate totals from actual line items - this was the main issue!
   const subtotal = lines?.reduce((sum, line) => sum + (Number(line.amount) || 0), 0) || 0;
   
-  // Calculate taxes based on invoice tax configuration
+  // Use the tax configuration from the invoice to calculate taxes
   let cgstAmount = 0;
   let sgstAmount = 0;
   let igstAmount = 0;
