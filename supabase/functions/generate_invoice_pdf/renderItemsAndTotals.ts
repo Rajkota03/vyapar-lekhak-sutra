@@ -19,8 +19,8 @@ export function renderItemsAndTotals(
   // Add spacing between Bill To and Items sections, align with Bill To content
   let cursor = pos.topOfItems - 30; // Added 30pt spacing
 
-  /* A. Column geometry - 5-column spreadsheet grid */
-  const fractions = [0.05, 0.50, 0.10, 0.15, 0.20]; // S.NO, Equipment, Days, Rate, Amount
+  /* A. Column geometry - 5-column spreadsheet grid with wider Equipment column */
+  const fractions = [0.05, 0.55, 0.10, 0.15, 0.15]; // S.NO, Equipment (wider), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   const colX = colWidths.reduce((acc, w, i) => 
     i === 0 ? [PAGE.margin] : [...acc, acc[i-1] + w], [] as number[]);
@@ -39,8 +39,11 @@ export function renderItemsAndTotals(
   });
   cursor -= TABLE.headerH;
 
-  /* Item rows */
+  /* Item rows with proper amount calculation */
   items.forEach((r, idx) => {
+    // Calculate amount properly: Days/Qty * Rate
+    const calculatedAmount = (r.qty || 1) * (r.unit_price || 0);
+    
     // S.NO (centered)
     drawText(String(idx + 1), colX[0] + colWidths[0] / 2, cursor, { size: FONTS.base },
       { textAlign: 'center' });
@@ -48,16 +51,16 @@ export function renderItemsAndTotals(
     // Equipment (left-aligned with padding)
     drawText(r.description, colX[1] + TABLE.padding, cursor, { size: FONTS.base });
     
-    // Days (centered) - using qty as days
-    drawText(String(r.qty ?? 1), colX[2] + colWidths[2] / 2, cursor, { size: FONTS.base },
+    // Days (centered) - using qty as days, ensure it's never empty
+    drawText(String(r.qty || 1), colX[2] + colWidths[2] / 2, cursor, { size: FONTS.base },
       { textAlign: 'center' });
     
     // Rate (right-aligned with padding)
     drawText(fm(r.unit_price || 0), colX[3] + colWidths[3] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
-    // Amount (right-aligned with padding) - THIS WAS MISSING!
-    drawText(fm(r.amount), colX[4] + colWidths[4] - TABLE.padding, cursor, { size: FONTS.base },
+    // Amount (right-aligned with padding) - Use calculated amount
+    drawText(fm(calculatedAmount), colX[4] + colWidths[4] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
     cursor -= 16;
@@ -65,8 +68,8 @@ export function renderItemsAndTotals(
 
   cursor -= 20; // gap before totals
 
-  // Calculate subtotal from actual line items
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+  // Calculate subtotal from calculated line item amounts (not stored amounts)
+  const subtotal = items.reduce((sum, item) => sum + ((item.qty || 1) * (item.unit_price || 0)), 0);
 
   // Calculate tax amounts based on tax configuration
   let cgstAmount = 0;

@@ -12,14 +12,18 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Calculate 5-column spreadsheet grid
-  const fractions = [0.05, 0.50, 0.10, 0.15, 0.20]; // S.NO, Equipment, Days, Rate, Amount
+  // Calculate 5-column spreadsheet grid with wider Equipment column
+  const fractions = [0.05, 0.55, 0.10, 0.15, 0.15]; // S.NO, Equipment (wider), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   const colX = colWidths.reduce((acc, w, i) => 
     i === 0 ? [0] : [...acc, acc[i-1] + w], [] as number[]); // Start at 0, relative to container
 
-  // Calculate totals from actual line items - this was the main issue!
-  const subtotal = lines?.reduce((sum, line) => sum + (Number(line.amount) || 0), 0) || 0;
+  // Calculate subtotal from calculated line item amounts (not stored amounts)
+  const subtotal = lines?.reduce((sum, line) => {
+    const qty = Number(line.qty) || 1;
+    const unitPrice = Number(line.unit_price) || 0;
+    return sum + (qty * unitPrice);
+  }, 0) || 0;
   
   // Use the tax configuration from the invoice to calculate taxes
   let cgstAmount = 0;
@@ -125,75 +129,82 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
 
         {/* Grid Body - Item rows */}
         <div style={{ marginBottom: '20px' }}>
-          {lines?.map((line, i) => (
-            <div 
-              key={i} 
-              style={{
-                minHeight: `${TABLE.rowH}px`,
-                position: 'relative',
-                marginBottom: '4px'
-              }}
-            >
-              {/* S.NO */}
-              <div style={{ 
-                position: 'absolute',
-                left: `${colX[0]}px`,
-                width: `${colWidths[0]}px`,
-                textAlign: 'center',
-                color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
-              }}>
-                {i + 1}
+          {lines?.map((line, i) => {
+            // Calculate amount properly: Days/Qty * Rate
+            const qty = Number(line.qty) || 1;
+            const unitPrice = Number(line.unit_price) || 0;
+            const calculatedAmount = qty * unitPrice;
+            
+            return (
+              <div 
+                key={i} 
+                style={{
+                  minHeight: `${TABLE.rowH}px`,
+                  position: 'relative',
+                  marginBottom: '4px'
+                }}
+              >
+                {/* S.NO */}
+                <div style={{ 
+                  position: 'absolute',
+                  left: `${colX[0]}px`,
+                  width: `${colWidths[0]}px`,
+                  textAlign: 'center',
+                  color: rgbToCSS(COLORS.text.primary), 
+                  fontSize: `${FONTS.base}px`
+                }}>
+                  {i + 1}
+                </div>
+                
+                {/* Equipment */}
+                <div style={{ 
+                  position: 'absolute',
+                  left: `${colX[1] + TABLE.padding}px`,
+                  width: `${colWidths[1] - TABLE.padding * 2}px`,
+                  color: rgbToCSS(COLORS.text.primary), 
+                  fontSize: `${FONTS.base}px`
+                }}>
+                  {line.description}
+                </div>
+                
+                {/* Days - ensure it's never empty */}
+                <div style={{ 
+                  position: 'absolute',
+                  left: `${colX[2]}px`,
+                  width: `${colWidths[2]}px`,
+                  textAlign: 'center',
+                  color: rgbToCSS(COLORS.text.primary), 
+                  fontSize: `${FONTS.base}px`
+                }}>
+                  {qty}
+                </div>
+                
+                {/* Rate */}
+                <div style={{ 
+                  position: 'absolute',
+                  left: `${colX[3]}px`,
+                  width: `${colWidths[3] - TABLE.padding}px`,
+                  textAlign: 'right',
+                  color: rgbToCSS(COLORS.text.primary), 
+                  fontSize: `${FONTS.base}px`
+                }}>
+                  {formatCurrency(unitPrice)}
+                </div>
+                
+                {/* Amount - Use calculated amount */}
+                <div style={{ 
+                  position: 'absolute',
+                  left: `${colX[4]}px`,
+                  width: `${colWidths[4] - TABLE.padding}px`,
+                  textAlign: 'right',
+                  color: rgbToCSS(COLORS.text.primary), 
+                  fontSize: `${FONTS.base}px`
+                }}>
+                  {formatCurrency(calculatedAmount)}
+                </div>
               </div>
-              
-              {/* Equipment */}
-              <div style={{ 
-                position: 'absolute',
-                left: `${colX[1] + TABLE.padding}px`,
-                width: `${colWidths[1] - TABLE.padding * 2}px`,
-                color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
-              }}>
-                {line.description}
-              </div>
-              
-              {/* Days */}
-              <div style={{ 
-                position: 'absolute',
-                left: `${colX[2]}px`,
-                width: `${colWidths[2]}px`,
-                textAlign: 'center',
-                color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
-              }}>
-                {line.qty || 1}
-              </div>
-              
-              {/* Rate */}
-              <div style={{ 
-                position: 'absolute',
-                left: `${colX[3]}px`,
-                width: `${colWidths[3] - TABLE.padding}px`,
-                textAlign: 'right',
-                color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
-              }}>
-                {formatCurrency(Number(line.unit_price || 0))}
-              </div>
-              
-              {/* Amount */}
-              <div style={{ 
-                position: 'absolute',
-                left: `${colX[4]}px`,
-                width: `${colWidths[4] - TABLE.padding}px`,
-                textAlign: 'right',
-                color: rgbToCSS(COLORS.text.primary), 
-                fontSize: `${FONTS.base}px`
-              }}>
-                {formatCurrency(Number(line.amount))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Separator line before totals */}
