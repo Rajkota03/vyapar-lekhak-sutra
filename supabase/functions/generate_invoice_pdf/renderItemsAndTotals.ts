@@ -1,4 +1,3 @@
-
 import { PAGE, FONTS, COLORS, getBandPositions, TABLE } from './layout.ts';
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
@@ -23,7 +22,7 @@ export function renderItemsAndTotals(
   const fractions = [0.05, 0.55, 0.10, 0.15, 0.15]; // S.NO, Equipment (wider), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   const colX = colWidths.reduce((acc, w, i) => 
-    i === 0 ? [PAGE.margin] : [...acc, acc[i-1] + w], [] as number[]);
+    i === 0 ? [PAGE.margin] : [...acc, acc[i-1] + colWidths[i-1]], [] as number[]); // Corrected colX accumulation
 
   /* Header row using the improved approach */
   const headers = ['S.NO','EQUIPMENT','DAYS','RATE','AMOUNT'];
@@ -95,35 +94,52 @@ export function renderItemsAndTotals(
   cursor -= 12;
 
   /* Totals rows as additional grid rows */
+  // Define X positions for right-aligned totals block
+  const totalsLabelX = colX[3] + colWidths[3] * 0.1; // X for labels like "Subtotal:" (adjust as needed)
+  const totalsValueX = colX[4] + colWidths[4] - TABLE.padding; // X for the actual numbers (right end of Amount column)
+
   const totalsRows: [string, number][] = [
     ['Subtotal', subtotal]
   ];
 
   // Add tax rows based on tax type
   if (inv.use_igst) {
-    if (igstAmount > 0) totalsRows.push([`IGST (${inv.igst_pct || 18}%)`, igstAmount]);
+    if (igstAmount > 0 || inv.igst_pct) totalsRows.push([`IGST (${inv.igst_pct || 18}%)`, igstAmount]);
   } else {
-    if (cgstAmount > 0) totalsRows.push([`CGST (${inv.cgst_pct || 9}%)`, cgstAmount]);
-    if (sgstAmount > 0) totalsRows.push([`SGST (${inv.sgst_pct || 9}%)`, sgstAmount]);
+    if (cgstAmount > 0 || inv.cgst_pct) totalsRows.push([`CGST (${inv.cgst_pct || 9}%)`, cgstAmount]);
+    if (sgstAmount > 0 || inv.sgst_pct) totalsRows.push([`SGST (${inv.sgst_pct || 9}%)`, sgstAmount]);
   }
 
-  // Render totals rows with labels in Days column and values in Amount column
+  // Render totals rows
   totalsRows.forEach(([label, val]) => {
-    // Label in Days column area (starting from column 2)
-    drawText(label, colX[2] + TABLE.padding, cursor, { size: FONTS.base });
+    // Label (e.g., "Subtotal")
+    drawText(label, totalsLabelX, cursor, { 
+      size: FONTS.base, 
+      color: rgb(0, 0, 0) // Explicit black
+    }); 
     
-    // Value right-aligned in Amount column
-    drawText(fm(val), colX[4] + colWidths[4] - TABLE.padding, cursor, { size: FONTS.base },
-      { textAlign: 'right' });
+    // Value (e.g., "40,000")
+    drawText(fm(val), totalsValueX, cursor, { 
+      size: FONTS.base, 
+      color: rgb(0, 0, 0) // Explicit black
+    }, { textAlign: 'right' });
     
     cursor -= 14;
   });
 
   /* Grand Total */
-  cursor -= 4;
+  cursor -= 4; 
   
-  // GRAND TOTAL label and value
-  drawText('GRAND TOTAL', colX[2] + TABLE.padding, cursor, { size: FONTS.medium, bold: true });
-  drawText(fm(grandTotal), colX[4] + colWidths[4] - TABLE.padding, cursor,
-    { size: FONTS.medium, bold: true }, { textAlign: 'right' });
+  // GRAND TOTAL label
+  drawText('GRAND TOTAL', totalsLabelX, cursor, { 
+    size: FONTS.medium, 
+    bold: true, 
+    color: rgb(0, 0, 0) // Explicit black
+  });
+  // GRAND TOTAL value
+  drawText(fm(grandTotal), totalsValueX, cursor, { 
+    size: FONTS.medium, 
+    bold: true, 
+    color: rgb(0, 0, 0) // Explicit black
+  }, { textAlign: 'right' });
 }
