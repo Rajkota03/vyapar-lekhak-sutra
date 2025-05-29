@@ -56,7 +56,7 @@ export function renderItemsAndTotals(
     drawText(fm(r.unit_price || 0), colX[3] + colWidths[3] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
-    // Amount (right-aligned with padding)
+    // Amount (right-aligned with padding) - THIS WAS MISSING!
     drawText(fm(r.amount), colX[4] + colWidths[4] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
@@ -65,8 +65,22 @@ export function renderItemsAndTotals(
 
   cursor -= 20; // gap before totals
 
-  // Calculate subtotal
+  // Calculate subtotal from actual line items
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+
+  // Calculate tax amounts based on tax configuration
+  let cgstAmount = 0;
+  let sgstAmount = 0;
+  let igstAmount = 0;
+  
+  if (inv.use_igst) {
+    igstAmount = subtotal * ((Number(inv.igst_pct) || 18) / 100);
+  } else {
+    cgstAmount = subtotal * ((Number(inv.cgst_pct) || 9) / 100);
+    sgstAmount = subtotal * ((Number(inv.sgst_pct) || 9) / 100);
+  }
+  
+  const grandTotal = subtotal + cgstAmount + sgstAmount + igstAmount;
 
   // Draw separator line before totals
   page.drawLine({ 
@@ -84,15 +98,15 @@ export function renderItemsAndTotals(
 
   // Add tax rows based on tax type
   if (inv.use_igst) {
-    if (+inv.igst) totalsRows.push([`IGST (${inv.igst_pct}%)`, inv.igst]);
+    if (igstAmount > 0) totalsRows.push([`IGST (${inv.igst_pct || 18}%)`, igstAmount]);
   } else {
-    if (+inv.cgst) totalsRows.push([`CGST (${inv.cgst_pct}%)`, inv.cgst]);
-    if (+inv.sgst) totalsRows.push([`SGST (${inv.sgst_pct}%)`, inv.sgst]);
+    if (cgstAmount > 0) totalsRows.push([`CGST (${inv.cgst_pct || 9}%)`, cgstAmount]);
+    if (sgstAmount > 0) totalsRows.push([`SGST (${inv.sgst_pct || 9}%)`, sgstAmount]);
   }
 
   // Render totals rows with labels in Days column and values in Amount column
   totalsRows.forEach(([label, val]) => {
-    // Label in Days column (centered)
+    // Label in Days column area (starting from column 2)
     drawText(label, colX[2] + TABLE.padding, cursor, { size: FONTS.base });
     
     // Value right-aligned in Amount column
@@ -107,6 +121,6 @@ export function renderItemsAndTotals(
   
   // GRAND TOTAL label and value
   drawText('GRAND TOTAL', colX[2] + TABLE.padding, cursor, { size: FONTS.medium, bold: true });
-  drawText(fm(inv.total), colX[4] + colWidths[4] - TABLE.padding, cursor,
+  drawText(fm(grandTotal), colX[4] + colWidths[4] - TABLE.padding, cursor,
     { size: FONTS.medium, bold: true }, { textAlign: 'right' });
 }
