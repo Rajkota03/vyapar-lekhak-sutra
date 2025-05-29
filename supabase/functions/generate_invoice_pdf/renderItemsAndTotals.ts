@@ -21,13 +21,13 @@ export function renderItemsAndTotals(
   const pos = getBandPositions(); // Assuming this provides key Y positions
   let cursor = pos.topOfItems - 30; // Start Y cursor below a certain point
 
-  /* A. Column geometry - Aligned with grey bar */
+  /* A. Column geometry - Aligned with grey bar padding */
   // Fractions define the proportion of width for each column
   const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner); // Calculate actual widths
 
-  // Calculate the starting X coordinate for each column - START AT PAGE.margin (no offset)
-  const colX = [PAGE.margin]; // Start first column exactly at page margin
+  // Calculate the starting X coordinate for each column - START AT PAGE.margin + 25px to align with "BILL TO" text
+  const colX = [PAGE.margin + 25]; // Start first column aligned with "BILL TO" text (25px padding inside grey bar)
   for (let i = 1; i < colWidths.length; i++) {
     colX.push(colX[i-1] + colWidths[i-1]);
   }
@@ -108,7 +108,7 @@ export function renderItemsAndTotals(
 
   /* Separator Line before Totals */
   page.drawLine({ 
-    start: { x: PAGE.margin, y: cursor }, 
+    start: { x: PAGE.margin + 25, y: cursor }, // Align with column start
     end: { x: PAGE.margin + PAGE.inner, y: cursor }, 
     thickness: 0.5, 
     color: rgb(...COLORS.lines.light)

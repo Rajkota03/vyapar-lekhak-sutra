@@ -12,12 +12,12 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Match the exact column proportions from PDF generation - aligned with grey bar
+  // Match the exact column proportions from PDF generation - aligned with grey bar padding
   const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   
-  // Calculate column positions - START AT 0 (relative to container which is already positioned at PAGE.margin)
-  const colX = [0]; // Start first column at 0 relative to container
+  // Calculate column positions - START AT 25px (relative to container to align with "BILL TO" text)
+  const colX = [25]; // Start first column at 25px relative to container to align with "BILL TO" text
   for (let i = 1; i < colWidths.length; i++) {
     colX.push(colX[i-1] + colWidths[i-1]);
   }
@@ -222,7 +222,8 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
         <div style={{
           height: '0.5px',
           backgroundColor: rgbToCSS(COLORS.lines.light),
-          marginBottom: '12px'
+          marginBottom: '12px',
+          marginLeft: '25px' // Align with column start
         }} />
 
         {/* Totals Section - Updated positioning to align with new column layout */}
