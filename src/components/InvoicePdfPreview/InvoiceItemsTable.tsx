@@ -12,11 +12,14 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Calculate 5-column spreadsheet grid with wider Equipment column
-  const fractions = [0.05, 0.55, 0.10, 0.15, 0.15]; // S.NO, Equipment (wider), Days, Rate, Amount
+  // Match the exact column proportions from PDF generation
+  const fractions = [0.05, 0.50, 0.12, 0.16, 0.17]; // S.NO, Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   const colX = colWidths.reduce((acc, w, i) => 
     i === 0 ? [0] : [...acc, acc[i-1] + w], [] as number[]); // Start at 0, relative to container
+
+  console.log('React column positions:', colX);
+  console.log('React column widths:', colWidths);
 
   // Calculate subtotal from calculated line item amounts (not stored amounts)
   const subtotal = lines?.reduce((sum, line) => {
@@ -39,13 +42,15 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
   
   const grandTotal = subtotal + cgstAmount + sgstAmount + igstAmount;
 
+  console.log('React totals calculation:', { subtotal, cgstAmount, sgstAmount, igstAmount, grandTotal });
+
   return (
     <div 
       className="absolute"
       style={{
         ...getAbsoluteStyles(positions.topOfBill - SPACING.sectionGap - 30), // Added 30px spacing
         bottom: `${positions.bottomOfTable}px`,
-        left: `${PAGE.margin + 25}px`, // Align with Bill To content
+        left: `${PAGE.margin}px`, // Align with page margin, not offset
         width: `${PAGE.inner}px`,
         overflow: 'hidden'
       }}
@@ -156,13 +161,15 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   {i + 1}
                 </div>
                 
-                {/* Equipment */}
+                {/* Equipment - with text wrapping */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[1] + TABLE.padding}px`,
                   width: `${colWidths[1] - TABLE.padding * 2}px`,
                   color: rgbToCSS(COLORS.text.primary), 
-                  fontSize: `${FONTS.base}px`
+                  fontSize: `${FONTS.base}px`,
+                  wordWrap: 'break-word',
+                  overflow: 'hidden'
                 }}>
                   {line.description}
                 </div>
@@ -214,7 +221,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           marginBottom: '12px'
         }} />
 
-        {/* Totals Section as additional grid rows */}
+        {/* Totals Section - Fixed positioning to match PDF */}
         <div style={{ marginTop: '20px' }}>
           {/* Subtotal */}
           <div style={{
@@ -224,7 +231,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           }}>
             <div style={{ 
               position: 'absolute',
-              left: `${colX[2] + TABLE.padding}px`,
+              left: `${colX[2] + TABLE.padding}px`, // Start of Days column
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.base}px`
             }}>
