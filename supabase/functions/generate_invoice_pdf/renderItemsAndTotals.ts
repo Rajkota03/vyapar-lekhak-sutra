@@ -21,9 +21,9 @@ export function renderItemsAndTotals(
   const pos = getBandPositions(); // Assuming this provides key Y positions
   let cursor = pos.topOfItems - 30; // Start Y cursor below a certain point
 
-  /* A. Column geometry - Updated with better proportions */
+  /* A. Column geometry - Updated with improved proportions for better spacing */
   // Fractions define the proportion of width for each column
-  const fractions = [0.05, 0.50, 0.12, 0.16, 0.17]; // S.NO, Equipment (reduced), Days, Rate, Amount
+  const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner); // Calculate actual widths
 
   // Calculate the starting X coordinate for each column
@@ -115,7 +115,7 @@ export function renderItemsAndTotals(
   });
   cursor -= 12; // Move cursor down past line
 
-  /* Totals Section - Fixed positioning */
+  /* Totals Section - Updated positioning to align with new column layout */
   // Use the Days column start for labels and Amount column for values
   const totalsLabelX = colX[2]; // Start of Days column
   const totalsValueX = colX[4] + colWidths[4] - TABLE.padding; // Right-aligned in Amount column

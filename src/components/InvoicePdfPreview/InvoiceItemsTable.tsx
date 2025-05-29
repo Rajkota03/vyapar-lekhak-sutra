@@ -12,8 +12,8 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Match the exact column proportions from PDF generation
-  const fractions = [0.05, 0.50, 0.12, 0.16, 0.17]; // S.NO, Equipment (reduced), Days, Rate, Amount
+  // Match the exact column proportions from PDF generation - updated with improved spacing
+  const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   const colX = colWidths.reduce((acc, w, i) => 
     i === 0 ? [0] : [...acc, acc[i-1] + w], [] as number[]); // Start at 0, relative to container
@@ -221,7 +221,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
           marginBottom: '12px'
         }} />
 
-        {/* Totals Section - Fixed positioning to match PDF */}
+        {/* Totals Section - Updated positioning to align with new column layout */}
         <div style={{ marginTop: '20px' }}>
           {/* Subtotal */}
           <div style={{
