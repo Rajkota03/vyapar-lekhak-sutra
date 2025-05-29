@@ -1,4 +1,5 @@
 
+
 import { PAGE, FONTS, COLORS, getBandPositions, TABLE } from './layout.ts';
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 import { wrapLines } from './textUtils.ts';
@@ -26,8 +27,8 @@ export function renderItemsAndTotals(
   const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner); // Calculate actual widths
 
-  // Calculate the starting X coordinate for each column - START AT PAGE.margin + 25px to align with "BILL TO" text
-  const colX = [PAGE.margin + 25]; // Start first column aligned with "BILL TO" text (25px padding inside grey bar)
+  // Calculate the starting X coordinate for each column - START AT 25px from left edge of page
+  const colX = [25]; // Start first column at 25px from left edge of page
   for (let i = 1; i < colWidths.length; i++) {
     colX.push(colX[i-1] + colWidths[i-1]);
   }
@@ -108,7 +109,7 @@ export function renderItemsAndTotals(
 
   /* Separator Line before Totals */
   page.drawLine({ 
-    start: { x: PAGE.margin + 25, y: cursor }, // Align with column start
+    start: { x: 25, y: cursor }, // Start at 25px from left edge
     end: { x: PAGE.margin + PAGE.inner, y: cursor }, 
     thickness: 0.5, 
     color: rgb(...COLORS.lines.light)
