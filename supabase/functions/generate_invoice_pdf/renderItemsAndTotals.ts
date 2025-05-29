@@ -6,7 +6,7 @@ import { wrapLines } from './textUtils.ts';
 import type { InvoiceData, LineItem, DrawTextOptions } from './types.ts';
 
 /* money helper */
-const fm = (n: number) => new Intl.NumberFormat('en-IN').format(n);
+const fm = (n: number) => `₹${new Intl.NumberFormat('en-IN').format(n)}`;
 
 export function renderItemsAndTotals(
   page: any, // This is likely a pdf-lib PDFPage object
@@ -22,9 +22,9 @@ export function renderItemsAndTotals(
   const pos = getBandPositions(); // Assuming this provides key Y positions
   let cursor = pos.topOfItems - 30; // Start Y cursor below a certain point
 
-  /* A. Column geometry - Aligned with grey bar padding */
+  /* A. Column geometry - Adjusted to squeeze equipment column and match grey bar margin */
   // Fractions define the proportion of width for each column
-  const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
+  const fractions = [0.08, 0.40, 0.14, 0.19, 0.19]; // S.NO, Equipment (squeezed), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner); // Calculate actual widths
 
   // Calculate the starting X coordinate for each column - START AT 25px from left edge of page
@@ -78,11 +78,11 @@ export function renderItemsAndTotals(
     drawText(String(itemQty), colX[2] + colWidths[2] / 2, cursor, 
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'center' });
     
-    // Rate (right-aligned with padding)
+    // Rate (right-aligned with padding and rupee symbol)
     drawText(fm(itemUnitPrice), colX[3] + colWidths[3] - TABLE.padding, cursor, 
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'right' });
     
-    // Amount (right-aligned with padding)
+    // Amount (right-aligned with padding and rupee symbol)
     drawText(fm(calculatedAmount), colX[4] + colWidths[4] - TABLE.padding, cursor, 
       { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'right' });
     
@@ -135,7 +135,7 @@ export function renderItemsAndTotals(
     drawText(label, totalsLabelX + TABLE.padding, cursor, 
       { size: FONTS.base, color: rgb(0,0,0) }); // Label text
     drawText(fm(value), totalsValueX, cursor, 
-      { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'right' }); // Numeric value
+      { size: FONTS.base, color: rgb(0,0,0) }, { textAlign: 'right' }); // Numeric value with rupee symbol
     cursor -= 14; // Move cursor down for next total line
   });
 
@@ -144,7 +144,7 @@ export function renderItemsAndTotals(
   drawText('GRAND TOTAL', totalsLabelX + TABLE.padding, cursor, 
     { size: FONTS.medium, bold: true, color: rgb(0,0,0) }); // Grand Total Label
   drawText(fm(grandTotal), totalsValueX, cursor, 
-    { size: FONTS.medium, bold: true, color: rgb(0,0,0) }, { textAlign: 'right' }); // Grand Total Value
+    { size: FONTS.medium, bold: true, color: rgb(0,0,0) }, { textAlign: 'right' }); // Grand Total Value with rupee symbol
 
   console.log('Final cursor position:', cursor);
 }

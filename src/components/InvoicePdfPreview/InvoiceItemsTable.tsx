@@ -12,8 +12,8 @@ interface InvoiceItemsTableProps {
 export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, invoice, companySettings }) => {
   const positions = getBandPositions();
 
-  // Match the exact column proportions from PDF generation - aligned with grey bar padding
-  const fractions = [0.08, 0.45, 0.14, 0.16, 0.17]; // S.NO (increased), Equipment (reduced), Days, Rate, Amount
+  // Match the exact column proportions from PDF generation - adjusted to squeeze equipment column
+  const fractions = [0.08, 0.40, 0.14, 0.19, 0.19]; // S.NO, Equipment (squeezed), Days, Rate, Amount
   const colWidths = fractions.map(f => f * PAGE.inner);
   
   // Calculate column positions - START AT 0px since container is positioned at 25px from left
@@ -190,7 +190,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   {qty}
                 </div>
                 
-                {/* Rate */}
+                {/* Rate with rupee symbol and right alignment */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[3]}px`,
@@ -199,10 +199,10 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`
                 }}>
-                  {formatCurrency(unitPrice)}
+                  ₹{unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                 </div>
                 
-                {/* Amount - Use calculated amount */}
+                {/* Amount with rupee symbol and right alignment for units consistency */}
                 <div style={{ 
                   position: 'absolute',
                   left: `${colX[4]}px`,
@@ -211,7 +211,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                   color: rgbToCSS(COLORS.text.primary), 
                   fontSize: `${FONTS.base}px`
                 }}>
-                  {formatCurrency(calculatedAmount)}
+                  ₹{calculatedAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                 </div>
               </div>
             );
@@ -250,7 +250,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               color: rgbToCSS(COLORS.text.primary), 
               fontSize: `${FONTS.base}px`
             }}>
-              {formatCurrency(subtotal)}
+              ₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
             </div>
           </div>
           
@@ -277,7 +277,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
-                {formatCurrency(cgstAmount)}
+                ₹{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
               </div>
             </div>
           )}
@@ -304,7 +304,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
-                {formatCurrency(sgstAmount)}
+                ₹{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
               </div>
             </div>
           )}
@@ -331,7 +331,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
                 color: rgbToCSS(COLORS.text.primary), 
                 fontSize: `${FONTS.base}px`
               }}>
-                {formatCurrency(igstAmount)}
+                ₹{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
               </div>
             </div>
           )}
@@ -360,7 +360,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ lines, inv
               fontSize: `${FONTS.medium}px`,
               fontWeight: 'bold'
             }}>
-              {formatCurrency(grandTotal)}
+              ₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
             </div>
           </div>
         </div>
