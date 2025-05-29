@@ -65,46 +65,48 @@ export function renderItemsAndTotals(
 
   cursor -= 20; // gap before totals
 
+  // Calculate subtotal
+  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+
+  // Draw separator line before totals
+  page.drawLine({ 
+    start: { x: PAGE.margin, y: cursor }, 
+    end: { x: PAGE.margin + PAGE.inner, y: cursor }, 
+    thickness: 0.5, 
+    color: rgb(...COLORS.lines.light)
+  });
+  cursor -= 12;
+
   /* Totals rows as additional grid rows */
   const totalsRows: [string, number][] = [
-    ['Subtotal', inv.subtotal]
+    ['Subtotal', subtotal]
   ];
 
   // Add tax rows based on tax type
   if (inv.use_igst) {
-    if (+inv.igst) totalsRows.push([`IGST (${inv.igst_pct} %)`, inv.igst]);
+    if (+inv.igst) totalsRows.push([`IGST (${inv.igst_pct}%)`, inv.igst]);
   } else {
-    if (+inv.cgst) totalsRows.push([`CGST (${inv.cgst_pct} %)`, inv.cgst]);
-    if (+inv.sgst) totalsRows.push([`SGST (${inv.sgst_pct} %)`, inv.sgst]);
+    if (+inv.cgst) totalsRows.push([`CGST (${inv.cgst_pct}%)`, inv.cgst]);
+    if (+inv.sgst) totalsRows.push([`SGST (${inv.sgst_pct}%)`, inv.sgst]);
   }
 
-  // Render totals rows spanning columns 2-5
-  totalsRows.forEach(([lbl, val]) => {
-    // Label in Equipment column (left-aligned with padding)
-    drawText(lbl, colX[1] + TABLE.padding, cursor, { size: FONTS.base });
+  // Render totals rows with labels in Days column and values in Amount column
+  totalsRows.forEach(([label, val]) => {
+    // Label in Days column (centered)
+    drawText(label, colX[2] + TABLE.padding, cursor, { size: FONTS.base });
     
-    // Value in Amount column (right-aligned with padding)
+    // Value right-aligned in Amount column
     drawText(fm(val), colX[4] + colWidths[4] - TABLE.padding, cursor, { size: FONTS.base },
       { textAlign: 'right' });
     
-    cursor -= 16;
+    cursor -= 14;
   });
 
-  /* Grand Total with separator line */
-  cursor -= 8;
-  
-  // Separator line spanning from Equipment to Amount columns
-  page.drawLine({
-    start: { x: colX[1], y: cursor },
-    end: { x: colX[4] + colWidths[4], y: cursor },
-    thickness: 0.5,
-    color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
-  });
-  
-  cursor -= 12;
+  /* Grand Total */
+  cursor -= 4;
   
   // GRAND TOTAL label and value
-  drawText('GRAND TOTAL', colX[1] + TABLE.padding, cursor, { size: FONTS.medium, bold: true });
+  drawText('GRAND TOTAL', colX[2] + TABLE.padding, cursor, { size: FONTS.medium, bold: true });
   drawText(fm(inv.total), colX[4] + colWidths[4] - TABLE.padding, cursor,
     { size: FONTS.medium, bold: true }, { textAlign: 'right' });
 }
