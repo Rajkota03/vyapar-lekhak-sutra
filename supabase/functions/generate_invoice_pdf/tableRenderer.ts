@@ -1,7 +1,7 @@
 import { PAGE, TABLE, FONTS, COLORS, SPACING, TEXT_HANDLING, getBandPositions, formatCurrency } from './layout.ts'
 import { drawRoundedRect } from './pdfUtils.ts'
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1'
-import { truncateText, wrapLines, createWrappedDrawText } from './textUtils.ts'
+import { truncateText, wrapLines, createWrappedDrawText, formatNumericValue } from './textUtils.ts'
 import type { LineItem, DrawTextOptions } from './types.ts'
 
 export function renderItemsTable(
@@ -149,9 +149,9 @@ export function renderItemsTable(
     
     // Equipment description with wrapping - left aligned with consistent padding
     const descMaxWidth = colWidths[1] - (TABLE.padding * 2);
-    const descY = tableY - SPACING.lineHeight; // Start at top of cell
+    const descY = tableY - SPACING.lineHeight; // Start at top of cell with proper spacing
     
-    // Use wrapped text drawing for description
+    // Use wrapped text drawing for description with max lines constraint
     wrappedDrawText(
       item.description,
       colX + TABLE.padding,
@@ -168,14 +168,18 @@ export function renderItemsTable(
     
     // Days/Quantity (centered) - use the same center point as header
     const daysColCenter = colX + (colWidths[2] / 2)
-    drawText(item.qty.toString(), daysColCenter, rowY, { 
+    // Format quantity to ensure it fits
+    const qtyText = formatNumericValue(item.qty, colWidths[2] - (TABLE.padding * 2), FONTS.base);
+    drawText(qtyText, daysColCenter, rowY, { 
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'center' })
     colX += colWidths[2]
     
     // Rate (right-aligned) - consistent padding from right edge
-    const rateText = formatCurrency(Number(item.unit_price))
+    // Format currency with overflow handling
+    const rateMaxWidth = colWidths[3] - (TABLE.padding * 2);
+    const rateText = formatNumericValue(Number(item.unit_price), rateMaxWidth, FONTS.base);
     const rateRightEdge = colX + colWidths[3] - TABLE.padding
     drawText(rateText, rateRightEdge, rowY, { 
       size: FONTS.base,
@@ -184,7 +188,9 @@ export function renderItemsTable(
     colX += colWidths[3]
     
     // Amount (right-aligned) - consistent padding from right edge
-    const amountText = formatCurrency(Number(item.amount))
+    // Format currency with overflow handling
+    const amountMaxWidth = colWidths[4] - (TABLE.padding * 2);
+    const amountText = formatNumericValue(Number(item.amount), amountMaxWidth, FONTS.base);
     const amountRightEdge = colX + colWidths[4] - TABLE.padding
     drawText(amountText, amountRightEdge, rowY, { 
       size: FONTS.base,

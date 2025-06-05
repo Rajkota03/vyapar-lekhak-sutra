@@ -19,11 +19,11 @@ export const BANDS = {
 };
 
 export const TABLE = {
-  rowH: 24,               // Increased row height for better readability
-  headerH: 30,            // Increased header height
-  cols: [0.08, 0.47, 0.15, 0.15, 0.15], // Adjusted column proportions for better alignment
+  rowH: 28,               // Increased row height for better readability and to accommodate wrapped text
+  headerH: 32,            // Increased header height
+  cols: [0.07, 0.48, 0.15, 0.15, 0.15], // Adjusted column proportions - more space for description
   borderColor: 0.4,       // Darker borders for better visibility
-  padding: 10,            // Increased cell padding
+  padding: 12,            // Increased cell padding for better text containment
 };
 
 export const FONTS = {
@@ -67,27 +67,29 @@ export const SIGNATURE = {
 export const SPACING = {
   paragraph: 15,
   section: 30,
-  lineHeight: 14,           // Increased line height
-  itemSpacing: 8,           // Spacing between items
-  sectionGap: 20,           // Gap between sections
+  lineHeight: 16,           // Increased line height for better readability and text wrapping
+  itemSpacing: 10,          // Increased spacing between items
+  sectionGap: 25,           // Increased gap between sections
 };
 
 // Text handling constants for overflow and truncation
 export const TEXT_HANDLING = {
-  maxInvoiceCodeWidth: 120,
-  maxClientNameWidth: 200,
-  maxDescriptionWidth: 180,
+  maxInvoiceCodeWidth: 140,  // Increased to accommodate longer invoice codes
+  maxClientNameWidth: 220,   // Increased for longer client names
+  maxDescriptionWidth: 200,  // Increased for longer descriptions
   ellipsis: '...',
-  truncateThreshold: 0.9,   // When to start truncating (90% of max width)
+  truncateThreshold: 0.9,    // When to start truncating (90% of max width)
+  maxLineLength: 40,         // Maximum characters per line for wrapping
+  maxLinesPerCell: 3,        // Maximum number of lines per table cell
 };
 
 // Updated band positions with improved spacing
 export const getBandPositions = () => {
   const topOfHeader = PAGE.height - PAGE.margin - BANDS.header;
-  const topOfBill = topOfHeader - 20 - BANDS.bill; // Increased gap between header and bill
-  const topOfItems = topOfBill - 20; // Increased gap between bill and items
+  const topOfBill = topOfHeader - 25 - BANDS.bill; // Increased gap between header and bill
+  const topOfItems = topOfBill - 25; // Increased gap between bill and items
   const topOfPayment = PAGE.margin + BANDS.footer + BANDS.payment;
-  const bottomOfTable = PAGE.margin + BANDS.footer + 140; // Increased space for totals
+  const bottomOfTable = PAGE.margin + BANDS.footer + 150; // Increased space for totals
   
   return {
     topOfHeader,

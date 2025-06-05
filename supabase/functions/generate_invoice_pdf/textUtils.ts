@@ -81,17 +81,30 @@ export function truncateText(text: string, maxWidth: number, fontSize: number): 
 export function wrapLines(text: string, maxWidth: number, fontSize: number): string[] {
   if (!text) return [''];
   
+  // Enforce maximum lines per cell
+  const maxLines = TEXT_HANDLING.maxLinesPerCell || 3;
+  
   const words = text.split(' ');
   const lines: string[] = [];
   let currentLine = '';
   
-  words.forEach(word => {
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    
     // Handle very long words by breaking them if necessary
     if (measureText(word, fontSize) > maxWidth) {
       // If current line is not empty, push it first
       if (currentLine) {
         lines.push(currentLine);
         currentLine = '';
+        
+        // Check if we've reached the maximum number of lines
+        if (lines.length >= maxLines - 1) {
+          // Add the truncated word as the last line
+          const lastLine = truncateText(word, maxWidth, fontSize);
+          lines.push(lastLine);
+          return lines;
+        }
       }
       
       // Break the long word into chunks that fit
@@ -111,8 +124,18 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
         
         lines.push(chunk);
         remainingWord = remainingWord.substring(i);
+        
+        // Check if we've reached the maximum number of lines
+        if (lines.length >= maxLines) {
+          // If there's still remaining text, replace the last character with ellipsis
+          if (remainingWord.length > 0) {
+            const lastLine = lines[lines.length - 1];
+            lines[lines.length - 1] = lastLine.substring(0, lastLine.length - 1) + TEXT_HANDLING.ellipsis;
+          }
+          return lines;
+        }
       }
-      return;
+      continue;
     }
     
     // Normal word handling
@@ -124,11 +147,29 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
     } else {
       lines.push(currentLine);
       currentLine = word;
+      
+      // Check if we've reached the maximum number of lines
+      if (lines.length >= maxLines - 1) {
+        // If there are more words, add ellipsis to the current word
+        if (i < words.length - 1) {
+          currentLine = truncateText(currentLine + ' ' + words.slice(i + 1).join(' '), maxWidth, fontSize);
+        }
+        break;
+      }
     }
-  });
+  }
   
   if (currentLine) {
     lines.push(currentLine);
+  }
+  
+  // If we have more lines than allowed, truncate the last line
+  if (lines.length > maxLines) {
+    lines.splice(maxLines);
+    const lastLine = lines[lines.length - 1];
+    if (lastLine.length > 3 && !lastLine.endsWith(TEXT_HANDLING.ellipsis)) {
+      lines[lines.length - 1] = lastLine.substring(0, lastLine.length - 3) + TEXT_HANDLING.ellipsis;
+    }
   }
   
   return lines;
@@ -187,4 +228,27 @@ export function createClippedDrawText(page: any, drawText: Function) {
     const clippedText = clipText(text, maxWidth, fontSize);
     drawText(clippedText, x, y, options);
   };
+}
+
+// New function to handle numeric values with proper formatting and overflow prevention
+export function formatNumericValue(value: string | number, maxWidth: number, fontSize: number): string {
+  if (value === null || value === undefined) return '';
+  
+  const formattedValue = typeof value === 'number' 
+    ? value.toLocaleString('en-IN', { minimumFractionDigits: 2 })
+    : value.toString();
+  
+  const textWidth = measureText(formattedValue, fontSize);
+  if (textWidth <= maxWidth) return formattedValue;
+  
+  // For numeric values, try scientific notation if it doesn't fit
+  if (typeof value === 'number' && value > 9999) {
+    const scientific = value.toExponential(2);
+    const scientificWidth = measureText(scientific, fontSize);
+    
+    if (scientificWidth <= maxWidth) return scientific;
+  }
+  
+  // If still too long, truncate with ellipsis
+  return truncateText(formattedValue, maxWidth, fontSize);
 }
