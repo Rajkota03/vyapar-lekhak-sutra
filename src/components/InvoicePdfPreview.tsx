@@ -2,7 +2,7 @@
 import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { PAGE, FONTS } from '@/lib/pdf/layout';
+import { PAGE, FONTS, getBandPositions } from '@/lib/pdf/layout';
 import { InvoiceHeader } from './InvoicePdfPreview/InvoiceHeader';
 import { InvoiceBillBar } from './InvoicePdfPreview/InvoiceBillBar';
 import { InvoiceItemsTable } from './InvoicePdfPreview/InvoiceItemsTable';
@@ -58,6 +58,13 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
   });
 
   const currentCompany = freshCompanyData || company;
+  const positions = getBandPositions();
+
+  console.log('InvoicePdfPreview rendering with:', {
+    linesCount: lines?.length,
+    invoice: invoice?.id,
+    positions
+  });
 
   return (
     <div 
@@ -85,11 +92,43 @@ export const InvoicePdfPreview: React.FC<InvoicePdfPreviewProps> = ({
         companySettings={companySettings} 
       />
       
-      <InvoiceItemsTable 
-        lines={lines} 
-        invoice={invoice} 
-        companySettings={companySettings} 
-      />
+      {/* Debug info for items table positioning */}
+      <div style={{
+        position: 'absolute',
+        top: `${positions.topOfItems - 50}px`,
+        left: `${PAGE.margin}px`,
+        fontSize: '10px',
+        color: 'red',
+        background: 'yellow',
+        padding: '2px',
+        zIndex: 1000
+      }}>
+        Items Table Debug: lines={lines?.length || 0}, topOfItems={positions.topOfItems}
+      </div>
+      
+      {lines && lines.length > 0 ? (
+        <InvoiceItemsTable 
+          lines={lines} 
+          invoice={invoice} 
+          companySettings={companySettings} 
+        />
+      ) : (
+        <div style={{
+          position: 'absolute',
+          top: `${positions.topOfItems - 30}px`,
+          left: `${PAGE.margin}px`,
+          width: `${PAGE.inner}px`,
+          height: '100px',
+          border: '2px dashed red',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '14px',
+          color: 'red'
+        }}>
+          No line items found
+        </div>
+      )}
       
       <InvoiceFooter 
         invoice={invoice} 
