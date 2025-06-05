@@ -1,3 +1,4 @@
+
 /**
  * Shared layout constants for invoice PDF generation
  * 
@@ -21,11 +22,11 @@ export const BANDS = {
 };
 
 export const TABLE = {
-  rowH: 18,               // Increased row height for better readability
-  headerH: 24,            // Increased header height
-  cols: [0.45, 0.12, 0.20, 0.23], // Adjusted column proportions
-  borderColor: 0.85,      // Slightly darker borders
-  padding: 6,             // Cell padding
+  rowH: 28,               // Standard row height
+  headerH: 32,            // Header height
+  cols: [0.07, 0.48, 0.15, 0.15, 0.15], // Column proportions optimized for content
+  borderColor: 0.4,       // Border color intensity
+  padding: 12,            // Cell padding for text containment
 };
 
 export const FONTS = {
@@ -34,7 +35,7 @@ export const FONTS = {
   base: 9,
   medium: 10,
   large: 12,
-  h1: 16,                 // Increased header sizes
+  h1: 16,
   h2: 13,
   h3: 11,
   boldInc: 1,
@@ -43,18 +44,18 @@ export const FONTS = {
 export const COLORS = {
   text: {
     primary: [0, 0, 0],       // Black
-    secondary: [0.25, 0.25, 0.25], // Darker gray
+    secondary: [0.25, 0.25, 0.25], // Dark gray
     muted: [0.5, 0.5, 0.5],   // Medium gray
     light: [0.65, 0.65, 0.65], // Light gray
   },
   background: {
-    light: [0.96, 0.96, 0.96], // Very light gray for bill bar
-    medium: [0.92, 0.92, 0.92], // Light gray for totals
+    light: [0.96, 0.96, 0.96], // Very light gray
+    medium: [0.92, 0.92, 0.92], // Light gray
     accent: [0.88, 0.88, 0.88], // Accent gray
   },
   lines: {
-    light: [0.9, 0.9, 0.9],    // Light borders
-    medium: [0.7, 0.7, 0.7],   // Medium borders
+    light: [0.8, 0.8, 0.8],    // Light borders
+    medium: [0.6, 0.6, 0.6],   // Medium borders
     dark: [0.4, 0.4, 0.4],     // Dark borders
   }
 };
@@ -69,18 +70,29 @@ export const SIGNATURE = {
 export const SPACING = {
   paragraph: 15,
   section: 30,
-  lineHeight: 14,           // Increased line height
-  itemSpacing: 8,           // Spacing between items
-  sectionGap: 20,           // Gap between sections
+  lineHeight: 16,           // Line height for text wrapping
+  itemSpacing: 10,          // Spacing between items
+  sectionGap: 25,           // Gap between sections
+};
+
+// Text handling constants for precise overflow control
+export const TEXT_HANDLING = {
+  maxInvoiceCodeWidth: 140,  // Max width for invoice codes
+  maxClientNameWidth: 220,   // Max width for client names
+  maxDescriptionWidth: 200,  // Max width for descriptions
+  ellipsis: '...',
+  truncateThreshold: 0.9,    // When to start truncating (90% of max width)
+  maxLineLength: 40,         // Maximum characters per line for wrapping
+  maxLinesPerCell: 3,        // Maximum number of lines per table cell
 };
 
 // Updated band positions with improved spacing
 export const getBandPositions = () => {
   const topOfHeader = PAGE.height - PAGE.margin - BANDS.header;
-  const topOfBill = topOfHeader - 10 - BANDS.bill;
-  const topOfItems = topOfBill - 10;
+  const topOfBill = topOfHeader - 25 - BANDS.bill;
+  const topOfItems = topOfBill - 25;
   const topOfPayment = PAGE.margin + BANDS.footer + BANDS.payment;
-  const bottomOfTable = PAGE.margin + BANDS.footer + 120; // Space for totals
+  const bottomOfTable = PAGE.margin + BANDS.footer + 150;
   
   return {
     topOfHeader,

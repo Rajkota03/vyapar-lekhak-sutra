@@ -1,3 +1,4 @@
+
 /**
  * PDF layout constants for invoice generation
  * This file contains the same constants as src/lib/pdf/layout.ts
@@ -19,11 +20,11 @@ export const BANDS = {
 };
 
 export const TABLE = {
-  rowH: 28,               // Increased row height for better readability and to accommodate wrapped text
-  headerH: 32,            // Increased header height
-  cols: [0.07, 0.48, 0.15, 0.15, 0.15], // Adjusted column proportions - more space for description
-  borderColor: 0.4,       // Darker borders for better visibility
-  padding: 12,            // Increased cell padding for better text containment
+  rowH: 28,               // Standard row height
+  headerH: 32,            // Header height
+  cols: [0.07, 0.48, 0.15, 0.15, 0.15], // Column proportions optimized for content
+  borderColor: 0.4,       // Border color intensity
+  padding: 12,            // Cell padding for text containment
 };
 
 export const FONTS = {
@@ -32,7 +33,7 @@ export const FONTS = {
   base: 9,
   medium: 10,
   large: 12,
-  h1: 16,                 // Increased header sizes
+  h1: 16,
   h2: 13,
   h3: 11,
   boldInc: 1,
@@ -41,18 +42,18 @@ export const FONTS = {
 export const COLORS = {
   text: {
     primary: [0, 0, 0],       // Black
-    secondary: [0.25, 0.25, 0.25], // Darker gray
+    secondary: [0.25, 0.25, 0.25], // Dark gray
     muted: [0.5, 0.5, 0.5],   // Medium gray
     light: [0.65, 0.65, 0.65], // Light gray
   },
   background: {
-    light: [0.96, 0.96, 0.96], // Very light gray for bill bar
-    medium: [0.92, 0.92, 0.92], // Light gray for totals
+    light: [0.96, 0.96, 0.96], // Very light gray
+    medium: [0.92, 0.92, 0.92], // Light gray
     accent: [0.88, 0.88, 0.88], // Accent gray
   },
   lines: {
-    light: [0.8, 0.8, 0.8],    // Darker light borders for better visibility
-    medium: [0.6, 0.6, 0.6],   // Darker medium borders
+    light: [0.8, 0.8, 0.8],    // Light borders
+    medium: [0.6, 0.6, 0.6],   // Medium borders
     dark: [0.4, 0.4, 0.4],     // Dark borders
   }
 };
@@ -67,16 +68,16 @@ export const SIGNATURE = {
 export const SPACING = {
   paragraph: 15,
   section: 30,
-  lineHeight: 16,           // Increased line height for better readability and text wrapping
-  itemSpacing: 10,          // Increased spacing between items
-  sectionGap: 25,           // Increased gap between sections
+  lineHeight: 16,           // Line height for text wrapping
+  itemSpacing: 10,          // Spacing between items
+  sectionGap: 25,           // Gap between sections
 };
 
-// Text handling constants for overflow and truncation
+// Text handling constants for precise overflow control
 export const TEXT_HANDLING = {
-  maxInvoiceCodeWidth: 140,  // Increased to accommodate longer invoice codes
-  maxClientNameWidth: 220,   // Increased for longer client names
-  maxDescriptionWidth: 200,  // Increased for longer descriptions
+  maxInvoiceCodeWidth: 140,  // Max width for invoice codes
+  maxClientNameWidth: 220,   // Max width for client names
+  maxDescriptionWidth: 200,  // Max width for descriptions
   ellipsis: '...',
   truncateThreshold: 0.9,    // When to start truncating (90% of max width)
   maxLineLength: 40,         // Maximum characters per line for wrapping
@@ -86,10 +87,10 @@ export const TEXT_HANDLING = {
 // Updated band positions with improved spacing
 export const getBandPositions = () => {
   const topOfHeader = PAGE.height - PAGE.margin - BANDS.header;
-  const topOfBill = topOfHeader - 25 - BANDS.bill; // Increased gap between header and bill
-  const topOfItems = topOfBill - 25; // Increased gap between bill and items
+  const topOfBill = topOfHeader - 25 - BANDS.bill;
+  const topOfItems = topOfBill - 25;
   const topOfPayment = PAGE.margin + BANDS.footer + BANDS.payment;
-  const bottomOfTable = PAGE.margin + BANDS.footer + 150; // Increased space for totals
+  const bottomOfTable = PAGE.margin + BANDS.footer + 150;
   
   return {
     topOfHeader,

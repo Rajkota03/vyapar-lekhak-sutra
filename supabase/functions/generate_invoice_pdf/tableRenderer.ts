@@ -1,19 +1,42 @@
-// Add this to the top of tableRenderer.ts to add a version marker
-// VERSION: 2025-06-05-FIX-1
+
+// Table Renderer with Fixed Text Overflow - VERSION: 2025-06-05-FIX-2
 
 import { PAGE, TABLE, FONTS, COLORS, SPACING, TEXT_HANDLING, getBandPositions, formatCurrency } from './layout.ts'
 import { drawRoundedRect } from './pdfUtils.ts'
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1'
-import { truncateText, wrapLines, createWrappedDrawText, formatNumericValue } from './textUtils.ts'
+import { truncateText, formatNumericValue, measureText, clipText, createWrappedDrawText } from './textUtils.ts'
 import type { LineItem, DrawTextOptions } from './types.ts'
 
-// Add a version marker to the footer of the PDF
+// Add version marker for tracking fixes
 export function addVersionMarker(page: any, drawText: Function) {
-  const versionText = "Table Fix v2025-06-05-1";
+  const versionText = "Table Fix v2025-06-05-2";
   drawText(versionText, PAGE.margin, PAGE.margin / 2, {
     size: FONTS.tiny,
     color: COLORS.text.muted
   });
+}
+
+// Create a clipped drawing function for table cells
+function createTableCellDrawText(page: any, drawText: Function) {
+  return (text: string, x: number, y: number, width: number, options: DrawTextOptions = {}, extraOptions: any = {}) => {
+    const fontSize = options.size || FONTS.base;
+    
+    // For right-aligned text, calculate the actual x position
+    let actualX = x;
+    if (extraOptions.textAlign === 'right') {
+      const textWidth = measureText(text, fontSize);
+      actualX = x - textWidth;
+    } else if (extraOptions.textAlign === 'center') {
+      const textWidth = measureText(text, fontSize);
+      actualX = x - (textWidth / 2);
+    }
+    
+    // Always truncate text to fit within the specified width
+    const clippedText = truncateText(text, width, fontSize);
+    
+    // Draw the clipped text
+    drawText(clippedText, actualX, y, options, extraOptions);
+  };
 }
 
 export function renderItemsTable(
@@ -21,43 +44,63 @@ export function renderItemsTable(
   drawText: (text: string, x: number, y: number, options?: DrawTextOptions, extraOptions?: any) => void,
   lineItems: LineItem[]
 ) {
-  // Add version marker to identify which code version is running
+  // Add version marker
   addVersionMarker(page, drawText);
   
   const positions = getBandPositions()
   let tableY = positions.topOfItems
   
-  // Calculate column widths based on proportions - adjusted for better alignment
+  // Calculate column widths and positions
   const colWidths = TABLE.cols.map(ratio => PAGE.inner * ratio)
+  const colPositions = [PAGE.margin]
+  for (let i = 0; i < colWidths.length - 1; i++) {
+    colPositions.push(colPositions[colPositions.length - 1] + colWidths[i])
+  }
   
-  // Calculate total table height including potential wrapped text
-  let totalTableHeight = TABLE.headerH;
-  const wrappedDrawText = createWrappedDrawText(page, drawText);
+  // Create clipped text drawing function
+  const cellDrawText = createTableCellDrawText(page, drawText);
   
-  // Pre-calculate row heights based on content
+  // Calculate row heights with proper text measurement
   const rowHeights = lineItems.map(item => {
-    // Check if description needs wrapping
     const descMaxWidth = colWidths[1] - (TABLE.padding * 2);
-    const lines = wrapLines(item.description, descMaxWidth, FONTS.base);
-    const contentHeight = Math.max(lines.length * SPACING.lineHeight, TABLE.rowH);
-    return contentHeight;
+    const fontSize = FONTS.base;
+    
+    // Calculate how many lines the description will need
+    const words = item.description.split(' ');
+    let currentLine = '';
+    let lineCount = 1;
+    
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testWidth = measureText(testLine, fontSize);
+      
+      if (testWidth > descMaxWidth && currentLine) {
+        lineCount++;
+        currentLine = word;
+        if (lineCount >= TEXT_HANDLING.maxLinesPerCell) break;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    
+    return Math.max(lineCount * SPACING.lineHeight + TABLE.padding, TABLE.rowH);
   });
   
-  totalTableHeight += rowHeights.reduce((sum, height) => sum + height, 0);
+  const totalTableHeight = TABLE.headerH + rowHeights.reduce((sum, height) => sum + height, 0);
   
-  // Draw table border with thicker lines for better visibility
+  // Draw table background and border
   drawRoundedRect(
     page,
     PAGE.margin,
     tableY - totalTableHeight,
     PAGE.inner,
     totalTableHeight,
-    [1, 1, 1], // Pure white background
-    COLORS.lines.dark, // Dark border
-    2 // Thicker border
+    [1, 1, 1], // White background
+    COLORS.lines.dark,
+    2
   )
   
-  // Table header with proper border and background
+  // Draw table header
   drawRoundedRect(
     page,
     PAGE.margin,
@@ -66,78 +109,52 @@ export function renderItemsTable(
     TABLE.headerH,
     COLORS.background.accent,
     COLORS.lines.dark,
-    2 // Thicker border
+    2
   )
   
-  // Header text with improved positioning
-  const headerY = tableY - TABLE.headerH/2 + 4  // Better vertical centering
-  let colX = PAGE.margin
+  // Header text with precise positioning and clipping
+  const headerY = tableY - TABLE.headerH/2 + 3;
+  const headerLabels = ['S.NO', 'EQUIPMENT', 'DAYS', 'RATE', 'AMOUNT'];
+  const headerAlignments = ['center', 'left', 'center', 'center', 'center'];
   
-  // S.NO column - centered in its column
-  const snoColCenter = colX + (colWidths[0] / 2)
-  drawText('S.NO', snoColCenter, headerY, { 
-    size: FONTS.medium, 
-    bold: true,
-    color: COLORS.text.primary
-  }, { textAlign: 'center' })
-  colX += colWidths[0]
-  
-  // EQUIPMENT column - left aligned with padding
-  drawText('EQUIPMENT', colX + TABLE.padding, headerY, { 
-    size: FONTS.medium, 
-    bold: true,
-    color: COLORS.text.primary
-  })
-  colX += colWidths[1]
-  
-  // DAYS column - centered in its column
-  const daysColCenter = colX + (colWidths[2] / 2)
-  drawText('DAYS', daysColCenter, headerY, { 
-    size: FONTS.medium, 
-    bold: true,
-    color: COLORS.text.primary
-  }, { textAlign: 'center' })
-  colX += colWidths[2]
-  
-  // RATE column - centered in its column
-  const rateColCenter = colX + (colWidths[3] / 2)
-  drawText('RATE', rateColCenter, headerY, { 
-    size: FONTS.medium, 
-    bold: true,
-    color: COLORS.text.primary
-  }, { textAlign: 'center' })
-  colX += colWidths[3]
-  
-  // AMOUNT column - centered in its column
-  const amountColCenter = colX + (colWidths[4] / 2)
-  drawText('AMOUNT', amountColCenter, headerY, { 
-    size: FONTS.medium, 
-    bold: true,
-    color: COLORS.text.primary
-  }, { textAlign: 'center' })
-  
-  tableY -= TABLE.headerH
-  
-  // Draw vertical lines for columns with thicker lines
-  for (let i = 1; i < TABLE.cols.length; i++) {
-    let xPos = PAGE.margin
-    for (let j = 0; j < i; j++) {
-      xPos += colWidths[j]
+  headerLabels.forEach((label, index) => {
+    const colX = colPositions[index];
+    const colWidth = colWidths[index];
+    const cellPadding = TABLE.padding;
+    
+    let textX = colX + cellPadding;
+    let availableWidth = colWidth - (cellPadding * 2);
+    
+    if (headerAlignments[index] === 'center') {
+      textX = colX + (colWidth / 2);
+    } else if (headerAlignments[index] === 'right') {
+      textX = colX + colWidth - cellPadding;
     }
     
+    cellDrawText(label, textX, headerY, availableWidth, {
+      size: FONTS.medium,
+      bold: true,
+      color: COLORS.text.primary
+    }, { textAlign: headerAlignments[index] });
+  });
+  
+  tableY -= TABLE.headerH;
+  
+  // Draw vertical column separators
+  for (let i = 1; i < colPositions.length; i++) {
     page.drawLine({
-      start: { x: xPos, y: positions.topOfItems },
-      end: { x: xPos, y: positions.topOfItems - totalTableHeight },
-      thickness: 1.5, // Slightly thicker for better visibility
+      start: { x: colPositions[i], y: positions.topOfItems },
+      end: { x: colPositions[i], y: positions.topOfItems - totalTableHeight },
+      thickness: 1.5,
       color: rgb(COLORS.lines.dark[0], COLORS.lines.dark[1], COLORS.lines.dark[2]),
-    })
+    });
   }
   
-  // Table rows with proper alignment, borders and alternating backgrounds
+  // Render table rows with precise text clipping
   lineItems.forEach((item, rowIndex) => {
     const rowHeight = rowHeights[rowIndex];
     
-    // Alternate row background with more contrast
+    // Alternate row backgrounds
     if (rowIndex % 2 === 1) {
       drawRoundedRect(
         page,
@@ -146,84 +163,68 @@ export function renderItemsTable(
         PAGE.inner,
         rowHeight,
         COLORS.background.light,
-        null, // No border
-        0 // No border thickness
-      )
+        null,
+        0
+      );
     }
     
-    const rowY = tableY - (rowHeight / 2) + 4  // Better vertical centering for text
-    colX = PAGE.margin
+    const rowY = tableY - (rowHeight / 2) + 2; // Vertical center
     
-    // S.NO column (centered) - use the same center point as header
-    const snoColCenter = colX + (colWidths[0] / 2)
-    drawText((rowIndex + 1).toString(), snoColCenter, rowY, { 
-      size: FONTS.base,
-      color: COLORS.text.primary
-    }, { textAlign: 'center' })
-    colX += colWidths[0]
+    // Column data and alignments
+    const columnData = [
+      { text: (rowIndex + 1).toString(), align: 'center' },
+      { text: item.description, align: 'left', multiline: true },
+      { text: formatNumericValue(item.qty, colWidths[2] - TABLE.padding * 2, FONTS.base), align: 'center' },
+      { text: formatNumericValue(Number(item.unit_price), colWidths[3] - TABLE.padding * 2, FONTS.base), align: 'right' },
+      { text: formatNumericValue(Number(item.amount), colWidths[4] - TABLE.padding * 2, FONTS.base), align: 'right' }
+    ];
     
-    // Equipment description with wrapping - left aligned with consistent padding
-    const descMaxWidth = colWidths[1] - (TABLE.padding * 2);
-    const descY = tableY - SPACING.lineHeight; // Start at top of cell with proper spacing
-    
-    // Use wrapped text drawing for description with max lines constraint
-    wrappedDrawText(
-      item.description,
-      colX + TABLE.padding,
-      descY,
-      descMaxWidth,
-      SPACING.lineHeight,
-      { 
-        size: FONTS.base,
-        color: COLORS.text.primary
+    columnData.forEach((col, colIndex) => {
+      const colX = colPositions[colIndex];
+      const colWidth = colWidths[colIndex];
+      const cellPadding = TABLE.padding;
+      const availableWidth = colWidth - (cellPadding * 2);
+      
+      let textX = colX + cellPadding;
+      if (col.align === 'center') {
+        textX = colX + (colWidth / 2);
+      } else if (col.align === 'right') {
+        textX = colX + colWidth - cellPadding;
       }
-    );
+      
+      if (col.multiline && colIndex === 1) {
+        // Handle multi-line description with proper wrapping
+        const wrappedDrawText = createWrappedDrawText(page, drawText);
+        wrappedDrawText(
+          col.text,
+          colX + cellPadding,
+          tableY - SPACING.lineHeight,
+          availableWidth,
+          SPACING.lineHeight,
+          { size: FONTS.base, color: COLORS.text.primary },
+          TEXT_HANDLING.maxLinesPerCell
+        );
+      } else {
+        // Single line text with clipping
+        cellDrawText(col.text, textX, rowY, availableWidth, {
+          size: FONTS.base,
+          color: COLORS.text.primary
+        }, { textAlign: col.align });
+      }
+    });
     
-    colX += colWidths[1]
-    
-    // Days/Quantity (centered) - use the same center point as header
-    const daysColCenter = colX + (colWidths[2] / 2)
-    // Format quantity to ensure it fits
-    const qtyText = formatNumericValue(item.qty, colWidths[2] - (TABLE.padding * 2), FONTS.base);
-    drawText(qtyText, daysColCenter, rowY, { 
-      size: FONTS.base,
-      color: COLORS.text.primary
-    }, { textAlign: 'center' })
-    colX += colWidths[2]
-    
-    // Rate (right-aligned) - consistent padding from right edge
-    // Format currency with overflow handling
-    const rateMaxWidth = colWidths[3] - (TABLE.padding * 2);
-    const rateText = formatNumericValue(Number(item.unit_price), rateMaxWidth, FONTS.base);
-    const rateRightEdge = colX + colWidths[3] - TABLE.padding
-    drawText(rateText, rateRightEdge, rowY, { 
-      size: FONTS.base,
-      color: COLORS.text.primary
-    }, { textAlign: 'right' })
-    colX += colWidths[3]
-    
-    // Amount (right-aligned) - consistent padding from right edge
-    // Format currency with overflow handling
-    const amountMaxWidth = colWidths[4] - (TABLE.padding * 2);
-    const amountText = formatNumericValue(Number(item.amount), amountMaxWidth, FONTS.base);
-    const amountRightEdge = colX + colWidths[4] - TABLE.padding
-    drawText(amountText, amountRightEdge, rowY, { 
-      size: FONTS.base,
-      color: COLORS.text.primary
-    }, { textAlign: 'right' })
-    
-    // Draw horizontal line after each row with consistent thickness
+    // Draw horizontal separator after each row
     if (rowIndex < lineItems.length - 1) {
       page.drawLine({
         start: { x: PAGE.margin, y: tableY - rowHeight },
         end: { x: PAGE.margin + PAGE.inner, y: tableY - rowHeight },
-        thickness: 1, // Consistent thickness
-        color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]), // Darker for better visibility
-      })
+        thickness: 1,
+        color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]),
+      });
     }
     
-    tableY -= rowHeight
-  })
+    tableY -= rowHeight;
+  });
   
-  return tableY // Return the new Y position after the table
+  return tableY;
 }
