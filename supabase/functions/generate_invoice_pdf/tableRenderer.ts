@@ -12,18 +12,19 @@ export function renderItemsTable(
   const positions = getBandPositions()
   let tableY = positions.topOfItems
   
-  // Calculate column widths based on proportions
+  // Calculate column widths based on proportions - adjusted for better alignment
   const colWidths = TABLE.cols.map(ratio => PAGE.inner * ratio)
   
-  // Draw table border
+  // Draw table border with thicker lines for better visibility
   drawRoundedRect(
     page,
     PAGE.margin,
     tableY - (lineItems.length * TABLE.rowH + TABLE.headerH),
     PAGE.inner,
     lineItems.length * TABLE.rowH + TABLE.headerH,
-    [1, 1, 1], // White background
-    COLORS.lines.dark // Dark border
+    [1, 1, 1], // Pure white background
+    COLORS.lines.dark, // Dark border
+    2 // Thicker border
   )
   
   // Table header with proper border and background
@@ -34,22 +35,24 @@ export function renderItemsTable(
     PAGE.inner,
     TABLE.headerH,
     COLORS.background.accent,
-    COLORS.lines.dark
+    COLORS.lines.dark,
+    2 // Thicker border
   )
   
   // Header text with improved positioning
   const headerY = tableY - TABLE.headerH/2 + 4  // Better vertical centering
   let colX = PAGE.margin
   
-  // S.NO column
-  drawText('S.NO', colX + TABLE.padding, headerY, { 
+  // S.NO column - centered in its column
+  const snoColCenter = colX + (colWidths[0] / 2)
+  drawText('S.NO', snoColCenter, headerY, { 
     size: FONTS.medium, 
     bold: true,
     color: COLORS.text.primary
-  })
+  }, { textAlign: 'center' })
   colX += colWidths[0]
   
-  // EQUIPMENT column
+  // EQUIPMENT column - left aligned with padding
   drawText('EQUIPMENT', colX + TABLE.padding, headerY, { 
     size: FONTS.medium, 
     bold: true,
@@ -57,24 +60,27 @@ export function renderItemsTable(
   })
   colX += colWidths[1]
   
-  // DAYS column
-  drawText('DAYS', colX + TABLE.padding, headerY, { 
+  // DAYS column - centered in its column
+  const daysColCenter = colX + (colWidths[2] / 2)
+  drawText('DAYS', daysColCenter, headerY, { 
     size: FONTS.medium, 
     bold: true,
     color: COLORS.text.primary
   }, { textAlign: 'center' })
   colX += colWidths[2]
   
-  // RATE column
-  drawText('RATE', colX + colWidths[2]/2, headerY, { 
+  // RATE column - centered in its column
+  const rateColCenter = colX + (colWidths[2] / 2)
+  drawText('RATE', rateColCenter, headerY, { 
     size: FONTS.medium, 
     bold: true,
     color: COLORS.text.primary
   }, { textAlign: 'center' })
   colX += colWidths[2]
   
-  // AMOUNT column
-  drawText('AMOUNT', colX + colWidths[3]/2, headerY, { 
+  // AMOUNT column - centered in its column
+  const amountColCenter = colX + (colWidths[3] / 2)
+  drawText('AMOUNT', amountColCenter, headerY, { 
     size: FONTS.medium, 
     bold: true,
     color: COLORS.text.primary
@@ -82,7 +88,7 @@ export function renderItemsTable(
   
   tableY -= TABLE.headerH
   
-  // Draw vertical lines for columns
+  // Draw vertical lines for columns with thicker lines
   for (let i = 1; i < TABLE.cols.length; i++) {
     let xPos = PAGE.margin
     for (let j = 0; j < i; j++) {
@@ -92,14 +98,14 @@ export function renderItemsTable(
     page.drawLine({
       start: { x: xPos, y: positions.topOfItems },
       end: { x: xPos, y: positions.topOfItems - (lineItems.length * TABLE.rowH + TABLE.headerH) },
-      thickness: 1,
+      thickness: 1.5, // Slightly thicker for better visibility
       color: rgb(COLORS.lines.dark[0], COLORS.lines.dark[1], COLORS.lines.dark[2]),
     })
   }
   
   // Table rows with proper alignment, borders and alternating backgrounds
   lineItems.forEach((item, rowIndex) => {
-    // Alternate row background
+    // Alternate row background with more contrast
     if (rowIndex % 2 === 1) {
       drawRoundedRect(
         page,
@@ -107,24 +113,27 @@ export function renderItemsTable(
         tableY - TABLE.rowH,
         PAGE.inner,
         TABLE.rowH,
-        COLORS.background.light
+        COLORS.background.light,
+        null, // No border
+        0 // No border thickness
       )
     }
     
     const rowY = tableY - TABLE.rowH/2 + 4  // Better vertical centering for text
     colX = PAGE.margin
     
-    // S.NO column (centered)
-    drawText((rowIndex + 1).toString(), colX + colWidths[0]/2, rowY, { 
+    // S.NO column (centered) - use the same center point as header
+    const snoColCenter = colX + (colWidths[0] / 2)
+    drawText((rowIndex + 1).toString(), snoColCenter, rowY, { 
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'center' })
     colX += colWidths[0]
     
-    // Equipment description with truncation
+    // Equipment description with truncation - left aligned with consistent padding
     const truncatedDesc = truncateText(
       item.description,
-      colWidths[1] - TABLE.padding * 2,
+      colWidths[1] - (TABLE.padding * 2),
       FONTS.base
     )
     
@@ -134,35 +143,38 @@ export function renderItemsTable(
     })
     colX += colWidths[1]
     
-    // Days/Quantity (centered)
-    drawText(item.qty.toString(), colX + colWidths[1]/2, rowY, { 
+    // Days/Quantity (centered) - use the same center point as header
+    const daysColCenter = colX + (colWidths[2] / 2)
+    drawText(item.qty.toString(), daysColCenter, rowY, { 
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'center' })
     colX += colWidths[2]
     
-    // Rate (right-aligned)
+    // Rate (right-aligned) - consistent padding from right edge
     const rateText = formatCurrency(Number(item.unit_price))
-    drawText(rateText, colX + colWidths[2] - TABLE.padding, rowY, { 
+    const rateRightEdge = colX + colWidths[2] - TABLE.padding
+    drawText(rateText, rateRightEdge, rowY, { 
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'right' })
     colX += colWidths[2]
     
-    // Amount (right-aligned)
+    // Amount (right-aligned) - consistent padding from right edge
     const amountText = formatCurrency(Number(item.amount))
-    drawText(amountText, colX + colWidths[3] - TABLE.padding, rowY, { 
+    const amountRightEdge = colX + colWidths[3] - TABLE.padding
+    drawText(amountText, amountRightEdge, rowY, { 
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'right' })
     
-    // Draw horizontal line after each row
+    // Draw horizontal line after each row with consistent thickness
     if (rowIndex < lineItems.length - 1) {
       page.drawLine({
         start: { x: PAGE.margin, y: tableY - TABLE.rowH },
         end: { x: PAGE.margin + PAGE.inner, y: tableY - TABLE.rowH },
-        thickness: 1,
-        color: rgb(COLORS.lines.light[0], COLORS.lines.light[1], COLORS.lines.light[2]),
+        thickness: 1, // Consistent thickness
+        color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]), // Darker for better visibility
       })
     }
     

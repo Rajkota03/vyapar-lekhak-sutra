@@ -19,11 +19,11 @@ export const BANDS = {
 };
 
 export const TABLE = {
-  rowH: 22,               // Increased row height for better readability
-  headerH: 28,            // Increased header height
-  cols: [0.45, 0.12, 0.20, 0.23], // Adjusted column proportions
+  rowH: 24,               // Increased row height for better readability
+  headerH: 30,            // Increased header height
+  cols: [0.08, 0.47, 0.15, 0.15, 0.15], // Adjusted column proportions for better alignment
   borderColor: 0.4,       // Darker borders for better visibility
-  padding: 8,             // Increased cell padding
+  padding: 10,            // Increased cell padding
 };
 
 export const FONTS = {
