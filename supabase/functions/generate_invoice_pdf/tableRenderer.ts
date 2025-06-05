@@ -1,14 +1,29 @@
+// Add this to the top of tableRenderer.ts to add a version marker
+// VERSION: 2025-06-05-FIX-1
+
 import { PAGE, TABLE, FONTS, COLORS, SPACING, TEXT_HANDLING, getBandPositions, formatCurrency } from './layout.ts'
 import { drawRoundedRect } from './pdfUtils.ts'
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1'
 import { truncateText, wrapLines, createWrappedDrawText, formatNumericValue } from './textUtils.ts'
 import type { LineItem, DrawTextOptions } from './types.ts'
 
+// Add a version marker to the footer of the PDF
+export function addVersionMarker(page: any, drawText: Function) {
+  const versionText = "Table Fix v2025-06-05-1";
+  drawText(versionText, PAGE.margin, PAGE.margin / 2, {
+    size: FONTS.tiny,
+    color: COLORS.text.muted
+  });
+}
+
 export function renderItemsTable(
   page: any,
   drawText: (text: string, x: number, y: number, options?: DrawTextOptions, extraOptions?: any) => void,
   lineItems: LineItem[]
 ) {
+  // Add version marker to identify which code version is running
+  addVersionMarker(page, drawText);
+  
   const positions = getBandPositions()
   let tableY = positions.topOfItems
   
