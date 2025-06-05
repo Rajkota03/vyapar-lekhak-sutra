@@ -19,11 +19,11 @@ export const BANDS = {
 };
 
 export const TABLE = {
-  rowH: 18,               // Increased row height for better readability
-  headerH: 24,            // Increased header height
+  rowH: 22,               // Increased row height for better readability
+  headerH: 28,            // Increased header height
   cols: [0.45, 0.12, 0.20, 0.23], // Adjusted column proportions
-  borderColor: 0.85,      // Slightly darker borders
-  padding: 6,             // Cell padding
+  borderColor: 0.4,       // Darker borders for better visibility
+  padding: 8,             // Increased cell padding
 };
 
 export const FONTS = {
@@ -51,8 +51,8 @@ export const COLORS = {
     accent: [0.88, 0.88, 0.88], // Accent gray
   },
   lines: {
-    light: [0.9, 0.9, 0.9],    // Light borders
-    medium: [0.7, 0.7, 0.7],   // Medium borders
+    light: [0.8, 0.8, 0.8],    // Darker light borders for better visibility
+    medium: [0.6, 0.6, 0.6],   // Darker medium borders
     dark: [0.4, 0.4, 0.4],     // Dark borders
   }
 };
@@ -72,13 +72,22 @@ export const SPACING = {
   sectionGap: 20,           // Gap between sections
 };
 
+// Text handling constants for overflow and truncation
+export const TEXT_HANDLING = {
+  maxInvoiceCodeWidth: 120,
+  maxClientNameWidth: 200,
+  maxDescriptionWidth: 180,
+  ellipsis: '...',
+  truncateThreshold: 0.9,   // When to start truncating (90% of max width)
+};
+
 // Updated band positions with improved spacing
 export const getBandPositions = () => {
   const topOfHeader = PAGE.height - PAGE.margin - BANDS.header;
-  const topOfBill = topOfHeader - 10 - BANDS.bill;
-  const topOfItems = topOfBill - 10;
+  const topOfBill = topOfHeader - 20 - BANDS.bill; // Increased gap between header and bill
+  const topOfItems = topOfBill - 20; // Increased gap between bill and items
   const topOfPayment = PAGE.margin + BANDS.footer + BANDS.payment;
-  const bottomOfTable = PAGE.margin + BANDS.footer + 120; // Space for totals
+  const bottomOfTable = PAGE.margin + BANDS.footer + 140; // Increased space for totals
   
   return {
     topOfHeader,

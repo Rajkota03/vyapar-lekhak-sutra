@@ -1,4 +1,4 @@
-
+import { truncateText } from './textUtils.ts';
 import { PAGE, BANDS, FONTS, COLORS, getBandPositions } from './layout.ts'
 import { drawRoundedRect, embedImage } from './pdfUtils.ts'
 import type { InvoiceData, CompanyData, CompanySettings, DrawTextOptions } from './types.ts'
@@ -6,7 +6,7 @@ import type { InvoiceData, CompanyData, CompanySettings, DrawTextOptions } from 
 export async function renderHeader(
   pdfDoc: any,
   page: any,
-  drawText: (text: string, x: number, y: number, options?: DrawTextOptions) => void,
+  drawText: (text: string, x: number, y: number, options?: DrawTextOptions, extraOptions?: any) => void,
   invoice: InvoiceData,
   companySettings: CompanySettings | null
 ) {
@@ -28,10 +28,22 @@ export async function renderHeader(
   if (logoUrl) {
     const logoResult = await embedImage(pdfDoc, logoUrl)
     if (logoResult) {
-      logoWidth = Math.min(logoResult.width * logoScale, maxLogoSize)
-      logoHeight = Math.min(logoResult.height * logoScale, maxLogoSize)
+      // Calculate logo dimensions while maintaining aspect ratio
+      const aspectRatio = logoResult.width / logoResult.height
       
-      // Center logo vertically in header band
+      // Limit logo height to 80% of header band height
+      const maxHeight = BANDS.header * 0.8
+      logoHeight = Math.min(logoResult.height * logoScale, maxHeight)
+      logoWidth = logoHeight * aspectRatio
+      
+      // Ensure logo width doesn't exceed 30% of page inner width
+      const maxWidth = PAGE.inner * 0.3
+      if (logoWidth > maxWidth) {
+        logoWidth = maxWidth
+        logoHeight = logoWidth / aspectRatio
+      }
+      
+      // Position logo at left margin with vertical centering
       const logoY = positions.topOfHeader + (BANDS.header - logoHeight) / 2
       
       page.drawImage(logoResult.image, {
@@ -46,9 +58,9 @@ export async function renderHeader(
     console.log('No logo URL found, skipping logo embedding')
   }
 
-  // Company info positioned better relative to logo
-  const companyInfoX = logoWidth > 0 ? PAGE.margin + logoWidth + 30 : PAGE.width - PAGE.margin - 220
-  let companyInfoY = headerY
+  // Company info positioned to the right of logo with proper spacing
+  const companyInfoX = PAGE.margin + (logoWidth > 0 ? logoWidth + 20 : 0)
+  let companyInfoY = positions.topOfHeader + BANDS.header - 30
   
   // Invoice title - properly pass color as array
   drawText('INVOICE', companyInfoX, companyInfoY, { 
@@ -58,38 +70,65 @@ export async function renderHeader(
   })
   companyInfoY -= 25
   
-  // Company name
-  drawText(invoice.companies?.name || 'Square Blue Media', companyInfoX, companyInfoY, { 
+  // Company name with truncation to prevent overflow
+  const companyName = invoice.companies?.name || 'Square Blue Media'
+  const truncatedCompanyName = truncateText(
+    companyName,
+    PAGE.inner - (logoWidth + 40), // Available width minus logo and padding
+    FONTS.h2
+  )
+  
+  drawText(truncatedCompanyName, companyInfoX, companyInfoY, { 
     size: FONTS.h2, 
     bold: true,
     color: COLORS.text.primary
   })
   companyInfoY -= 18
   
-  // Company address with better spacing
+  // Company address with better spacing and overflow handling
   const addressLines = [
-    'H.NO. 8-3-224/11C/17.E-96,',
-    'MADHURA NAGAR,',
-    'HYDERABAD TELANGANA 500038'
+    invoice.companies?.address_line1 || 'H.NO. 8-3-224/11C/17.E-96,',
+    invoice.companies?.address_line2 || 'MADHURA NAGAR,',
+    invoice.companies?.address_city_state_zip || 'HYDERABAD TELANGANA 500038'
   ]
   
   addressLines.forEach((line) => {
-    drawText(line, companyInfoX, companyInfoY, { 
+    const truncatedLine = truncateText(
+      line,
+      PAGE.inner - (logoWidth + 40), // Available width minus logo and padding
+      FONTS.small
+    )
+    
+    drawText(truncatedLine, companyInfoX, companyInfoY, { 
       size: FONTS.small, 
       color: COLORS.text.secondary
     })
     companyInfoY -= 14
   })
   
-  // Contact information
-  drawText('squarebluemedia@gmail.com', companyInfoX, companyInfoY, { 
+  // Contact information with overflow handling
+  const emailText = invoice.companies?.email || 'squarebluemedia@gmail.com'
+  const truncatedEmail = truncateText(
+    emailText,
+    PAGE.inner - (logoWidth + 40), // Available width minus logo and padding
+    FONTS.small
+  )
+  
+  drawText(truncatedEmail, companyInfoX, companyInfoY, { 
     size: FONTS.small, 
     color: COLORS.text.secondary
   })
   companyInfoY -= 14
   
   if (invoice.companies?.gstin) {
-    drawText(`GSTIN : ${invoice.companies.gstin}`, companyInfoX, companyInfoY, { 
+    const gstinText = `GSTIN : ${invoice.companies.gstin}`
+    const truncatedGstin = truncateText(
+      gstinText,
+      PAGE.inner - (logoWidth + 40), // Available width minus logo and padding
+      FONTS.small
+    )
+    
+    drawText(truncatedGstin, companyInfoX, companyInfoY, { 
       size: FONTS.small, 
       color: COLORS.text.secondary
     })

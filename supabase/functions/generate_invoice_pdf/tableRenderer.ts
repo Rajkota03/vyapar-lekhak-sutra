@@ -1,126 +1,173 @@
-
-import { PAGE, TABLE, FONTS, COLORS, SPACING, getBandPositions, formatCurrency } from './layout.ts'
+import { PAGE, TABLE, FONTS, COLORS, SPACING, TEXT_HANDLING, getBandPositions, formatCurrency } from './layout.ts'
 import { drawRoundedRect } from './pdfUtils.ts'
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1'
+import { truncateText } from './textUtils.ts'
 import type { LineItem, DrawTextOptions } from './types.ts'
 
 export function renderItemsTable(
   page: any,
-  drawText: (text: string, x: number, y: number, options?: DrawTextOptions) => void,
+  drawText: (text: string, x: number, y: number, options?: DrawTextOptions, extraOptions?: any) => void,
   lineItems: LineItem[]
 ) {
   const positions = getBandPositions()
-  let tableY = positions.topOfBill - SPACING.sectionGap
+  let tableY = positions.topOfItems
   
-  // Enhanced table headers with better spacing
+  // Calculate column widths based on proportions
   const colWidths = TABLE.cols.map(ratio => PAGE.inner * ratio)
-  let colX = PAGE.margin
   
-  // Table header background
+  // Draw table border
   drawRoundedRect(
     page,
     PAGE.margin,
-    tableY - TABLE.headerH + 5,
+    tableY - (lineItems.length * TABLE.rowH + TABLE.headerH),
+    PAGE.inner,
+    lineItems.length * TABLE.rowH + TABLE.headerH,
+    [1, 1, 1], // White background
+    COLORS.lines.dark // Dark border
+  )
+  
+  // Table header with proper border and background
+  drawRoundedRect(
+    page,
+    PAGE.margin,
+    tableY - TABLE.headerH,
     PAGE.inner,
     TABLE.headerH,
-    COLORS.background.accent
+    COLORS.background.accent,
+    COLORS.lines.dark
   )
   
   // Header text with improved positioning
-  const headerY = tableY - 12  // Better vertical centering
-  drawText('EQUIPMENT', colX + TABLE.padding, headerY, { 
+  const headerY = tableY - TABLE.headerH/2 + 4  // Better vertical centering
+  let colX = PAGE.margin
+  
+  // S.NO column
+  drawText('S.NO', colX + TABLE.padding, headerY, { 
     size: FONTS.medium, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+    color: COLORS.text.primary
   })
   colX += colWidths[0]
   
-  drawText('PKG', colX + TABLE.padding, headerY, { 
+  // EQUIPMENT column
+  drawText('EQUIPMENT', colX + TABLE.padding, headerY, { 
     size: FONTS.medium, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+    color: COLORS.text.primary
   })
   colX += colWidths[1]
   
-  drawText('Rate', colX + TABLE.padding, headerY, { 
+  // DAYS column
+  drawText('DAYS', colX + TABLE.padding, headerY, { 
     size: FONTS.medium, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
-  })
+    color: COLORS.text.primary
+  }, { textAlign: 'center' })
   colX += colWidths[2]
   
-  drawText('Amount', colX + TABLE.padding, headerY, { 
+  // RATE column
+  drawText('RATE', colX + colWidths[2]/2, headerY, { 
     size: FONTS.medium, 
     bold: true,
-    color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
-  })
+    color: COLORS.text.primary
+  }, { textAlign: 'center' })
+  colX += colWidths[2]
   
-  tableY -= TABLE.headerH + SPACING.itemSpacing
+  // AMOUNT column
+  drawText('AMOUNT', colX + colWidths[3]/2, headerY, { 
+    size: FONTS.medium, 
+    bold: true,
+    color: COLORS.text.primary
+  }, { textAlign: 'center' })
   
-  // Table rows with proper alignment and spacing
-  let rowIndex = 0
+  tableY -= TABLE.headerH
   
-  while (tableY - TABLE.rowH > positions.bottomOfTable && rowIndex < (lineItems?.length || 0)) {
-    const item = lineItems![rowIndex]
-    const rowY = tableY - TABLE.rowH + 8  // Better vertical centering for text
+  // Draw vertical lines for columns
+  for (let i = 1; i < TABLE.cols.length; i++) {
+    let xPos = PAGE.margin
+    for (let j = 0; j < i; j++) {
+      xPos += colWidths[j]
+    }
     
+    page.drawLine({
+      start: { x: xPos, y: positions.topOfItems },
+      end: { x: xPos, y: positions.topOfItems - (lineItems.length * TABLE.rowH + TABLE.headerH) },
+      thickness: 1,
+      color: rgb(COLORS.lines.dark[0], COLORS.lines.dark[1], COLORS.lines.dark[2]),
+    })
+  }
+  
+  // Table rows with proper alignment, borders and alternating backgrounds
+  lineItems.forEach((item, rowIndex) => {
     // Alternate row background
     if (rowIndex % 2 === 1) {
       drawRoundedRect(
         page,
         PAGE.margin,
-        tableY - TABLE.rowH + 2,
+        tableY - TABLE.rowH,
         PAGE.inner,
         TABLE.rowH,
-        [0.98, 0.98, 0.98]
+        COLORS.background.light
       )
     }
     
+    const rowY = tableY - TABLE.rowH/2 + 4  // Better vertical centering for text
     colX = PAGE.margin
     
-    // Equipment description
-    drawText(item.description, colX + TABLE.padding, rowY, { 
+    // S.NO column (centered)
+    drawText((rowIndex + 1).toString(), colX + colWidths[0]/2, rowY, { 
       size: FONTS.base,
-      color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
-    })
+      color: COLORS.text.primary
+    }, { textAlign: 'center' })
     colX += colWidths[0]
     
-    // Package quantity (centered)
-    const qtyX = colX + (colWidths[1] / 2) - 5  // Better centering
-    drawText(item.qty.toString(), qtyX, rowY, { 
+    // Equipment description with truncation
+    const truncatedDesc = truncateText(
+      item.description,
+      colWidths[1] - TABLE.padding * 2,
+      FONTS.base
+    )
+    
+    drawText(truncatedDesc, colX + TABLE.padding, rowY, { 
       size: FONTS.base,
-      color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
+      color: COLORS.text.primary
     })
     colX += colWidths[1]
     
+    // Days/Quantity (centered)
+    drawText(item.qty.toString(), colX + colWidths[1]/2, rowY, { 
+      size: FONTS.base,
+      color: COLORS.text.primary
+    }, { textAlign: 'center' })
+    colX += colWidths[2]
+    
     // Rate (right-aligned)
     const rateText = formatCurrency(Number(item.unit_price))
-    const rateX = colX + colWidths[2] - TABLE.padding - 50  // Better right alignment
-    drawText(rateText, rateX, rowY, { 
+    drawText(rateText, colX + colWidths[2] - TABLE.padding, rowY, { 
       size: FONTS.base,
-      color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
-    })
+      color: COLORS.text.primary
+    }, { textAlign: 'right' })
     colX += colWidths[2]
     
     // Amount (right-aligned)
     const amountText = formatCurrency(Number(item.amount))
-    const amountX = colX + colWidths[3] - TABLE.padding - 50  // Better right alignment
-    drawText(amountText, amountX, rowY, { 
+    drawText(amountText, colX + colWidths[3] - TABLE.padding, rowY, { 
       size: FONTS.base,
-      color: { r: COLORS.text.primary[0], g: COLORS.text.primary[1], b: COLORS.text.primary[2] }
-    })
+      color: COLORS.text.primary
+    }, { textAlign: 'right' })
     
-    // Only draw separator line if not the last row and with proper spacing
-    if (rowIndex < (lineItems?.length || 0) - 1) {
+    // Draw horizontal line after each row
+    if (rowIndex < lineItems.length - 1) {
       page.drawLine({
-        start: { x: PAGE.margin + 10, y: tableY - TABLE.rowH },
-        end: { x: PAGE.width - PAGE.margin - 10, y: tableY - TABLE.rowH },
-        thickness: 0.5,
+        start: { x: PAGE.margin, y: tableY - TABLE.rowH },
+        end: { x: PAGE.margin + PAGE.inner, y: tableY - TABLE.rowH },
+        thickness: 1,
         color: rgb(COLORS.lines.light[0], COLORS.lines.light[1], COLORS.lines.light[2]),
       })
     }
     
     tableY -= TABLE.rowH
-    rowIndex++
-  }
+  })
+  
+  return tableY // Return the new Y position after the table
 }
