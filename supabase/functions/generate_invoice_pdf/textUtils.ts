@@ -6,14 +6,41 @@
 import { FONTS, TEXT_HANDLING } from './layout.ts';
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1';
 
-// Approximate text width calculation
+// Improved text width calculation with font-specific adjustments
 export function measureText(text: string, fontSize: number): number {
-  // Average character width as a fraction of font size
-  const avgCharWidth = 0.6;
-  return text.length * fontSize * avgCharWidth;
+  // More accurate character width calculation
+  // Different characters have different widths, so we use a weighted approach
+  if (!text) return 0;
+  
+  // Character width multipliers by category
+  const charWidths = {
+    narrow: 0.4, // i, l, I, !, etc.
+    normal: 0.6, // most characters
+    wide: 0.85,  // m, w, W, etc.
+    extraWide: 1.0 // @, M, etc.
+  };
+  
+  // Categorize characters
+  const narrowChars = 'ijl!|.,:;\'`()-[]{}';
+  const wideChars = 'mwWQAMNO%#@&';
+  
+  let totalWidth = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (narrowChars.includes(char)) {
+      totalWidth += fontSize * charWidths.narrow;
+    } else if (wideChars.includes(char)) {
+      totalWidth += fontSize * charWidths.wide;
+    } else {
+      totalWidth += fontSize * charWidths.normal;
+    }
+  }
+  
+  // Add a small buffer for accuracy
+  return totalWidth * 1.05;
 }
 
-// Truncate text with ellipsis if it exceeds maxWidth
+// Enhanced truncate text with ellipsis if it exceeds maxWidth
 export function truncateText(text: string, maxWidth: number, fontSize: number): string {
   if (!text) return '';
   
@@ -24,17 +51,33 @@ export function truncateText(text: string, maxWidth: number, fontSize: number): 
   const ellipsisWidth = measureText(ellipsis, fontSize);
   const availableWidth = maxWidth - ellipsisWidth;
   
-  // Calculate how many characters we can fit
-  const avgCharWidth = 0.6 * fontSize;
-  const maxChars = Math.floor(availableWidth / avgCharWidth);
+  // Binary search for the optimal truncation point
+  let low = 0;
+  let high = text.length;
+  let bestFit = '';
   
-  // Ensure we don't go negative
-  if (maxChars <= 0) return ellipsis;
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const testText = text.substring(0, mid);
+    const testWidth = measureText(testText, fontSize);
+    
+    if (testWidth <= availableWidth) {
+      bestFit = testText;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
   
-  return text.substring(0, maxChars) + ellipsis;
+  // Ensure we don't return just the ellipsis unless absolutely necessary
+  if (bestFit.length === 0 && text.length > 0) {
+    bestFit = text.substring(0, 1);
+  }
+  
+  return bestFit + ellipsis;
 }
 
-// Wrap text into multiple lines based on maxWidth
+// Improved wrap text into multiple lines based on maxWidth
 export function wrapLines(text: string, maxWidth: number, fontSize: number): string[] {
   if (!text) return [''];
   
@@ -43,6 +86,36 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
   let currentLine = '';
   
   words.forEach(word => {
+    // Handle very long words by breaking them if necessary
+    if (measureText(word, fontSize) > maxWidth) {
+      // If current line is not empty, push it first
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = '';
+      }
+      
+      // Break the long word into chunks that fit
+      let remainingWord = word;
+      while (remainingWord.length > 0) {
+        let i = 1;
+        while (i <= remainingWord.length && 
+               measureText(remainingWord.substring(0, i), fontSize) <= maxWidth) {
+          i++;
+        }
+        i--; // Step back to last fitting position
+        
+        // Add hyphen if breaking in the middle of the word
+        const chunk = i < remainingWord.length ? 
+                      remainingWord.substring(0, i) + '-' : 
+                      remainingWord.substring(0, i);
+        
+        lines.push(chunk);
+        remainingWord = remainingWord.substring(i);
+      }
+      return;
+    }
+    
+    // Normal word handling
     const testLine = currentLine ? `${currentLine} ${word}` : word;
     const testWidth = measureText(testLine, fontSize);
     
@@ -61,31 +134,50 @@ export function wrapLines(text: string, maxWidth: number, fontSize: number): str
   return lines;
 }
 
-// Clip text to fit within maxWidth
+// Enhanced clip text to fit within maxWidth
 export function clipText(text: string, maxWidth: number, fontSize: number, addEllipsis = true): string {
   if (!text) return '';
   
   const textWidth = measureText(text, fontSize);
   if (textWidth <= maxWidth) return text;
   
-  // Calculate how many characters we can fit
-  const avgCharWidth = 0.6 * fontSize;
-  const maxChars = Math.floor(maxWidth / avgCharWidth);
-  
-  // Ensure we don't go negative
-  if (maxChars <= 0) return '';
-  
   if (addEllipsis) {
-    const ellipsis = '...';
-    const ellipsisWidth = measureText(ellipsis, fontSize);
-    const availableWidth = maxWidth - ellipsisWidth;
-    const availableChars = Math.floor(availableWidth / avgCharWidth);
-    
-    if (availableChars <= 0) return ellipsis;
-    return text.substring(0, availableChars) + ellipsis;
+    return truncateText(text, maxWidth, fontSize);
   }
   
-  return text.substring(0, maxChars);
+  // Binary search for the optimal clipping point
+  let low = 0;
+  let high = text.length;
+  let bestFit = '';
+  
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const testText = text.substring(0, mid);
+    const testWidth = measureText(testText, fontSize);
+    
+    if (testWidth <= maxWidth) {
+      bestFit = testText;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  
+  return bestFit;
+}
+
+// Create a function that draws text with proper wrapping and clipping
+export function createWrappedDrawText(page: any, drawText: Function) {
+  return (text: string, x: number, y: number, maxWidth: number, lineHeight: number, options: any = {}) => {
+    const fontSize = options.size || FONTS.base;
+    const lines = wrapLines(text, maxWidth, fontSize);
+    
+    lines.forEach((line, index) => {
+      drawText(line, x, y - (index * lineHeight), options);
+    });
+    
+    return lines.length; // Return number of lines drawn
+  };
 }
 
 // Create a function that draws text with clipping

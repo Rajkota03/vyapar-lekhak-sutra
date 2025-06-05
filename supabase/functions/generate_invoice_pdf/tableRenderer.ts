@@ -1,7 +1,7 @@
 import { PAGE, TABLE, FONTS, COLORS, SPACING, TEXT_HANDLING, getBandPositions, formatCurrency } from './layout.ts'
 import { drawRoundedRect } from './pdfUtils.ts'
 import { rgb } from 'https://esm.sh/pdf-lib@1.17.1'
-import { truncateText } from './textUtils.ts'
+import { truncateText, wrapLines, createWrappedDrawText } from './textUtils.ts'
 import type { LineItem, DrawTextOptions } from './types.ts'
 
 export function renderItemsTable(
@@ -15,13 +15,28 @@ export function renderItemsTable(
   // Calculate column widths based on proportions - adjusted for better alignment
   const colWidths = TABLE.cols.map(ratio => PAGE.inner * ratio)
   
+  // Calculate total table height including potential wrapped text
+  let totalTableHeight = TABLE.headerH;
+  const wrappedDrawText = createWrappedDrawText(page, drawText);
+  
+  // Pre-calculate row heights based on content
+  const rowHeights = lineItems.map(item => {
+    // Check if description needs wrapping
+    const descMaxWidth = colWidths[1] - (TABLE.padding * 2);
+    const lines = wrapLines(item.description, descMaxWidth, FONTS.base);
+    const contentHeight = Math.max(lines.length * SPACING.lineHeight, TABLE.rowH);
+    return contentHeight;
+  });
+  
+  totalTableHeight += rowHeights.reduce((sum, height) => sum + height, 0);
+  
   // Draw table border with thicker lines for better visibility
   drawRoundedRect(
     page,
     PAGE.margin,
-    tableY - (lineItems.length * TABLE.rowH + TABLE.headerH),
+    tableY - totalTableHeight,
     PAGE.inner,
-    lineItems.length * TABLE.rowH + TABLE.headerH,
+    totalTableHeight,
     [1, 1, 1], // Pure white background
     COLORS.lines.dark, // Dark border
     2 // Thicker border
@@ -70,16 +85,16 @@ export function renderItemsTable(
   colX += colWidths[2]
   
   // RATE column - centered in its column
-  const rateColCenter = colX + (colWidths[2] / 2)
+  const rateColCenter = colX + (colWidths[3] / 2)
   drawText('RATE', rateColCenter, headerY, { 
     size: FONTS.medium, 
     bold: true,
     color: COLORS.text.primary
   }, { textAlign: 'center' })
-  colX += colWidths[2]
+  colX += colWidths[3]
   
   // AMOUNT column - centered in its column
-  const amountColCenter = colX + (colWidths[3] / 2)
+  const amountColCenter = colX + (colWidths[4] / 2)
   drawText('AMOUNT', amountColCenter, headerY, { 
     size: FONTS.medium, 
     bold: true,
@@ -97,7 +112,7 @@ export function renderItemsTable(
     
     page.drawLine({
       start: { x: xPos, y: positions.topOfItems },
-      end: { x: xPos, y: positions.topOfItems - (lineItems.length * TABLE.rowH + TABLE.headerH) },
+      end: { x: xPos, y: positions.topOfItems - totalTableHeight },
       thickness: 1.5, // Slightly thicker for better visibility
       color: rgb(COLORS.lines.dark[0], COLORS.lines.dark[1], COLORS.lines.dark[2]),
     })
@@ -105,21 +120,23 @@ export function renderItemsTable(
   
   // Table rows with proper alignment, borders and alternating backgrounds
   lineItems.forEach((item, rowIndex) => {
+    const rowHeight = rowHeights[rowIndex];
+    
     // Alternate row background with more contrast
     if (rowIndex % 2 === 1) {
       drawRoundedRect(
         page,
         PAGE.margin,
-        tableY - TABLE.rowH,
+        tableY - rowHeight,
         PAGE.inner,
-        TABLE.rowH,
+        rowHeight,
         COLORS.background.light,
         null, // No border
         0 // No border thickness
       )
     }
     
-    const rowY = tableY - TABLE.rowH/2 + 4  // Better vertical centering for text
+    const rowY = tableY - (rowHeight / 2) + 4  // Better vertical centering for text
     colX = PAGE.margin
     
     // S.NO column (centered) - use the same center point as header
@@ -130,17 +147,23 @@ export function renderItemsTable(
     }, { textAlign: 'center' })
     colX += colWidths[0]
     
-    // Equipment description with truncation - left aligned with consistent padding
-    const truncatedDesc = truncateText(
-      item.description,
-      colWidths[1] - (TABLE.padding * 2),
-      FONTS.base
-    )
+    // Equipment description with wrapping - left aligned with consistent padding
+    const descMaxWidth = colWidths[1] - (TABLE.padding * 2);
+    const descY = tableY - SPACING.lineHeight; // Start at top of cell
     
-    drawText(truncatedDesc, colX + TABLE.padding, rowY, { 
-      size: FONTS.base,
-      color: COLORS.text.primary
-    })
+    // Use wrapped text drawing for description
+    wrappedDrawText(
+      item.description,
+      colX + TABLE.padding,
+      descY,
+      descMaxWidth,
+      SPACING.lineHeight,
+      { 
+        size: FONTS.base,
+        color: COLORS.text.primary
+      }
+    );
+    
     colX += colWidths[1]
     
     // Days/Quantity (centered) - use the same center point as header
@@ -153,16 +176,16 @@ export function renderItemsTable(
     
     // Rate (right-aligned) - consistent padding from right edge
     const rateText = formatCurrency(Number(item.unit_price))
-    const rateRightEdge = colX + colWidths[2] - TABLE.padding
+    const rateRightEdge = colX + colWidths[3] - TABLE.padding
     drawText(rateText, rateRightEdge, rowY, { 
       size: FONTS.base,
       color: COLORS.text.primary
     }, { textAlign: 'right' })
-    colX += colWidths[2]
+    colX += colWidths[3]
     
     // Amount (right-aligned) - consistent padding from right edge
     const amountText = formatCurrency(Number(item.amount))
-    const amountRightEdge = colX + colWidths[3] - TABLE.padding
+    const amountRightEdge = colX + colWidths[4] - TABLE.padding
     drawText(amountText, amountRightEdge, rowY, { 
       size: FONTS.base,
       color: COLORS.text.primary
@@ -171,14 +194,14 @@ export function renderItemsTable(
     // Draw horizontal line after each row with consistent thickness
     if (rowIndex < lineItems.length - 1) {
       page.drawLine({
-        start: { x: PAGE.margin, y: tableY - TABLE.rowH },
-        end: { x: PAGE.margin + PAGE.inner, y: tableY - TABLE.rowH },
+        start: { x: PAGE.margin, y: tableY - rowHeight },
+        end: { x: PAGE.margin + PAGE.inner, y: tableY - rowHeight },
         thickness: 1, // Consistent thickness
         color: rgb(COLORS.lines.medium[0], COLORS.lines.medium[1], COLORS.lines.medium[2]), // Darker for better visibility
       })
     }
     
-    tableY -= TABLE.rowH
+    tableY -= rowHeight
   })
   
   return tableY // Return the new Y position after the table
