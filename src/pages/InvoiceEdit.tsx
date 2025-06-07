@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -20,8 +21,6 @@ import PreviewModal from "@/components/invoice/PreviewModal";
 // Custom Hook
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 
 // Define form schema
 const invoiceFormSchema = z.object({
@@ -39,8 +38,6 @@ type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 const InvoiceEdit = () => {
   const navigate = useNavigate();
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   
   const {
     isEditing,
@@ -103,80 +100,9 @@ const InvoiceEdit = () => {
   // Generate invoice code for display
   const invoiceCode = existingInvoice?.invoice_code || "Will be generated on save";
 
-  // Handle preview with force regeneration and better error handling
-  const handlePreview = async () => {
-    if (!existingInvoice?.id) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please save the invoice first before generating a preview.",
-      });
-      return;
-    }
-    
-    setIsGeneratingPreview(true);
-    
-    try {
-      console.log('Generating preview for invoice:', existingInvoice.id);
-      
-      // Always force regeneration for preview to get latest layout fixes
-      const timestamp = Date.now();
-      const { data, error } = await supabase.functions.invoke('generate_invoice_pdf', {
-        body: { 
-          invoice_id: existingInvoice.id, 
-          preview: true,
-          force_regenerate: true,
-          timestamp: timestamp
-        }
-      });
-      
-      if (error) {
-        console.error('Error generating preview:', error);
-        
-        // Provide more specific error messages
-        let errorMessage = 'Unknown error occurred';
-        if (error.message?.includes('Invalid color')) {
-          errorMessage = 'Preview generation failed due to formatting issue. Please try again.';
-        } else if (error.message?.includes('FunctionsHttpError')) {
-          errorMessage = 'Server error while generating preview. Please try again in a moment.';
-        } else {
-          errorMessage = error.message || 'Failed to generate preview';
-        }
-        
-        toast({
-          variant: "destructive",
-          title: "Preview Error",
-          description: errorMessage,
-        });
-        return;
-      }
-      
-      if (!data?.pdf_url) {
-        console.error('No PDF URL in preview response:', data);
-        toast({
-          variant: "destructive",
-          title: "Preview Error",
-          description: "Preview URL not available. Please try again.",
-        });
-        return;
-      }
-      
-      // Add cache busting parameter to ensure fresh preview
-      const freshPdfUrl = `${data.pdf_url}?v=${timestamp}`;
-      console.log('Preview URL generated:', freshPdfUrl);
-      setPdfUrl(freshPdfUrl);
-      setPreviewOpen(true);
-      
-    } catch (error) {
-      console.error('Error generating preview:', error);
-      toast({
-        variant: "destructive",
-        title: "Preview Error",
-        description: `Failed to generate preview: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
-    } finally {
-      setIsGeneratingPreview(false);
-    }
+  // Handle preview - simplified without PDF generation
+  const handlePreview = () => {
+    setPreviewOpen(true);
   };
 
   // Handle form submission including tax config and signatures
@@ -223,7 +149,7 @@ const InvoiceEdit = () => {
             onPreview={isEditing ? handlePreview : undefined}
             invoiceId={existingInvoice?.id}
             invoiceCode={existingInvoice?.invoice_code}
-            isGeneratingPreview={isGeneratingPreview}
+            isGeneratingPreview={false}
           />
 
           <div className="p-4 space-y-4 px-0 mx-0">
@@ -259,7 +185,6 @@ const InvoiceEdit = () => {
       <PreviewModal
         isOpen={previewOpen}
         onOpenChange={setPreviewOpen}
-        pdfUrl={pdfUrl}
         invoiceId={existingInvoice?.id}
       />
     </DashboardLayout>
