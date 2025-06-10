@@ -1,5 +1,3 @@
-
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -118,6 +116,16 @@ export const generateInvoicePDF = async (
     return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // Calculate logo dimensions based on scale
+  const baseLogo = { width: 80, height: 80 };
+  const logoWidth = baseLogo.width * logoScale;
+  const logoHeight = baseLogo.height * logoScale;
+  
+  console.log('=== LOGO DIMENSIONS ===');
+  console.log('Base dimensions:', baseLogo);
+  console.log('Scale factor:', logoScale);
+  console.log('Final dimensions:', { width: logoWidth, height: logoHeight });
+
   // Create header content with improved layout matching the reference image
   const headerContent = [];
   
@@ -131,8 +139,8 @@ export const generateInvoicePDF = async (
           stack: [
             {
               image: logoBase64,
-              width: 80,
-              height: 80,
+              width: logoWidth,
+              height: logoHeight,
               margin: [0, 0, 0, 0]
             }
           ]
