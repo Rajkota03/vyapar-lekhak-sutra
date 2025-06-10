@@ -120,6 +120,11 @@ const LogoSheet: React.FC = () => {
     }
   };
 
+  // Calculate preview dimensions - using a base of 120px for better preview
+  const previewBaseSize = 120;
+  const previewWidth = previewBaseSize * logoScale;
+  const previewHeight = previewBaseSize * logoScale;
+
   console.log('=== LOGO SHEET DEBUG ===');
   console.log('Current logoUrl state:', logoUrl);
   console.log('Current logoScale state:', logoScale);
@@ -136,42 +141,37 @@ const LogoSheet: React.FC = () => {
           </p>
         </div>
 
-        {/* Debug info */}
-        <div className="bg-gray-100 p-3 rounded text-xs">
-          <p><strong>Debug Info:</strong></p>
-          <p>Company ID: {companyId}</p>
-          <p>Settings loaded: {settings ? 'Yes' : 'No'}</p>
-          <p>Logo URL from settings: {settings?.logo_url || 'None'}</p>
-          <p>Logo scale from settings: {settings?.logo_scale || 'None'}</p>
-          <p>Current logo state: {logoUrl || 'None'}</p>
-          <p>Current scale state: {logoScale}</p>
-        </div>
-
         {logoUrl ? (
-          <div className="space-y-4">
-            <div className="border rounded-lg p-6 bg-gray-50">
-              <img 
-                src={logoUrl} 
-                alt="Company Logo" 
-                className="max-w-full mx-auto object-contain border border-gray-200"
-                style={{ 
-                  height: `${64 * logoScale}px`,
-                  width: `${64 * logoScale}px`
-                }}
-                onLoad={() => console.log('Logo preview loaded successfully')}
-                onError={(e) => {
-                  console.error('Logo preview failed to load:', e);
-                  console.error('Failed URL:', logoUrl);
-                }}
-                crossOrigin="anonymous"
-              />
-              <p className="text-xs text-gray-500 mt-2 text-center break-all">
-                URL: {logoUrl}
+          <div className="space-y-6">
+            {/* Logo Preview Section */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-gray-700">Preview</h4>
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                <img 
+                  src={logoUrl} 
+                  alt="Company Logo" 
+                  className="object-contain border border-gray-200 shadow-sm"
+                  style={{ 
+                    height: `${previewHeight}px`,
+                    width: `${previewWidth}px`,
+                    maxHeight: '160px',
+                    maxWidth: '100%'
+                  }}
+                  onLoad={() => console.log('Logo preview loaded successfully')}
+                  onError={(e) => {
+                    console.error('Logo preview failed to load:', e);
+                    console.error('Failed URL:', logoUrl);
+                  }}
+                  crossOrigin="anonymous"
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                This is how your logo will appear on invoices
               </p>
             </div>
 
-            {/* Logo Scale Slider */}
-            <div className="space-y-3">
+            {/* Logo Size Control */}
+            <div className="space-y-4">
               <label className="text-sm font-medium text-gray-700">
                 Logo Size
               </label>
@@ -179,19 +179,23 @@ const LogoSheet: React.FC = () => {
                 <Slider
                   value={[logoScale]}
                   onValueChange={handleScaleChange}
-                  max={1.0}
+                  max={2.0}
                   min={0.1}
                   step={0.1}
                   className="w-full"
                 />
               </div>
               <div className="flex justify-between text-xs text-gray-500">
-                <span>Small (0.1x)</span>
-                <span>Current: {logoScale.toFixed(1)}x</span>
-                <span>Large (1.0x)</span>
+                <span>Tiny (0.1x)</span>
+                <span className="font-medium">Current: {logoScale.toFixed(1)}x</span>
+                <span>Large (2.0x)</span>
+              </div>
+              <div className="text-xs text-gray-400 text-center">
+                Dimensions: {Math.round(80 * logoScale)}px × {Math.round(80 * logoScale)}px (in PDF)
               </div>
             </div>
 
+            {/* Action Buttons */}
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -208,6 +212,14 @@ const LogoSheet: React.FC = () => {
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
+            </div>
+
+            {/* Technical Details */}
+            <div className="bg-gray-50 p-3 rounded text-xs space-y-1">
+              <p><strong>Technical Details:</strong></p>
+              <p>Original URL: {logoUrl.substring(0, 50)}...</p>
+              <p>Scale Factor: {logoScale}x</p>
+              <p>PDF Dimensions: {Math.round(80 * logoScale)}px × {Math.round(80 * logoScale)}px</p>
             </div>
           </div>
         ) : (
