@@ -12,8 +12,9 @@ import { useAuth } from "@/context/AuthContext";
 
 const SignatureSheet: React.FC = () => {
   const navigate = useNavigate();
-  const { selectedCompany } = useAuth();
-  const companyId = selectedCompany?.id;
+  const { user } = useAuth();
+  // For now, we'll use a placeholder company ID until proper company management is implemented
+  const companyId = user?.id; // Using user ID as company ID temporarily
   const { settings, updateSettings } = useCompanySettings(companyId);
   
   const [signatureUrl, setSignatureUrl] = useState("");
@@ -111,7 +112,7 @@ const SignatureSheet: React.FC = () => {
     return (
       <SheetLayout title="Signature">
         <div className="text-center text-muted-foreground">
-          Please select a company first
+          Please log in to manage your signature
         </div>
       </SheetLayout>
     );
