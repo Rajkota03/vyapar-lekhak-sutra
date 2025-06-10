@@ -1,3 +1,4 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -17,22 +18,32 @@ interface CompanyData {
 // Function to convert image URL to base64
 const getImageAsBase64 = async (url: string): Promise<string | null> => {
   try {
-    console.log('Fetching image from URL:', url);
+    console.log('=== LOGO FETCH DEBUG ===');
+    console.log('Attempting to fetch logo from URL:', url);
+    
     const response = await fetch(url);
+    console.log('Fetch response status:', response.status);
+    console.log('Fetch response headers:', Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
       console.error('Failed to fetch image:', response.status, response.statusText);
       return null;
     }
+    
     const blob = await response.blob();
+    console.log('Blob details:', { size: blob.size, type: blob.type });
+    
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
-        console.log('Successfully converted image to base64, length:', base64.length);
+        console.log('Successfully converted image to base64');
+        console.log('Base64 length:', base64.length);
+        console.log('Base64 prefix:', base64.substring(0, 50));
         resolve(base64);
       };
-      reader.onerror = () => {
-        console.error('Error reading image as base64');
+      reader.onerror = (error) => {
+        console.error('Error reading image as base64:', error);
         resolve(null);
       };
       reader.readAsDataURL(blob);
@@ -46,6 +57,9 @@ const getImageAsBase64 = async (url: string): Promise<string | null> => {
 // Function to get company settings including logo
 const getCompanySettings = async (companyId: string) => {
   try {
+    console.log('=== COMPANY SETTINGS DEBUG ===');
+    console.log('Fetching company settings for ID:', companyId);
+    
     const { data, error } = await supabase
       .from('company_settings')
       .select('*')
@@ -57,6 +71,7 @@ const getCompanySettings = async (companyId: string) => {
       return null;
     }
 
+    console.log('Company settings retrieved:', data);
     return data;
   } catch (error) {
     console.error('Error fetching company settings:', error);
@@ -70,16 +85,24 @@ export const generateInvoicePDF = async (
   companyData: CompanyData,
   lineItems: LineItem[]
 ) => {
+  console.log('=== PDF GENERATION START ===');
+  console.log('Invoice data:', invoiceData);
+  console.log('Company data:', companyData);
+  
   // Get company settings for logo
   const companySettings = await getCompanySettings(invoiceData.company_id);
   let logoBase64: string | null = null;
   let logoScale = 0.3;
 
   if (companySettings?.logo_url) {
+    console.log('=== LOGO PROCESSING ===');
     console.log('Company has logo URL:', companySettings.logo_url);
     logoBase64 = await getImageAsBase64(companySettings.logo_url);
     logoScale = Number(companySettings.logo_scale || 0.3);
     console.log('Logo scale:', logoScale);
+    console.log('Logo base64 result:', logoBase64 ? 'SUCCESS' : 'FAILED');
+  } else {
+    console.log('No logo URL found in company settings');
   }
 
   // Calculate totals
@@ -98,13 +121,14 @@ export const generateInvoicePDF = async (
   const headerContent = [];
   
   if (logoBase64) {
+    console.log('=== CREATING HEADER WITH LOGO ===');
     // Header with logo
     headerContent.push({
       columns: [
         {
           image: logoBase64,
-          width: 60 * logoScale,
-          height: 60 * logoScale,
+          width: 40,
+          height: 40,
           margin: [0, 0, 10, 0]
         },
         {
@@ -152,6 +176,7 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 30]
     });
   } else {
+    console.log('=== CREATING HEADER WITHOUT LOGO ===');
     // Header without logo
     headerContent.push({
       columns: [
@@ -470,6 +495,7 @@ export const generateInvoicePDF = async (
     }
   };
 
+  console.log('=== PDF GENERATION COMPLETE ===');
   return docDefinition;
 };
 
