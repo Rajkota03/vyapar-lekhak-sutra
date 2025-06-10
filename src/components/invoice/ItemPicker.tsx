@@ -20,12 +20,15 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
   const [isModalOpen, setIsModalOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  console.log('=== ITEM PICKER RENDERED ===');
+  console.log('Company ID received:', companyId);
+
   // Search items query
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['items', companyId, debouncedSearchTerm],
     queryFn: async () => {
-      if (!companyId) {
-        console.log('No company ID provided to ItemPicker');
+      if (!companyId || companyId.trim() === '') {
+        console.log('No valid company ID provided to ItemPicker, companyId:', companyId);
         return [];
       }
       
@@ -52,7 +55,7 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
       console.log('Items fetched:', data?.length || 0);
       return data || [];
     },
-    enabled: !!companyId,
+    enabled: !!companyId && companyId.trim() !== '',
   });
 
   // Handle item select
@@ -71,13 +74,24 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
   };
 
   const handleCreateNewItem = () => {
-    if (!companyId) {
-      console.error('Cannot create item: No company ID');
+    if (!companyId || companyId.trim() === '') {
+      console.error('Cannot create item: No valid company ID, received:', companyId);
       return;
     }
     console.log('Opening item creation modal for company:', companyId);
     setIsModalOpen(true);
   };
+
+  // Show error state if no company ID
+  if (!companyId || companyId.trim() === '') {
+    return (
+      <div className="flex flex-col h-full items-center justify-center p-8 text-center">
+        <Package className="h-12 w-12 text-gray-300 mb-4" />
+        <p className="text-sm font-medium mb-2 text-gray-700">No Company Selected</p>
+        <p className="text-xs text-gray-500">Please select a company to view items</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -88,7 +102,6 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
             variant="outline" 
             className="w-full justify-start text-blue-500 border-blue-200 hover:bg-blue-50 h-10 text-sm"
             onClick={handleCreateNewItem}
-            disabled={!companyId}
           >
             <Plus className="h-4 w-4 mr-2" /> Create new item
           </Button>
@@ -155,7 +168,7 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
         </div>
       </div>
 
-      {companyId && (
+      {companyId && companyId.trim() !== '' && (
         <ItemModal 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 

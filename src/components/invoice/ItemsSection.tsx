@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCompany } from "@/context/CompanyContext";
 import NoItemsView from "./NoItemsView";
 import ItemsTable from "./ItemsTable";
 import ItemPickerDialog from "./ItemPickerDialog";
@@ -21,8 +22,17 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
   items = [],
   selectedCompanyId,
 }) => {
+  const { currentCompany } = useCompany();
   const [itemPickerOpen, setItemPickerOpen] = useState(false);
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
+
+  // Use the selectedCompanyId from props, fallback to currentCompany.id
+  const effectiveCompanyId = selectedCompanyId || currentCompany?.id || null;
+
+  console.log('=== ITEMS SECTION COMPANY ID ===');
+  console.log('Props selectedCompanyId:', selectedCompanyId);
+  console.log('Current company ID:', currentCompany?.id);
+  console.log('Effective company ID:', effectiveCompanyId);
 
   // Add a new line item from the selected item
   const addLineItem = (item: Item) => {
@@ -99,12 +109,12 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
   };
 
   const handleOpenItemPicker = () => {
-    if (!selectedCompanyId) {
+    if (!effectiveCompanyId) {
       console.error('Cannot open item picker: No company ID');
       return;
     }
     console.log('=== OPENING ITEM PICKER ===');
-    console.log('Company ID:', selectedCompanyId);
+    console.log('Company ID:', effectiveCompanyId);
     setItemPickerOpen(true);
   };
 
@@ -137,7 +147,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
           variant="outline"
           className="w-full flex items-center justify-center border-dashed border-blue-500 text-blue-500 h-8 rounded text-xs font-medium"
           onClick={handleOpenItemPicker}
-          disabled={!selectedCompanyId}
+          disabled={!effectiveCompanyId}
         >
           <Plus className="h-4 w-4 mr-2" /> Add Item
         </Button>
@@ -147,7 +157,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
         isOpen={itemPickerOpen}
         onOpenChange={setItemPickerOpen}
         onItemSelect={addLineItem}
-        selectedCompanyId={selectedCompanyId}
+        selectedCompanyId={effectiveCompanyId}
       />
 
       <ItemEditSheet
