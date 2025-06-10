@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,8 +36,12 @@ type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
 const InvoiceEdit = () => {
   const navigate = useNavigate();
+  const params = useParams();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  
+  // Extract invoice ID from URL - handle both patterns
+  const invoiceId = params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
   
   const {
     isEditing,
@@ -56,6 +59,14 @@ const InvoiceEdit = () => {
     selectedCompanyId,
     existingInvoice
   } = useInvoiceData();
+
+  // Log invoice ID extraction
+  useEffect(() => {
+    console.log('=== INVOICE EDIT DEBUG ===');
+    console.log('URL params:', params);
+    console.log('Extracted invoice ID:', invoiceId);
+    console.log('Existing invoice from hook:', existingInvoice);
+  }, [params, invoiceId, existingInvoice]);
 
   // Initialize form with defaults or existing invoice data
   const form = useForm<InvoiceFormValues>({
@@ -177,7 +188,7 @@ const InvoiceEdit = () => {
             canSave={!!selectedClient && lineItems.length > 0} 
             onSave={handleSaveInvoice}
             onPreview={existingInvoice?.id ? handlePreview : undefined}
-            invoiceId={existingInvoice?.id}
+            invoiceId={existingInvoice?.id || invoiceId}
             invoiceCode={existingInvoice?.invoice_code}
             isGeneratingPreview={isGeneratingPreview}
           />
@@ -215,7 +226,7 @@ const InvoiceEdit = () => {
       <PreviewModal
         isOpen={previewOpen}
         onOpenChange={setPreviewOpen}
-        invoiceId={existingInvoice?.id}
+        invoiceId={existingInvoice?.id || invoiceId}
       />
     </DashboardLayout>
   );

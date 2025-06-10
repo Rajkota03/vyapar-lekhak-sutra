@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -43,9 +42,9 @@ export const useInvoiceData = () => {
   const queryClient = useQueryClient();
   const { currentCompany } = useCompany();
 
-  // Extract both companyId and invoiceId from params
+  // Extract invoice ID from params - handle both /invoices/:invoiceId and /invoices/:companyId/:invoiceId patterns
+  const invoiceId = params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
   const selectedCompanyId = params.companyId || currentCompany?.id || null;
-  const invoiceId = params.invoiceId;
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -53,14 +52,16 @@ export const useInvoiceData = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [existingInvoice, setExistingInvoice] = useState<any>(null);
 
-  // Log company ID changes
+  // Log URL params extraction
   useEffect(() => {
-    console.log('=== COMPANY ID EXTRACTION ===');
-    console.log('URL params companyId:', params.companyId);
-    console.log('Current company ID:', currentCompany?.id);
+    console.log('=== URL PARAMS EXTRACTION ===');
+    console.log('Raw params object:', params);
+    console.log('params.invoiceId:', params.invoiceId);
+    console.log('params["*"]:', params["*"]);
+    console.log('Extracted Invoice ID:', invoiceId);
+    console.log('URL pathname:', window.location.pathname);
     console.log('Selected Company ID:', selectedCompanyId);
-    console.log('Invoice ID:', invoiceId);
-  }, [params.companyId, currentCompany?.id, selectedCompanyId, invoiceId]);
+  }, [params, invoiceId, selectedCompanyId]);
 
   const { data: clients, isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients', selectedCompanyId],
