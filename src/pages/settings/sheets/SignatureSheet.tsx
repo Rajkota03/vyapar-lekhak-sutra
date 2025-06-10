@@ -39,13 +39,38 @@ const SignatureSheet: React.FC = () => {
       return;
     }
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please upload an image file",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "File size must be less than 5MB",
+      });
+      return;
+    }
+
     setUploading(true);
     try {
+      console.log('=== SIGNATURE UPLOAD START ===');
       console.log('Uploading signature for company:', companyId);
+      console.log('File details:', { name: file.name, size: file.size, type: file.type });
       
       const fileExt = file.name.split('.').pop();
       const fileName = `company_${companyId}/signature.${fileExt}`;
       
+      console.log('Upload path:', fileName);
+
+      // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('company-assets')
         .upload(fileName, file, { upsert: true });
@@ -55,25 +80,32 @@ const SignatureSheet: React.FC = () => {
         throw uploadError;
       }
 
+      // Get the public URL
       const { data } = supabase.storage
         .from('company-assets')
         .getPublicUrl(fileName);
 
-      console.log('Signature uploaded successfully. URL:', data.publicUrl);
+      console.log('=== SIGNATURE UPLOAD SUCCESS ===');
+      console.log('Public URL:', data.publicUrl);
+      
       setSignatureUrl(data.publicUrl);
       
+      // Update company settings with the new signature URL
       await updateSettings({ signature_url: data.publicUrl });
+      
+      console.log('Company settings updated with signature URL');
       
       toast({
         title: "Success",
         description: "Signature uploaded successfully",
       });
     } catch (error) {
+      console.error('=== SIGNATURE UPLOAD ERROR ===');
       console.error('Error uploading signature:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to upload signature",
+        description: "Failed to upload signature. Please try again.",
       });
     } finally {
       setUploading(false);
@@ -91,14 +123,39 @@ const SignatureSheet: React.FC = () => {
     }
 
     try {
+      console.log('=== SIGNATURE DELETE START ===');
+      console.log('Deleting signature for company:', companyId);
+      
+      // Extract filename from URL to delete from storage
+      if (signatureUrl) {
+        const urlParts = signatureUrl.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        const fullPath = `company_${companyId}/${fileName}`;
+        
+        console.log('Deleting file from storage:', fullPath);
+        
+        // Delete from storage
+        const { error: deleteError } = await supabase.storage
+          .from('company-assets')
+          .remove([fullPath]);
+
+        if (deleteError) {
+          console.error('Storage delete error:', deleteError);
+          // Continue anyway to remove from settings
+        }
+      }
+      
       setSignatureUrl("");
       await updateSettings({ signature_url: null });
+      
+      console.log('=== SIGNATURE DELETE SUCCESS ===');
       
       toast({
         title: "Success",
         description: "Signature removed successfully",
       });
     } catch (error) {
+      console.error('=== SIGNATURE DELETE ERROR ===');
       console.error('Error removing signature:', error);
       toast({
         variant: "destructive",
@@ -135,6 +192,10 @@ const SignatureSheet: React.FC = () => {
                 src={signatureUrl} 
                 alt="Digital Signature" 
                 className="max-w-full max-h-24 mx-auto object-contain"
+                onError={() => {
+                  console.error('Failed to load signature image:', signatureUrl);
+                  setSignatureUrl("");
+                }}
               />
             </div>
             <div className="flex gap-2">
@@ -160,7 +221,7 @@ const SignatureSheet: React.FC = () => {
             <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h4 className="text-lg font-medium mb-2">Upload your signature</h4>
             <p className="text-sm text-gray-500 mb-4">
-              PNG, JPG or SVG files are supported
+              PNG, JPG or SVG files are supported (max 5MB)
             </p>
             <Button
               onClick={() => document.getElementById('signature-upload')?.click()}
