@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -6,12 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
-import { toast } from "@/hooks/use-toast";
 
 const NumberingSheet: React.FC = () => {
   const navigate = useNavigate();
-  const companyId = "your-company-id"; // Replace with actual company ID from context
-  const { settings, updateSettings } = useCompanySettings(companyId);
+  const { settings, updateSettings, isLoading, companyId } = useCompanySettings();
   
   const [numberingData, setNumberingData] = useState({
     invoice_title: "Invoice",
@@ -44,20 +41,31 @@ const NumberingSheet: React.FC = () => {
   const handleSave = async () => {
     try {
       await updateSettings(numberingData);
-      
-      toast({
-        title: "Success",
-        description: "Document numbering settings saved successfully",
-      });
       navigate('/settings');
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save numbering settings",
-      });
+      // Error handling is done in the hook
     }
   };
+
+  if (!companyId) {
+    return (
+      <SheetLayout title="Document Numbering">
+        <div className="text-center text-muted-foreground">
+          Please create a company to manage document numbering
+        </div>
+      </SheetLayout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SheetLayout title="Document Numbering">
+        <div className="text-center text-muted-foreground">
+          Loading numbering settings...
+        </div>
+      </SheetLayout>
+    );
+  }
 
   return (
     <SheetLayout title="Document Numbering">

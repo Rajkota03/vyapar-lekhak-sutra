@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -12,9 +11,7 @@ import { toast } from "@/hooks/use-toast";
 
 const LogoSheet: React.FC = () => {
   const navigate = useNavigate();
-  // TODO: Get actual company ID from user context/auth - for now using a placeholder
-  const companyId = "0d32b9a9-54b4-4d99-bf37-5526ede25b2a"; // This should come from user's selected company
-  const { settings, updateSettings } = useCompanySettings(companyId);
+  const { settings, updateSettings, isLoading, companyId } = useCompanySettings();
   
   const [logoUrl, setLogoUrl] = useState("");
   const [logoScale, setLogoScale] = useState(0.3);
@@ -33,7 +30,7 @@ const LogoSheet: React.FC = () => {
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !companyId) return;
 
     console.log('=== LOGO UPLOAD DEBUG ===');
     console.log('File selected:', file.name, file.type, file.size);
@@ -130,6 +127,26 @@ const LogoSheet: React.FC = () => {
   console.log('Current logoScale state:', logoScale);
   console.log('Settings from hook:', settings);
   console.log('Company ID:', companyId);
+
+  if (!companyId) {
+    return (
+      <SheetLayout title="Logo">
+        <div className="text-center text-muted-foreground">
+          Please create a company to manage your logo
+        </div>
+      </SheetLayout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SheetLayout title="Logo">
+        <div className="text-center text-muted-foreground">
+          Loading logo settings...
+        </div>
+      </SheetLayout>
+    );
+  }
 
   return (
     <SheetLayout title="Logo">

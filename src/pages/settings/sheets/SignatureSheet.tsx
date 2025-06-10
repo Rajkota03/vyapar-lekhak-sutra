@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -8,14 +7,10 @@ import { Upload, Trash2 } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
 
 const SignatureSheet: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  // For now, we'll use a placeholder company ID until proper company management is implemented
-  const companyId = user?.id; // Using user ID as company ID temporarily
-  const { settings, updateSettings, isLoading } = useCompanySettings(companyId);
+  const { settings, updateSettings, isLoading, companyId } = useCompanySettings();
   
   const [signatureUrl, setSignatureUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -185,7 +180,7 @@ const SignatureSheet: React.FC = () => {
     return (
       <SheetLayout title="Signature">
         <div className="text-center text-muted-foreground">
-          Please log in to manage your signature
+          Please create a company to manage your signature
         </div>
       </SheetLayout>
     );

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -13,8 +12,7 @@ import { toast } from "@/hooks/use-toast";
 
 const PaymentNoteSheet: React.FC = () => {
   const navigate = useNavigate();
-  const companyId = "your-company-id"; // Replace with actual company ID from context
-  const { settings, updateSettings } = useCompanySettings(companyId);
+  const { settings, updateSettings, isLoading, companyId } = useCompanySettings();
   
   const [paymentNote, setPaymentNote] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -33,23 +31,15 @@ const PaymentNoteSheet: React.FC = () => {
         payment_note: paymentNote,
         payment_qr_url: qrCodeUrl,
       });
-      toast({
-        title: "Success",
-        description: "Payment instructions saved successfully",
-      });
       navigate('/settings');
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save payment instructions",
-      });
+      // Error handling is done in the hook
     }
   };
 
   const handleQrUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !companyId) return;
 
     setUploading(true);
     try {
@@ -99,6 +89,26 @@ const PaymentNoteSheet: React.FC = () => {
       });
     }
   };
+
+  if (!companyId) {
+    return (
+      <SheetLayout title="Payment Instructions">
+        <div className="text-center text-muted-foreground">
+          Please create a company to manage payment instructions
+        </div>
+      </SheetLayout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SheetLayout title="Payment Instructions">
+        <div className="text-center text-muted-foreground">
+          Loading payment instructions...
+        </div>
+      </SheetLayout>
+    );
+  }
 
   return (
     <SheetLayout title="Payment Instructions">

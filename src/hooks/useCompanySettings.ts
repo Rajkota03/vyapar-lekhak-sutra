@@ -2,9 +2,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useCompany } from "@/context/CompanyContext";
 
-export const useCompanySettings = (companyId?: string) => {
+export const useCompanySettings = () => {
   const queryClient = useQueryClient();
+  const { currentCompany } = useCompany();
+  const companyId = currentCompany?.id;
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['company-settings', companyId],
@@ -33,7 +36,7 @@ export const useCompanySettings = (companyId?: string) => {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (updates: any) => {
-      if (!companyId) throw new Error('Company ID required');
+      if (!companyId) throw new Error('No company selected');
 
       console.log('=== UPDATING COMPANY SETTINGS ===');
       console.log('Company ID:', companyId);
@@ -62,10 +65,19 @@ export const useCompanySettings = (companyId?: string) => {
       console.log('Updated data:', data);
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['company-settings', companyId] });
+      toast({
+        title: "Success",
+        description: "Settings saved successfully",
+      });
     },
     onError: (error) => {
       console.error('=== SETTINGS UPDATE ERROR ===');
       console.error('Error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save settings",
+      });
     },
   });
 
@@ -74,5 +86,7 @@ export const useCompanySettings = (companyId?: string) => {
     isLoading,
     updateSettings: updateSettingsMutation.mutate,
     isUpdating: updateSettingsMutation.isPending,
+    companyId,
+    currentCompany,
   };
 };

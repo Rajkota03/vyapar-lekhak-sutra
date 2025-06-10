@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -8,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCompany } from "@/context/CompanyContext";
 
 const CompanyInfoSheet: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const companyId = "0d32b9a9-54b4-4d99-bf37-5526ede25b2a"; // This should come from user's selected company
+  const { currentCompany, refetchCompanies } = useCompany();
+  const companyId = currentCompany?.id;
   
   const [formData, setFormData] = useState({
     name: "",
@@ -31,6 +32,11 @@ const CompanyInfoSheet: React.FC = () => {
 
   useEffect(() => {
     const loadCompanyData = async () => {
+      if (!companyId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         console.log('Loading company data for ID:', companyId);
         
@@ -98,6 +104,15 @@ const CompanyInfoSheet: React.FC = () => {
       return;
     }
 
+    if (!companyId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No company selected",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       // Combine address lines into a single address field for storage
@@ -149,6 +164,9 @@ const CompanyInfoSheet: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['company-settings'] });
       queryClient.invalidateQueries({ queryKey: ['invoice-data'] });
+      
+      // Refetch companies to update the context
+      await refetchCompanies();
 
       toast({
         title: "Success",
@@ -168,6 +186,16 @@ const CompanyInfoSheet: React.FC = () => {
       setSaving(false);
     }
   };
+
+  if (!companyId) {
+    return (
+      <SheetLayout title="Company Information">
+        <div className="text-center text-muted-foreground">
+          Please create a company to manage company information
+        </div>
+      </SheetLayout>
+    );
+  }
 
   if (loading) {
     return (

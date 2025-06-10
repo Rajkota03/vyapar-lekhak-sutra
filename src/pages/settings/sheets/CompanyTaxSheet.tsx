@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -7,12 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
-import { toast } from "@/hooks/use-toast";
 
 const CompanyTaxSheet: React.FC = () => {
   const navigate = useNavigate();
-  const companyId = "your-company-id"; // Replace with actual company ID from context
-  const { settings, updateSettings } = useCompanySettings(companyId);
+  const { settings, updateSettings, isLoading, companyId } = useCompanySettings();
   
   const [taxData, setTaxData] = useState({
     default_cgst_pct: 9,
@@ -43,20 +40,31 @@ const CompanyTaxSheet: React.FC = () => {
         default_sgst_pct: taxData.default_sgst_pct,
         default_igst_pct: taxData.default_igst_pct,
       });
-      
-      toast({
-        title: "Success",
-        description: "Tax settings saved successfully",
-      });
       navigate('/settings');
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save tax settings",
-      });
+      // Error handling is done in the hook
     }
   };
+
+  if (!companyId) {
+    return (
+      <SheetLayout title="Tax Settings">
+        <div className="text-center text-muted-foreground">
+          Please create a company to manage tax settings
+        </div>
+      </SheetLayout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SheetLayout title="Tax Settings">
+        <div className="text-center text-muted-foreground">
+          Loading tax settings...
+        </div>
+      </SheetLayout>
+    );
+  }
 
   return (
     <SheetLayout title="Tax Settings">

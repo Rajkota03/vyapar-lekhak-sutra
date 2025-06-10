@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -12,8 +11,7 @@ import { toast } from "@/hooks/use-toast";
 
 const InvoiceDefaultsSheet: React.FC = () => {
   const navigate = useNavigate();
-  const companyId = "your-company-id"; // Replace with actual company ID from context
-  const { settings, updateSettings } = useCompanySettings(companyId);
+  const { settings, updateSettings, isLoading, companyId } = useCompanySettings();
   
   const [formData, setFormData] = useState({
     due_days: 0,
@@ -49,20 +47,31 @@ const InvoiceDefaultsSheet: React.FC = () => {
   const handleSave = async () => {
     try {
       await updateSettings(formData);
-      
-      toast({
-        title: "Success",
-        description: "Invoice defaults saved successfully",
-      });
       navigate('/settings');
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save invoice defaults",
-      });
+      // Error handling is done in the hook
     }
   };
+
+  if (!companyId) {
+    return (
+      <SheetLayout title="Invoice Defaults">
+        <div className="text-center text-muted-foreground">
+          Please create a company to manage invoice defaults
+        </div>
+      </SheetLayout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SheetLayout title="Invoice Defaults">
+        <div className="text-center text-muted-foreground">
+          Loading invoice defaults...
+        </div>
+      </SheetLayout>
+    );
+  }
 
   return (
     <SheetLayout title="Invoice Defaults">
