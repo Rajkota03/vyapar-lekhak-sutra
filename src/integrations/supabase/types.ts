@@ -102,6 +102,7 @@ export type Database = {
           payment_qr_url: string | null
           quote_title: string | null
           sac_code: string | null
+          signature_scale: number | null
           signature_url: string | null
           updated_at: string | null
         }
@@ -126,6 +127,7 @@ export type Database = {
           payment_qr_url?: string | null
           quote_title?: string | null
           sac_code?: string | null
+          signature_scale?: number | null
           signature_url?: string | null
           updated_at?: string | null
         }
@@ -150,6 +152,7 @@ export type Database = {
           payment_qr_url?: string | null
           quote_title?: string | null
           sac_code?: string | null
+          signature_scale?: number | null
           signature_url?: string | null
           updated_at?: string | null
         }

@@ -33,9 +33,12 @@ const SignatureSheet: React.FC = () => {
       setSignatureUrl("");
     }
 
-    if (settings?.signature_scale) {
+    if (settings?.signature_scale !== undefined && settings?.signature_scale !== null) {
       console.log('Setting signature scale from settings:', settings.signature_scale);
       setSignatureScale(Number(settings.signature_scale));
+    } else {
+      console.log('No signature scale in settings, using default 1.0');
+      setSignatureScale(1.0);
     }
   }, [settings, companyId, isLoading]);
 
