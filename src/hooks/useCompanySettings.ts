@@ -11,21 +11,33 @@ export const useCompanySettings = (companyId?: string) => {
     queryFn: async () => {
       if (!companyId) return null;
       
+      console.log('=== FETCHING COMPANY SETTINGS ===');
+      console.log('Company ID:', companyId);
+      
       const { data, error } = await supabase
         .from('company_settings')
         .select('*')
         .eq('company_id', companyId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching company settings:', error);
+        throw error;
+      }
+      
+      console.log('Fetched company settings:', data);
       return data;
     },
     enabled: !!companyId,
   });
 
-  const updateSettings = useMutation({
+  const updateSettingsMutation = useMutation({
     mutationFn: async (updates: any) => {
       if (!companyId) throw new Error('Company ID required');
+
+      console.log('=== UPDATING COMPANY SETTINGS ===');
+      console.log('Company ID:', companyId);
+      console.log('Updates:', updates);
 
       const { data, error } = await supabase
         .from('company_settings')
@@ -37,18 +49,30 @@ export const useCompanySettings = (companyId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating company settings:', error);
+        throw error;
+      }
+      
+      console.log('Updated company settings result:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('=== SETTINGS UPDATE SUCCESS ===');
+      console.log('Updated data:', data);
+      // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['company-settings', companyId] });
+    },
+    onError: (error) => {
+      console.error('=== SETTINGS UPDATE ERROR ===');
+      console.error('Error:', error);
     },
   });
 
   return {
     settings,
     isLoading,
-    updateSettings: updateSettings.mutate,
-    isUpdating: updateSettings.isPending,
+    updateSettings: updateSettingsMutation.mutate,
+    isUpdating: updateSettingsMutation.isPending,
   };
 };

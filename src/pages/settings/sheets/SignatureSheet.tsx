@@ -15,16 +15,26 @@ const SignatureSheet: React.FC = () => {
   const { user } = useAuth();
   // For now, we'll use a placeholder company ID until proper company management is implemented
   const companyId = user?.id; // Using user ID as company ID temporarily
-  const { settings, updateSettings } = useCompanySettings(companyId);
+  const { settings, updateSettings, isLoading } = useCompanySettings(companyId);
   
   const [signatureUrl, setSignatureUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    console.log('=== SIGNATURE SHEET EFFECT ===');
+    console.log('Company ID:', companyId);
+    console.log('Settings loading:', isLoading);
+    console.log('Settings data:', settings);
+    console.log('Settings signature_url:', settings?.signature_url);
+    
     if (settings?.signature_url) {
+      console.log('Setting signature URL from settings:', settings.signature_url);
       setSignatureUrl(settings.signature_url);
+    } else {
+      console.log('No signature URL in settings, clearing local state');
+      setSignatureUrl("");
     }
-  }, [settings]);
+  }, [settings, companyId, isLoading]);
 
   const handleSignatureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -88,12 +98,15 @@ const SignatureSheet: React.FC = () => {
       console.log('=== SIGNATURE UPLOAD SUCCESS ===');
       console.log('Public URL:', data.publicUrl);
       
-      setSignatureUrl(data.publicUrl);
+      const newSignatureUrl = data.publicUrl;
       
       // Update company settings with the new signature URL
-      await updateSettings({ signature_url: data.publicUrl });
+      await updateSettings({ signature_url: newSignatureUrl });
       
       console.log('Company settings updated with signature URL');
+      
+      // Update local state immediately
+      setSignatureUrl(newSignatureUrl);
       
       toast({
         title: "Success",
@@ -145,10 +158,13 @@ const SignatureSheet: React.FC = () => {
         }
       }
       
-      setSignatureUrl("");
+      // Update company settings to remove signature URL
       await updateSettings({ signature_url: null });
       
       console.log('=== SIGNATURE DELETE SUCCESS ===');
+      
+      // Update local state immediately
+      setSignatureUrl("");
       
       toast({
         title: "Success",
@@ -170,6 +186,16 @@ const SignatureSheet: React.FC = () => {
       <SheetLayout title="Signature">
         <div className="text-center text-muted-foreground">
           Please log in to manage your signature
+        </div>
+      </SheetLayout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SheetLayout title="Signature">
+        <div className="text-center text-muted-foreground">
+          Loading signature settings...
         </div>
       </SheetLayout>
     );
