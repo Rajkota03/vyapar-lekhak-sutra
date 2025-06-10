@@ -38,6 +38,7 @@ type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 const InvoiceEdit = () => {
   const navigate = useNavigate();
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   
   const {
     isEditing,
@@ -122,9 +123,12 @@ const InvoiceEdit = () => {
   // Generate invoice code for display
   const invoiceCode = existingInvoice?.invoice_code || "Will be generated on save";
 
-  // Handle preview - simplified without PDF generation
+  // Handle preview
   const handlePreview = () => {
+    setIsGeneratingPreview(true);
     setPreviewOpen(true);
+    // Reset generating state after modal opens
+    setTimeout(() => setIsGeneratingPreview(false), 100);
   };
 
   // Handle form submission including tax config and signatures
@@ -133,6 +137,7 @@ const InvoiceEdit = () => {
     console.log('Can save?', !!selectedClient && lineItems.length > 0);
     console.log('Selected client:', selectedClient);
     console.log('Line items:', lineItems);
+    console.log('Selected company ID:', selectedCompanyId);
     
     if (!selectedClient || lineItems.length === 0) {
       console.log('Cannot save: missing client or line items');
@@ -171,10 +176,10 @@ const InvoiceEdit = () => {
             isSubmitting={isSubmitting} 
             canSave={!!selectedClient && lineItems.length > 0} 
             onSave={handleSaveInvoice}
-            onPreview={isEditing ? handlePreview : undefined}
+            onPreview={existingInvoice?.id ? handlePreview : undefined}
             invoiceId={existingInvoice?.id}
             invoiceCode={existingInvoice?.invoice_code}
-            isGeneratingPreview={false}
+            isGeneratingPreview={isGeneratingPreview}
           />
 
           <div className="p-4 space-y-4 px-0 mx-0">

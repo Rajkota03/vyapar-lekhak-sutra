@@ -38,9 +38,14 @@ interface Item {
 }
 
 export const useInvoiceData = () => {
-  const { companyId: selectedCompanyId } = useParams();
+  const params = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { currentCompany } = useCompany();
+
+  // Extract both companyId and invoiceId from params
+  const selectedCompanyId = params.companyId || currentCompany?.id || null;
+  const invoiceId = params.invoiceId;
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -50,9 +55,12 @@ export const useInvoiceData = () => {
 
   // Log company ID changes
   useEffect(() => {
-    console.log('=== COMPANY ID CHANGED ===');
+    console.log('=== COMPANY ID EXTRACTION ===');
+    console.log('URL params companyId:', params.companyId);
+    console.log('Current company ID:', currentCompany?.id);
     console.log('Selected Company ID:', selectedCompanyId);
-  }, [selectedCompanyId]);
+    console.log('Invoice ID:', invoiceId);
+  }, [params.companyId, currentCompany?.id, selectedCompanyId, invoiceId]);
 
   const { data: clients, isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients', selectedCompanyId],
@@ -105,9 +113,8 @@ export const useInvoiceData = () => {
   });
 
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
-    queryKey: ['invoice', useParams().invoiceId],
+    queryKey: ['invoice', invoiceId],
     queryFn: async () => {
-      const { invoiceId } = useParams();
       if (!invoiceId) return null;
       
       console.log('=== FETCHING EXISTING INVOICE ===');
@@ -172,7 +179,7 @@ export const useInvoiceData = () => {
       setExistingInvoice(data);
       return data;
     },
-    enabled: !!useParams().invoiceId,
+    enabled: !!invoiceId,
   });
 
   const saveInvoiceMutation = useMutation({
