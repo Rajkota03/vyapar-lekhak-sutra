@@ -54,10 +54,14 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     </Sheet>
   );
 
+  // Show floating buttons if we have an invoiceId (which indicates an existing invoice)
+  const showFloatingButtons = !!invoiceId;
+
   console.log('=== INVOICE HEADER DEBUG ===');
   console.log('Invoice ID:', invoiceId);
-  console.log('Should show floating buttons:', !!invoiceId);
-  console.log('onPreview function:', !!onPreview);
+  console.log('Show floating buttons:', showFloatingButtons);
+  console.log('onPreview function exists:', !!onPreview);
+  console.log('isEditing:', isEditing);
 
   return (
     <>
@@ -91,8 +95,8 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         </div>
       </div>
 
-      {/* Floating Bottom Action Bar - Only show if invoice exists */}
-      {invoiceId && (
+      {/* Floating Bottom Action Bar - Show when we have an invoiceId */}
+      {showFloatingButtons && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg p-4 safe-area-pb">
           <div className="max-w-screen-sm mx-auto flex gap-3">
             {onPreview && (
