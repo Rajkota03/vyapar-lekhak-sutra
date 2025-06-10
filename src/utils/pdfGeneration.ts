@@ -87,7 +87,7 @@ export const generateInvoicePDF = async (
   console.log('=== PDF GENERATION START ===');
   console.log('Invoice data:', invoiceData);
   console.log('Company data:', companyData);
-  console.log('Show my signature:', invoiceData.show_my_signature);
+  console.log('Show my signature setting:', invoiceData.show_my_signature);
   
   // Get company settings for logo and signature
   const companySettings = await getCompanySettings(invoiceData.company_id);
@@ -106,14 +106,25 @@ export const generateInvoicePDF = async (
     console.log('No logo URL found in company settings');
   }
 
-  // Process signature if enabled
-  if (invoiceData.show_my_signature && companySettings?.signature_url) {
-    console.log('=== SIGNATURE PROCESSING ===');
-    console.log('Company has signature URL:', companySettings.signature_url);
+  // Process signature if enabled - FIXED THE LOGIC HERE
+  console.log('=== SIGNATURE PROCESSING DEBUG ===');
+  console.log('Invoice show_my_signature setting:', invoiceData.show_my_signature);
+  console.log('Company settings signature_url:', companySettings?.signature_url);
+  
+  if (invoiceData.show_my_signature === true && companySettings?.signature_url) {
+    console.log('=== SIGNATURE PROCESSING ENABLED ===');
+    console.log('Fetching signature from URL:', companySettings.signature_url);
     signatureBase64 = await getImageAsBase64(companySettings.signature_url);
     console.log('Signature base64 result:', signatureBase64 ? 'SUCCESS' : 'FAILED');
+    if (signatureBase64) {
+      console.log('✅ Signature will be added to PDF');
+    } else {
+      console.log('❌ Failed to process signature image');
+    }
   } else {
-    console.log('Signature not enabled or no signature URL found');
+    console.log('❌ Signature not enabled or no signature URL found');
+    console.log('- show_my_signature:', invoiceData.show_my_signature);
+    console.log('- signature_url exists:', !!companySettings?.signature_url);
   }
 
   // Calculate totals
@@ -255,27 +266,46 @@ export const generateInvoicePDF = async (
     });
   }
 
-  // Create signature section for bottom of page
+  // Create signature section for bottom of page - IMPROVED POSITIONING
   const signatureSection = [];
   if (signatureBase64) {
-    console.log('=== ADDING SIGNATURE SECTION ===');
+    console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
     signatureSection.push(
-      // Add some space before signature
+      // Add space before signature
       {
         text: '',
-        margin: [0, 40, 0, 0]
+        margin: [0, 30, 0, 0]
       },
-      // Signature section
+      // Signature section - positioned in bottom left
       {
         columns: [
           {
             width: '50%',
             stack: [
               {
-                image: signatureBase64,
-                width: 120,
-                height: 60,
+                text: 'Authorized Signature',
+                style: 'signatureTitle',
                 margin: [0, 0, 0, 10]
+              },
+              {
+                image: signatureBase64,
+                width: 150,
+                height: 60,
+                margin: [0, 0, 0, 5]
+              },
+              {
+                canvas: [
+                  {
+                    type: 'line',
+                    x1: 0,
+                    y1: 0,
+                    x2: 150,
+                    y2: 0,
+                    lineWidth: 1,
+                    lineColor: '#000000'
+                  }
+                ],
+                margin: [0, 0, 0, 5]
               },
               {
                 text: companyData.name,
@@ -289,9 +319,11 @@ export const generateInvoicePDF = async (
             text: '' // Empty space on right
           }
         ],
-        margin: [0, 20, 0, 0]
+        margin: [0, 0, 0, 0]
       }
     );
+  } else {
+    console.log('❌ No signature section added to PDF');
   }
 
   // Create document definition
@@ -448,7 +480,7 @@ export const generateInvoicePDF = async (
             }
           }
         ],
-        margin: [0, 0, 0, 50]
+        margin: [0, 0, 0, 20]
       },
 
       // Footer
@@ -456,7 +488,7 @@ export const generateInvoicePDF = async (
         text: 'Thank you for your business!',
         style: 'footer',
         alignment: 'center',
-        margin: [0, 30, 0, 0]
+        margin: [0, 20, 0, 0]
       },
       {
         text: companyData.name,
@@ -465,7 +497,7 @@ export const generateInvoicePDF = async (
         margin: [0, 5, 0, 0]
       },
 
-      // Signature Section (if enabled)
+      // Signature Section (if enabled) - MOVED TO END OF CONTENT
       ...signatureSection
     ],
     styles: {
@@ -563,6 +595,11 @@ export const generateInvoicePDF = async (
         bold: true,
         color: '#333333'
       },
+      signatureTitle: {
+        fontSize: 10,
+        color: '#666666',
+        bold: true
+      },
       signatureLabel: {
         fontSize: 10,
         color: '#333333',
@@ -572,6 +609,7 @@ export const generateInvoicePDF = async (
   };
 
   console.log('=== PDF GENERATION COMPLETE ===');
+  console.log('Signature section included:', signatureSection.length > 0);
   return docDefinition;
 };
 
