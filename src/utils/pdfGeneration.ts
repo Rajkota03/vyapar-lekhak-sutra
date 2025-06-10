@@ -2,7 +2,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
 import { Client } from '@/hooks/useInvoiceData';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
 // Initialize pdfMake with fonts - correct way
 pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts;
@@ -107,16 +107,13 @@ export const generateInvoicePDF = async (
     console.log('No logo URL found in company settings');
   }
 
-  // Process signature - IMPROVED LOGIC: Check if signature exists in settings OR if invoice specifically enables it
+  // SIMPLIFIED SIGNATURE LOGIC - Show signature if it exists in settings
   console.log('=== SIGNATURE PROCESSING DEBUG ===');
   console.log('Invoice show_my_signature setting:', invoiceData.show_my_signature);
   console.log('Company settings signature_url:', companySettings?.signature_url);
   
-  // Show signature if: 1) Invoice specifically enables it, OR 2) Signature exists in settings (even if invoice setting is undefined/false)
-  const shouldShowSignature = invoiceData.show_my_signature === true || 
-    (companySettings?.signature_url && invoiceData.show_my_signature !== false);
-  
-  if (shouldShowSignature && companySettings?.signature_url) {
+  // Show signature if there's a signature URL in settings (ignore invoice setting for now)
+  if (companySettings?.signature_url) {
     console.log('=== SIGNATURE PROCESSING ENABLED ===');
     console.log('Fetching signature from URL:', companySettings.signature_url);
     signatureBase64 = await getImageAsBase64(companySettings.signature_url);
@@ -129,10 +126,7 @@ export const generateInvoicePDF = async (
       console.log('❌ Failed to process signature image');
     }
   } else {
-    console.log('❌ Signature not enabled or no signature URL found');
-    console.log('- show_my_signature:', invoiceData.show_my_signature);
-    console.log('- signature_url exists:', !!companySettings?.signature_url);
-    console.log('- shouldShowSignature:', shouldShowSignature);
+    console.log('❌ No signature URL found in company settings');
   }
 
   // Calculate totals
@@ -284,11 +278,179 @@ export const generateInvoicePDF = async (
     });
   }
 
-  // Create signature section for bottom of page - IMPROVED POSITIONING WITH SCALE
-  const signatureSection = [];
+  // Create the main content array
+  const mainContent = [
+    // Header Section
+    ...headerContent,
+
+    // Bill To Section
+    {
+      text: 'BILL TO',
+      style: 'sectionHeader',
+      margin: [0, 0, 0, 10]
+    },
+    {
+      stack: [
+        {
+          text: clientData.name,
+          style: 'clientName',
+          margin: [0, 0, 0, 5]
+        },
+        {
+          text: clientData.billing_address || '',
+          style: 'clientAddress',
+          margin: [0, 0, 0, 5]
+        },
+        {
+          text: clientData.gstin ? `GSTIN: ${clientData.gstin}` : '',
+          style: 'clientGstin'
+        }
+      ],
+      margin: [0, 0, 0, 30]
+    },
+
+    // Items Table
+    {
+      table: {
+        headerRows: 1,
+        widths: ['*', 60, 80, 80],
+        body: [
+          // Header row
+          [
+            { text: 'DESCRIPTION', style: 'tableHeader' },
+            { text: 'QTY', style: 'tableHeader', alignment: 'center' },
+            { text: 'RATE', style: 'tableHeader', alignment: 'right' },
+            { text: 'AMOUNT', style: 'tableHeader', alignment: 'right' }
+          ],
+          // Data rows
+          ...lineItems.map(item => [
+            { text: item.description, style: 'tableCell' },
+            { text: item.qty.toString(), style: 'tableCell', alignment: 'center' },
+            { text: formatCurrency(item.unit_price), style: 'tableCell', alignment: 'right' },
+            { text: formatCurrency(item.amount), style: 'tableCell', alignment: 'right' }
+          ])
+        ]
+      },
+      layout: {
+        hLineWidth: (i: number, node: any) => {
+          return i === 0 || i === 1 || i === node.table.body.length ? 1 : 0.5;
+        },
+        vLineWidth: () => 0,
+        hLineColor: (i: number, node: any) => {
+          return i === 0 || i === 1 || i === node.table.body.length ? '#000000' : '#cccccc';
+        },
+        paddingLeft: () => 8,
+        paddingRight: () => 8,
+        paddingTop: () => 8,
+        paddingBottom: () => 8
+      },
+      margin: [0, 0, 0, 30]
+    },
+
+    // Totals Section
+    {
+      columns: [
+        {
+          width: '60%',
+          text: ''
+        },
+        {
+          width: '40%',
+          table: {
+            widths: ['*', 80],
+            body: [
+              [
+                { text: 'Subtotal', style: 'totalLabel' },
+                { text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right' }
+              ],
+              ...(invoiceData.use_igst ? [
+                [
+                  { text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel' },
+                  { text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right' }
+                ]
+              ] : [
+                [
+                  { text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel' },
+                  { text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right' }
+                ],
+                [
+                  { text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel' },
+                  { text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right' }
+                ]
+              ]),
+              [
+                { text: 'Total', style: 'grandTotalLabel' },
+                { text: formatCurrency(grandTotal), style: 'grandTotalValue', alignment: 'right' }
+              ]
+            ]
+          },
+          layout: {
+            hLineWidth: (i: number, node: any) => {
+              return i === node.table.body.length - 1 ? 1 : 0;
+            },
+            vLineWidth: () => 0,
+            hLineColor: () => '#000000',
+            paddingLeft: () => 8,
+            paddingRight: () => 8,
+            paddingTop: () => 6,
+            paddingBottom: () => 6
+          }
+        }
+      ],
+      margin: [0, 0, 0, 40]
+    },
+
+    // Grand Total Section
+    {
+      columns: [
+        {
+          width: '60%',
+          text: ''
+        },
+        {
+          width: '40%',
+          table: {
+            widths: ['*', 80],
+            body: [
+              [
+                { text: 'GRAND TOTAL', style: 'finalTotalLabel' },
+                { text: formatCurrency(grandTotal), style: 'finalTotalValue', alignment: 'right' }
+              ]
+            ]
+          },
+          layout: {
+            hLineWidth: () => 0,
+            vLineWidth: () => 0,
+            fillColor: '#f5f5f5',
+            paddingLeft: () => 8,
+            paddingRight: () => 8,
+            paddingTop: () => 10,
+            paddingBottom: () => 10
+          }
+        }
+      ],
+      margin: [0, 0, 0, 20]
+    },
+
+    // Footer
+    {
+      text: 'Thank you for your business!',
+      style: 'footer',
+      alignment: 'center',
+      margin: [0, 20, 0, 0]
+    },
+    {
+      text: companyData.name,
+      style: 'footerCompany',
+      alignment: 'center',
+      margin: [0, 5, 0, 0]
+    }
+  ];
+
+  // Add signature section if we have a signature
   if (signatureBase64) {
     console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
-    signatureSection.push(
+    mainContent.push(
       // Add space before signature
       {
         text: '',
@@ -348,176 +510,7 @@ export const generateInvoicePDF = async (
   const docDefinition = {
     pageSize: 'A4',
     pageMargins: [40, 60, 40, 60],
-    content: [
-      // Header Section
-      ...headerContent,
-
-      // Bill To Section
-      {
-        text: 'BILL TO',
-        style: 'sectionHeader',
-        margin: [0, 0, 0, 10]
-      },
-      {
-        stack: [
-          {
-            text: clientData.name,
-            style: 'clientName',
-            margin: [0, 0, 0, 5]
-          },
-          {
-            text: clientData.billing_address || '',
-            style: 'clientAddress',
-            margin: [0, 0, 0, 5]
-          },
-          {
-            text: clientData.gstin ? `GSTIN: ${clientData.gstin}` : '',
-            style: 'clientGstin'
-          }
-        ],
-        margin: [0, 0, 0, 30]
-      },
-
-      // Items Table
-      {
-        table: {
-          headerRows: 1,
-          widths: ['*', 60, 80, 80],
-          body: [
-            // Header row
-            [
-              { text: 'DESCRIPTION', style: 'tableHeader' },
-              { text: 'QTY', style: 'tableHeader', alignment: 'center' },
-              { text: 'RATE', style: 'tableHeader', alignment: 'right' },
-              { text: 'AMOUNT', style: 'tableHeader', alignment: 'right' }
-            ],
-            // Data rows
-            ...lineItems.map(item => [
-              { text: item.description, style: 'tableCell' },
-              { text: item.qty.toString(), style: 'tableCell', alignment: 'center' },
-              { text: formatCurrency(item.unit_price), style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(item.amount), style: 'tableCell', alignment: 'right' }
-            ])
-          ]
-        },
-        layout: {
-          hLineWidth: (i: number, node: any) => {
-            return i === 0 || i === 1 || i === node.table.body.length ? 1 : 0.5;
-          },
-          vLineWidth: () => 0,
-          hLineColor: (i: number, node: any) => {
-            return i === 0 || i === 1 || i === node.table.body.length ? '#000000' : '#cccccc';
-          },
-          paddingLeft: () => 8,
-          paddingRight: () => 8,
-          paddingTop: () => 8,
-          paddingBottom: () => 8
-        },
-        margin: [0, 0, 0, 30]
-      },
-
-      // Totals Section
-      {
-        columns: [
-          {
-            width: '60%',
-            text: ''
-          },
-          {
-            width: '40%',
-            table: {
-              widths: ['*', 80],
-              body: [
-                [
-                  { text: 'Subtotal', style: 'totalLabel' },
-                  { text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right' }
-                ],
-                ...(invoiceData.use_igst ? [
-                  [
-                    { text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel' },
-                    { text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right' }
-                  ]
-                ] : [
-                  [
-                    { text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel' },
-                    { text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right' }
-                  ],
-                  [
-                    { text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel' },
-                    { text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right' }
-                  ]
-                ]),
-                [
-                  { text: 'Total', style: 'grandTotalLabel' },
-                  { text: formatCurrency(grandTotal), style: 'grandTotalValue', alignment: 'right' }
-                ]
-              ]
-            },
-            layout: {
-              hLineWidth: (i: number, node: any) => {
-                return i === node.table.body.length - 1 ? 1 : 0;
-              },
-              vLineWidth: () => 0,
-              hLineColor: () => '#000000',
-              paddingLeft: () => 8,
-              paddingRight: () => 8,
-              paddingTop: () => 6,
-              paddingBottom: () => 6
-            }
-          }
-        ],
-        margin: [0, 0, 0, 40]
-      },
-
-      // Grand Total Section
-      {
-        columns: [
-          {
-            width: '60%',
-            text: ''
-          },
-          {
-            width: '40%',
-            table: {
-              widths: ['*', 80],
-              body: [
-                [
-                  { text: 'GRAND TOTAL', style: 'finalTotalLabel' },
-                  { text: formatCurrency(grandTotal), style: 'finalTotalValue', alignment: 'right' }
-                ]
-              ]
-            },
-            layout: {
-              hLineWidth: () => 0,
-              vLineWidth: () => 0,
-              fillColor: '#f5f5f5',
-              paddingLeft: () => 8,
-              paddingRight: () => 8,
-              paddingTop: () => 10,
-              paddingBottom: () => 10
-            }
-          }
-        ],
-        margin: [0, 0, 0, 20]
-      },
-
-      // Footer
-      {
-        text: 'Thank you for your business!',
-        style: 'footer',
-        alignment: 'center',
-        margin: [0, 20, 0, 0]
-      },
-      {
-        text: companyData.name,
-        style: 'footerCompany',
-        alignment: 'center',
-        margin: [0, 5, 0, 0]
-      },
-
-      // Signature Section (if enabled) - MOVED TO END OF CONTENT
-      ...signatureSection
-    ],
+    content: mainContent,
     styles: {
       companyName: {
         fontSize: 16,
@@ -627,7 +620,7 @@ export const generateInvoicePDF = async (
   };
 
   console.log('=== PDF GENERATION COMPLETE ===');
-  console.log('Signature section included:', signatureSection.length > 0);
+  console.log('Signature included:', !!signatureBase64);
   return docDefinition;
 };
 
