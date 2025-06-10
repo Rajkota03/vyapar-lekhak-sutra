@@ -17,8 +17,8 @@ interface CompanyData {
 // Function to convert image URL to base64
 const getImageAsBase64 = async (url: string): Promise<string | null> => {
   try {
-    console.log('=== LOGO FETCH DEBUG ===');
-    console.log('Attempting to fetch logo from URL:', url);
+    console.log('=== IMAGE FETCH DEBUG ===');
+    console.log('Attempting to fetch image from URL:', url);
     
     const response = await fetch(url);
     console.log('Fetch response status:', response.status);
@@ -53,7 +53,7 @@ const getImageAsBase64 = async (url: string): Promise<string | null> => {
   }
 };
 
-// Function to get company settings including logo
+// Function to get company settings including logo and signature
 const getCompanySettings = async (companyId: string) => {
   try {
     console.log('=== COMPANY SETTINGS DEBUG ===');
@@ -87,10 +87,12 @@ export const generateInvoicePDF = async (
   console.log('=== PDF GENERATION START ===');
   console.log('Invoice data:', invoiceData);
   console.log('Company data:', companyData);
+  console.log('Show my signature:', invoiceData.show_my_signature);
   
-  // Get company settings for logo
+  // Get company settings for logo and signature
   const companySettings = await getCompanySettings(invoiceData.company_id);
   let logoBase64: string | null = null;
+  let signatureBase64: string | null = null;
   let logoScale = 0.3;
 
   if (companySettings?.logo_url) {
@@ -102,6 +104,16 @@ export const generateInvoicePDF = async (
     console.log('Logo base64 result:', logoBase64 ? 'SUCCESS' : 'FAILED');
   } else {
     console.log('No logo URL found in company settings');
+  }
+
+  // Process signature if enabled
+  if (invoiceData.show_my_signature && companySettings?.signature_url) {
+    console.log('=== SIGNATURE PROCESSING ===');
+    console.log('Company has signature URL:', companySettings.signature_url);
+    signatureBase64 = await getImageAsBase64(companySettings.signature_url);
+    console.log('Signature base64 result:', signatureBase64 ? 'SUCCESS' : 'FAILED');
+  } else {
+    console.log('Signature not enabled or no signature URL found');
   }
 
   // Calculate totals
@@ -241,6 +253,45 @@ export const generateInvoicePDF = async (
       ],
       margin: [0, 0, 0, 30]
     });
+  }
+
+  // Create signature section for bottom of page
+  const signatureSection = [];
+  if (signatureBase64) {
+    console.log('=== ADDING SIGNATURE SECTION ===');
+    signatureSection.push(
+      // Add some space before signature
+      {
+        text: '',
+        margin: [0, 40, 0, 0]
+      },
+      // Signature section
+      {
+        columns: [
+          {
+            width: '50%',
+            stack: [
+              {
+                image: signatureBase64,
+                width: 120,
+                height: 60,
+                margin: [0, 0, 0, 10]
+              },
+              {
+                text: companyData.name,
+                style: 'signatureLabel',
+                margin: [0, 0, 0, 0]
+              }
+            ]
+          },
+          {
+            width: '50%',
+            text: '' // Empty space on right
+          }
+        ],
+        margin: [0, 20, 0, 0]
+      }
+    );
   }
 
   // Create document definition
@@ -412,7 +463,10 @@ export const generateInvoicePDF = async (
         style: 'footerCompany',
         alignment: 'center',
         margin: [0, 5, 0, 0]
-      }
+      },
+
+      // Signature Section (if enabled)
+      ...signatureSection
     ],
     styles: {
       companyName: {
@@ -508,6 +562,11 @@ export const generateInvoicePDF = async (
         fontSize: 12,
         bold: true,
         color: '#333333'
+      },
+      signatureLabel: {
+        fontSize: 10,
+        color: '#333333',
+        bold: true
       }
     }
   };
