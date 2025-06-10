@@ -8,10 +8,12 @@ import { Upload, Trash2 } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 const SignatureSheet: React.FC = () => {
   const navigate = useNavigate();
-  const companyId = "your-company-id"; // Replace with actual company ID from context
+  const { selectedCompany } = useAuth();
+  const companyId = selectedCompany?.id;
   const { settings, updateSettings } = useCompanySettings(companyId);
   
   const [signatureUrl, setSignatureUrl] = useState("");
@@ -25,10 +27,21 @@ const SignatureSheet: React.FC = () => {
 
   const handleSignatureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !companyId) {
+      if (!companyId) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No company selected",
+        });
+      }
+      return;
+    }
 
     setUploading(true);
     try {
+      console.log('Uploading signature for company:', companyId);
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `company_${companyId}/signature.${fileExt}`;
       
@@ -36,12 +49,16 @@ const SignatureSheet: React.FC = () => {
         .from('company-assets')
         .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage
         .from('company-assets')
         .getPublicUrl(fileName);
 
+      console.log('Signature uploaded successfully. URL:', data.publicUrl);
       setSignatureUrl(data.publicUrl);
       
       await updateSettings({ signature_url: data.publicUrl });
@@ -63,6 +80,15 @@ const SignatureSheet: React.FC = () => {
   };
 
   const handleDeleteSignature = async () => {
+    if (!companyId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No company selected",
+      });
+      return;
+    }
+
     try {
       setSignatureUrl("");
       await updateSettings({ signature_url: null });
@@ -72,6 +98,7 @@ const SignatureSheet: React.FC = () => {
         description: "Signature removed successfully",
       });
     } catch (error) {
+      console.error('Error removing signature:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -79,6 +106,16 @@ const SignatureSheet: React.FC = () => {
       });
     }
   };
+
+  if (!companyId) {
+    return (
+      <SheetLayout title="Signature">
+        <div className="text-center text-muted-foreground">
+          Please select a company first
+        </div>
+      </SheetLayout>
+    );
+  }
 
   return (
     <SheetLayout title="Signature">
