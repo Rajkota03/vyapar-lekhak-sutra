@@ -1,4 +1,5 @@
 
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -117,45 +118,53 @@ export const generateInvoicePDF = async (
     return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  // Create header content with logo
+  // Create header content with improved layout matching the reference image
   const headerContent = [];
   
   if (logoBase64) {
     console.log('=== CREATING HEADER WITH LOGO ===');
-    // Header with logo
+    // Header with logo on left and company details on right
     headerContent.push({
       columns: [
         {
-          image: logoBase64,
-          width: 40,
-          height: 40,
-          margin: [0, 0, 10, 0]
-        },
-        {
-          width: '*',
+          width: 120,
           stack: [
             {
-              text: companyData.name,
-              style: 'companyName',
-              margin: [0, 0, 0, 5]
-            },
-            {
-              text: companyData.address || '',
-              style: 'companyAddress',
-              margin: [0, 0, 0, 5]
-            },
-            {
-              text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
-              style: 'companyGstin'
+              image: logoBase64,
+              width: 80,
+              height: 80,
+              margin: [0, 0, 0, 0]
             }
           ]
         },
         {
-          width: 150,
+          width: '*',
+          text: '' // spacer
+        },
+        {
+          width: 200,
           stack: [
             {
               text: 'Invoice',
               style: 'invoiceTitle',
+              alignment: 'right',
+              margin: [0, 0, 0, 15]
+            },
+            {
+              text: companyData.name,
+              style: 'companyName',
+              alignment: 'right',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: companyData.address || '',
+              style: 'companyAddress',
+              alignment: 'right',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
+              style: 'companyGstin',
               alignment: 'right',
               margin: [0, 0, 0, 10]
             },
@@ -177,7 +186,7 @@ export const generateInvoicePDF = async (
     });
   } else {
     console.log('=== CREATING HEADER WITHOUT LOGO ===');
-    // Header without logo
+    // Header without logo but maintaining the layout structure
     headerContent.push({
       columns: [
         {
@@ -399,30 +408,30 @@ export const generateInvoicePDF = async (
     ],
     styles: {
       companyName: {
-        fontSize: 20,
+        fontSize: 16,
         bold: true,
         color: '#333333'
       },
       companyAddress: {
         fontSize: 10,
         color: '#666666',
-        lineHeight: 1.2
+        lineHeight: 1.3
       },
       companyGstin: {
         fontSize: 10,
         color: '#666666'
       },
       invoiceTitle: {
-        fontSize: 24,
+        fontSize: 28,
         bold: true,
         color: '#333333'
       },
       invoiceNumber: {
-        fontSize: 12,
+        fontSize: 11,
         color: '#666666'
       },
       invoiceDate: {
-        fontSize: 12,
+        fontSize: 11,
         color: '#666666'
       },
       sectionHeader: {
