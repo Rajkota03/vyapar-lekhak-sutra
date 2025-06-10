@@ -54,6 +54,11 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     </Sheet>
   );
 
+  console.log('=== INVOICE HEADER DEBUG ===');
+  console.log('Invoice ID:', invoiceId);
+  console.log('Should show floating buttons:', !!invoiceId);
+  console.log('onPreview function:', !!onPreview);
+
   return (
     <>
       {/* Compact Header */}
@@ -88,33 +93,32 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
       {/* Floating Bottom Action Bar - Only show if invoice exists */}
       {invoiceId && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg p-3">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg p-4 safe-area-pb">
           <div className="max-w-screen-sm mx-auto flex gap-3">
             {onPreview && (
               <Button
                 onClick={onPreview}
                 variant="outline"
-                className="flex-1 h-10"
+                className="flex-1 h-12 text-base font-medium"
                 disabled={isGeneratingPreview}
               >
                 {isGeneratingPreview ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                 ) : (
-                  <Eye className="h-4 w-4 mr-2" />
+                  <Eye className="h-5 w-5 mr-2" />
                 )}
                 {isGeneratingPreview ? "Generating..." : "Preview"}
               </Button>
             )}
             <Button
               onClick={handlePdfDownload}
-              variant="default"
-              className="flex-1 h-10"
+              className="flex-1 h-12 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={isDownloadingPdf}
             >
               {isDownloadingPdf ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               ) : (
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-5 w-5 mr-2" />
               )}
               {isDownloadingPdf ? "Preparing..." : "Download PDF"}
             </Button>
