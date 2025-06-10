@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,16 +46,29 @@ const ItemModal: React.FC<ItemModalProps> = ({
   const itemMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       setIsSubmitting(true);
+      
+      // Validate that companyId is provided and is a valid UUID
+      if (!companyId || companyId.trim() === '') {
+        throw new Error('Company ID is required');
+      }
+      
+      console.log('=== CREATING/UPDATING ITEM ===');
+      console.log('Company ID:', companyId);
+      console.log('Item name:', name);
+      console.log('Is editing:', isEditing);
+      
       try {
-        // Prepare the item data with explicit company_id
+        // Prepare the item data with explicit company_id validation
         const itemData = {
-          name,
-          code: code || null,
+          name: name.trim(),
+          code: code.trim() || null,
           default_price: defaultPrice ? parseFloat(defaultPrice) : null,
           default_cgst: useCGST ? 9 : null,
           default_sgst: useSGST ? 9 : null,
           company_id: companyId
         };
+
+        console.log('Item data to save:', itemData);
 
         let newItem: Item;
 
@@ -67,8 +81,12 @@ const ItemModal: React.FC<ItemModalProps> = ({
             .select()
             .single();
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error updating item:', error);
+            throw error;
+          }
           newItem = data;
+          console.log('Item updated successfully:', newItem);
         } else {
           // Create new item
           const { data, error } = await supabase
@@ -77,8 +95,12 @@ const ItemModal: React.FC<ItemModalProps> = ({
             .select()
             .single();
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error creating item:', error);
+            throw error;
+          }
           newItem = data;
+          console.log('Item created successfully:', newItem);
         }
 
         // Handle photo upload if there is a photo
@@ -126,11 +148,20 @@ const ItemModal: React.FC<ItemModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name) {
+    if (!name.trim()) {
       toast({
         variant: "destructive",
         title: "Name is required",
         description: "Please enter an item name"
+      });
+      return;
+    }
+
+    if (!companyId || companyId.trim() === '') {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Company ID is missing. Please refresh the page and try again."
       });
       return;
     }
@@ -149,7 +180,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save the item. Please try again."
+        description: error instanceof Error ? error.message : "Failed to save the item. Please try again."
       });
     }
   };
@@ -250,7 +281,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
             </Button>
             <Button 
               type="submit"
-              disabled={isSubmitting || !name}
+              disabled={isSubmitting || !name.trim()}
             >
               {isSubmitting ? "Saving..." : isEditing ? "Update" : "Create"}
             </Button>

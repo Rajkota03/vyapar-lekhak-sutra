@@ -48,18 +48,32 @@ export const useInvoiceData = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [existingInvoice, setExistingInvoice] = useState<any>(null);
 
+  // Log company ID changes
+  useEffect(() => {
+    console.log('=== COMPANY ID CHANGED ===');
+    console.log('Selected Company ID:', selectedCompanyId);
+  }, [selectedCompanyId]);
+
   const { data: clients, isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients', selectedCompanyId],
     queryFn: async () => {
-      if (!selectedCompanyId) return [];
+      if (!selectedCompanyId) {
+        console.log('No company ID for clients query');
+        return [];
+      }
+      
+      console.log('=== FETCHING CLIENTS ===');
+      console.log('Company ID:', selectedCompanyId);
+      
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .eq('company_id', selectedCompanyId);
       if (error) {
-        console.error(error);
+        console.error('Error fetching clients:', error);
         throw new Error(error.message);
       }
+      console.log('Clients fetched:', data?.length || 0);
       return data;
     },
     enabled: !!selectedCompanyId,
@@ -68,15 +82,23 @@ export const useInvoiceData = () => {
   const { data: items, isLoading: isLoadingItems } = useQuery({
     queryKey: ['items', selectedCompanyId],
     queryFn: async () => {
-      if (!selectedCompanyId) return [];
+      if (!selectedCompanyId) {
+        console.log('No company ID for items query');
+        return [];
+      }
+      
+      console.log('=== FETCHING ITEMS ===');
+      console.log('Company ID:', selectedCompanyId);
+      
       const { data, error } = await supabase
         .from('items')
         .select('*')
         .eq('company_id', selectedCompanyId);
       if (error) {
-        console.error(error);
+        console.error('Error fetching items:', error);
         throw new Error(error.message);
       }
+      console.log('Items fetched:', data?.length || 0);
       return data;
     },
     enabled: !!selectedCompanyId,
@@ -87,6 +109,10 @@ export const useInvoiceData = () => {
     queryFn: async () => {
       const { invoiceId } = useParams();
       if (!invoiceId) return null;
+      
+      console.log('=== FETCHING EXISTING INVOICE ===');
+      console.log('Invoice ID:', invoiceId);
+      
       setIsEditing(true);
       const { data, error } = await supabase
         .from('invoices')
@@ -94,10 +120,13 @@ export const useInvoiceData = () => {
         .eq('id', invoiceId)
         .single();
       if (error) {
-        console.error(error);
+        console.error('Error fetching invoice:', error);
         throw new Error(error.message);
       }
+      
+      console.log('Invoice fetched:', data);
       setSelectedDate(new Date(data.issue_date));
+      
       // Fetch the client data
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
@@ -106,9 +135,11 @@ export const useInvoiceData = () => {
         .single();
 
       if (clientError) {
-        console.error(clientError);
+        console.error('Error fetching client:', clientError);
         throw new Error(clientError.message);
       }
+      
+      console.log('Client fetched:', clientData);
       setSelectedClient(clientData);
 
       // Fetch line items
@@ -118,7 +149,7 @@ export const useInvoiceData = () => {
         .eq('invoice_id', invoiceId);
 
       if (lineItemsError) {
-        console.error(lineItemsError);
+        console.error('Error fetching line items:', lineItemsError);
         throw new Error(lineItemsError.message);
       }
 
@@ -136,6 +167,7 @@ export const useInvoiceData = () => {
         note: item.note || ''
       }));
 
+      console.log('Line items fetched and formatted:', formattedLineItems);
       setLineItems(formattedLineItems);
       setExistingInvoice(data);
       return data;
@@ -156,12 +188,23 @@ export const useInvoiceData = () => {
       requireClientSignature: boolean;
     }) => {
       console.log('=== SAVE INVOICE MUTATION START ===');
+      console.log('Selected Company ID:', selectedCompanyId);
+      console.log('Selected Client:', selectedClient);
+      console.log('Line Items:', lineItems);
       console.log('Tax config:', taxConfig);
       console.log('Show my signature:', showMySignature);
       console.log('Require client signature:', requireClientSignature);
       
       if (!selectedClient || !selectedCompanyId) {
-        throw new Error('Missing required data');
+        const errorMsg = `Missing required data - Client: ${!!selectedClient}, Company: ${!!selectedCompanyId}`;
+        console.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      if (lineItems.length === 0) {
+        const errorMsg = 'No line items to save';
+        console.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       const totals = calcTotals(lineItems, taxConfig);
@@ -208,6 +251,7 @@ export const useInvoiceData = () => {
         savedInvoice = updatedInvoice;
 
         // Delete existing line items
+        console.log('Deleting existing line items for invoice:', existingInvoice.id);
         const { error: deleteError } = await supabase
           .from('invoice_lines')
           .delete()
@@ -217,6 +261,7 @@ export const useInvoiceData = () => {
           console.error('Error deleting existing line items:', deleteError);
           throw deleteError;
         }
+        console.log('Existing line items deleted');
       } else {
         console.log('=== CREATING NEW INVOICE ===');
         
@@ -272,6 +317,8 @@ export const useInvoiceData = () => {
           note: item.note || ''
         }));
 
+        console.log('Formatted line items data:', lineItemsData);
+
         const { error: lineItemsError } = await supabase
           .from('invoice_lines')
           .insert(lineItemsData);
@@ -310,7 +357,7 @@ export const useInvoiceData = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save invoice. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save invoice. Please try again.",
       });
     },
   });

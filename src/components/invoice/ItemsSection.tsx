@@ -26,6 +26,9 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
   // Add a new line item from the selected item
   const addLineItem = (item: Item) => {
+    console.log('=== ADDING LINE ITEM ===');
+    console.log('Selected item:', item);
+    
     const newItem: LineItem = {
       item_id: item.id,
       description: item.name,
@@ -38,12 +41,20 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
       note: '',
     };
 
-    setLineItems([...lineItems, newItem]);
+    console.log('New line item:', newItem);
+    setLineItems(prevItems => {
+      const updatedItems = [...prevItems, newItem];
+      console.log('Updated line items:', updatedItems);
+      return updatedItems;
+    });
     setItemPickerOpen(false);
   };
 
   // Update line item quantity or price
   const updateLineItem = (index: number, field: string, value: number) => {
+    console.log('=== UPDATING LINE ITEM ===');
+    console.log('Index:', index, 'Field:', field, 'Value:', value);
+    
     const updatedItems = [...lineItems];
     const item = { ...updatedItems[index] };
 
@@ -56,11 +67,15 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
     }
 
     updatedItems[index] = item;
+    console.log('Updated line item:', item);
     setLineItems(updatedItems);
   };
 
   // Update entire line item (from edit sheet)
   const updateEntireLineItem = (index: number, updatedLine: LineItem) => {
+    console.log('=== UPDATING ENTIRE LINE ITEM ===');
+    console.log('Index:', index, 'Updated line:', updatedLine);
+    
     const updatedItems = [...lineItems];
     updatedItems[index] = updatedLine;
     setLineItems(updatedItems);
@@ -68,6 +83,9 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
 
   // Remove a line item
   const removeLineItem = (index: number) => {
+    console.log('=== REMOVING LINE ITEM ===');
+    console.log('Index:', index);
+    
     const updatedItems = [...lineItems];
     updatedItems.splice(index, 1);
     setLineItems(updatedItems);
@@ -75,7 +93,19 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
   };
 
   const handleEditItem = (index: number) => {
+    console.log('=== EDITING LINE ITEM ===');
+    console.log('Index:', index);
     setEditingLineIndex(index);
+  };
+
+  const handleOpenItemPicker = () => {
+    if (!selectedCompanyId) {
+      console.error('Cannot open item picker: No company ID');
+      return;
+    }
+    console.log('=== OPENING ITEM PICKER ===');
+    console.log('Company ID:', selectedCompanyId);
+    setItemPickerOpen(true);
   };
 
   return (
@@ -98,7 +128,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
             onEditItem={handleEditItem}
           />
         ) : (
-          <NoItemsView onAddItem={() => setItemPickerOpen(true)} />
+          <NoItemsView onAddItem={handleOpenItemPicker} />
         )}
       </div>
 
@@ -106,7 +136,8 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
         <Button
           variant="outline"
           className="w-full flex items-center justify-center border-dashed border-blue-500 text-blue-500 h-8 rounded text-xs font-medium"
-          onClick={() => setItemPickerOpen(true)}
+          onClick={handleOpenItemPicker}
+          disabled={!selectedCompanyId}
         >
           <Plus className="h-4 w-4 mr-2" /> Add Item
         </Button>

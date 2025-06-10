@@ -24,7 +24,14 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['items', companyId, debouncedSearchTerm],
     queryFn: async () => {
-      if (!companyId) return [];
+      if (!companyId) {
+        console.log('No company ID provided to ItemPicker');
+        return [];
+      }
+      
+      console.log('=== FETCHING ITEMS ===');
+      console.log('Company ID:', companyId);
+      console.log('Search term:', debouncedSearchTerm);
       
       const query = supabase
         .from('items')
@@ -42,6 +49,7 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
         return [];
       }
       
+      console.log('Items fetched:', data?.length || 0);
       return data || [];
     },
     enabled: !!companyId,
@@ -49,15 +57,26 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
 
   // Handle item select
   const handleItemSelect = (item: Item) => {
+    console.log('Item selected:', item);
     onItemSelect(item);
     onClose();
   };
 
   // Handle new item creation
   const handleItemCreated = (newItem: Item) => {
+    console.log('New item created:', newItem);
     setIsModalOpen(false);
     onItemSelect(newItem);
     onClose();
+  };
+
+  const handleCreateNewItem = () => {
+    if (!companyId) {
+      console.error('Cannot create item: No company ID');
+      return;
+    }
+    console.log('Opening item creation modal for company:', companyId);
+    setIsModalOpen(true);
   };
 
   return (
@@ -68,7 +87,8 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
           <Button 
             variant="outline" 
             className="w-full justify-start text-blue-500 border-blue-200 hover:bg-blue-50 h-10 text-sm"
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleCreateNewItem}
+            disabled={!companyId}
           >
             <Plus className="h-4 w-4 mr-2" /> Create new item
           </Button>
@@ -135,12 +155,14 @@ const ItemPicker: React.FC<ItemPickerProps> = ({ companyId, onItemSelect, onClos
         </div>
       </div>
 
-      <ItemModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onItemCreated={handleItemCreated}
-        companyId={companyId || ""}
-      />
+      {companyId && (
+        <ItemModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onItemCreated={handleItemCreated}
+          companyId={companyId}
+        />
+      )}
     </>
   );
 };
