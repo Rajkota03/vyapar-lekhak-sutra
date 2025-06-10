@@ -1,7 +1,9 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
 import { Client } from '@/hooks/useInvoiceData';
+import { supabase } from '@/integrations/supabase/client';
 
 // Initialize pdfMake with fonts - correct way
 pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts;
@@ -13,12 +15,74 @@ interface CompanyData {
   logo_url?: string;
 }
 
+// Function to convert image URL to base64
+const getImageAsBase64 = async (url: string): Promise<string | null> => {
+  try {
+    console.log('Fetching image from URL:', url);
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error('Failed to fetch image:', response.status, response.statusText);
+      return null;
+    }
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        console.log('Successfully converted image to base64, length:', base64.length);
+        resolve(base64);
+      };
+      reader.onerror = () => {
+        console.error('Error reading image as base64');
+        resolve(null);
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    return null;
+  }
+};
+
+// Function to get company settings including logo
+const getCompanySettings = async (companyId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('company_settings')
+      .select('*')
+      .eq('company_id', companyId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching company settings:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching company settings:', error);
+    return null;
+  }
+};
+
 export const generateInvoicePDF = async (
   invoiceData: Invoice,
   clientData: Client,
   companyData: CompanyData,
   lineItems: LineItem[]
 ) => {
+  // Get company settings for logo
+  const companySettings = await getCompanySettings(invoiceData.company_id);
+  let logoBase64: string | null = null;
+  let logoScale = 0.3;
+
+  if (companySettings?.logo_url) {
+    console.log('Company has logo URL:', companySettings.logo_url);
+    logoBase64 = await getImageAsBase64(companySettings.logo_url);
+    logoScale = Number(companySettings.logo_scale || 0.3);
+    console.log('Logo scale:', logoScale);
+  }
+
   // Calculate totals
   const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
   const cgstAmount = invoiceData.cgst || 0;
@@ -31,58 +95,121 @@ export const generateInvoicePDF = async (
     return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // Create header content with logo
+  const headerContent = [];
+  
+  if (logoBase64) {
+    // Header with logo
+    headerContent.push({
+      columns: [
+        {
+          width: 60,
+          image: logoBase64,
+          width: 60 * logoScale,
+          height: 60 * logoScale,
+          margin: [0, 0, 10, 0]
+        },
+        {
+          width: '*',
+          stack: [
+            {
+              text: companyData.name,
+              style: 'companyName',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: companyData.address || '',
+              style: 'companyAddress',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
+              style: 'companyGstin'
+            }
+          ]
+        },
+        {
+          width: 150,
+          stack: [
+            {
+              text: 'Invoice',
+              style: 'invoiceTitle',
+              alignment: 'right',
+              margin: [0, 0, 0, 10]
+            },
+            {
+              text: `Invoice #: ${invoiceData.number}`,
+              style: 'invoiceNumber',
+              alignment: 'right',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
+              style: 'invoiceDate',
+              alignment: 'right'
+            }
+          ]
+        }
+      ],
+      margin: [0, 0, 0, 30]
+    });
+  } else {
+    // Header without logo
+    headerContent.push({
+      columns: [
+        {
+          width: '60%',
+          stack: [
+            {
+              text: companyData.name,
+              style: 'companyName',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: companyData.address || '',
+              style: 'companyAddress',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
+              style: 'companyGstin'
+            }
+          ]
+        },
+        {
+          width: '40%',
+          stack: [
+            {
+              text: 'Invoice',
+              style: 'invoiceTitle',
+              alignment: 'right',
+              margin: [0, 0, 0, 10]
+            },
+            {
+              text: `Invoice #: ${invoiceData.number}`,
+              style: 'invoiceNumber',
+              alignment: 'right',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
+              style: 'invoiceDate',
+              alignment: 'right'
+            }
+          ]
+        }
+      ],
+      margin: [0, 0, 0, 30]
+    });
+  }
+
   // Create document definition
   const docDefinition = {
     pageSize: 'A4',
     pageMargins: [40, 60, 40, 60],
     content: [
       // Header Section
-      {
-        columns: [
-          {
-            width: '60%',
-            stack: [
-              {
-                text: companyData.name,
-                style: 'companyName',
-                margin: [0, 0, 0, 5]
-              },
-              {
-                text: companyData.address || '',
-                style: 'companyAddress',
-                margin: [0, 0, 0, 5]
-              },
-              {
-                text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
-                style: 'companyGstin'
-              }
-            ]
-          },
-          {
-            width: '40%',
-            stack: [
-              {
-                text: 'Invoice',
-                style: 'invoiceTitle',
-                alignment: 'right',
-                margin: [0, 0, 0, 10]
-              },
-              {
-                text: `Invoice #: ${invoiceData.number}`,
-                style: 'invoiceNumber',
-                alignment: 'right',
-                margin: [0, 0, 0, 5]
-              },
-              {
-                text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
-                style: 'invoiceDate',
-                alignment: 'right'
-              }
-            ]
-          }
-        ],
-        margin: [0, 0, 0, 30]
-      },
+      ...headerContent,
 
       // Bill To Section
       {
