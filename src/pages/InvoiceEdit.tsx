@@ -70,6 +70,28 @@ const InvoiceEdit = () => {
       requireClientSignature: existingInvoice?.require_client_signature || false
     }
   });
+
+  // Update form when existing invoice data changes
+  useEffect(() => {
+    if (existingInvoice) {
+      console.log('=== UPDATING FORM WITH EXISTING INVOICE DATA ===');
+      console.log('Existing invoice signature settings:');
+      console.log('- show_my_signature:', existingInvoice.show_my_signature);
+      console.log('- require_client_signature:', existingInvoice.require_client_signature);
+      
+      form.reset({
+        taxConfig: {
+          useIgst: existingInvoice.use_igst || false,
+          cgstPct: existingInvoice.cgst_pct || 9,
+          sgstPct: existingInvoice.sgst_pct || 9,
+          igstPct: existingInvoice.igst_pct || 18
+        },
+        showMySignature: existingInvoice.show_my_signature || false,
+        requireClientSignature: existingInvoice.require_client_signature || false
+      });
+    }
+  }, [existingInvoice, form]);
+
   const taxConfig = form.watch('taxConfig') as TaxConfig;
 
   // Calculate totals using the utility function with tax configuration
@@ -107,7 +129,7 @@ const InvoiceEdit = () => {
 
   // Handle form submission including tax config and signatures
   const handleSaveInvoice = () => {
-    console.log('Save button clicked');
+    console.log('=== SAVE BUTTON CLICKED ===');
     console.log('Can save?', !!selectedClient && lineItems.length > 0);
     console.log('Selected client:', selectedClient);
     console.log('Line items:', lineItems);
@@ -118,7 +140,10 @@ const InvoiceEdit = () => {
     }
     
     const formValues = form.getValues();
-    console.log('Form values:', formValues);
+    console.log('=== CURRENT FORM VALUES ===');
+    console.log('Tax config:', formValues.taxConfig);
+    console.log('Show my signature:', formValues.showMySignature);
+    console.log('Require client signature:', formValues.requireClientSignature);
     
     saveInvoiceMutation.mutate({
       navigate,
