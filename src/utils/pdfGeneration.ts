@@ -1,4 +1,3 @@
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -103,7 +102,6 @@ export const generateInvoicePDF = async (
     headerContent.push({
       columns: [
         {
-          width: 60,
           image: logoBase64,
           width: 60 * logoScale,
           height: 60 * logoScale,
