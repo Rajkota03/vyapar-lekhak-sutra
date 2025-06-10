@@ -5,7 +5,6 @@ import { SheetLayout } from "@/components/ui/SheetLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,7 +19,8 @@ const CompanyInfoSheet: React.FC = () => {
     email: "",
     phone: "",
     gstin: "",
-    address: "",
+    addressLine1: "",
+    addressLine2: "",
     city: "",
     state: "",
     zipCode: "",
@@ -48,12 +48,16 @@ const CompanyInfoSheet: React.FC = () => {
         console.log('Loaded company data:', company);
         
         if (company) {
+          // Split existing address into two lines if it exists
+          const addressLines = company.address ? company.address.split('\n') : ['', ''];
+          
           setFormData({
             name: company.name || "",
             email: "", // Not stored in companies table
             phone: "", // Not stored in companies table
             gstin: company.gstin || "",
-            address: company.address || "",
+            addressLine1: addressLines[0] || "",
+            addressLine2: addressLines[1] || "",
             city: "", // Not stored in companies table
             state: "", // Not stored in companies table
             zipCode: "", // Not stored in companies table
@@ -96,11 +100,16 @@ const CompanyInfoSheet: React.FC = () => {
 
     setSaving(true);
     try {
+      // Combine address lines into a single address field for storage
+      const combinedAddress = [formData.addressLine1.trim(), formData.addressLine2.trim()]
+        .filter(line => line.length > 0)
+        .join('\n');
+
       // Update companies table with only the fields that exist in the schema
       const companyUpdateData = {
         name: formData.name.trim(),
         gstin: formData.gstin.trim() || null,
-        address: formData.address.trim() || null,
+        address: combinedAddress || null,
       };
       
       console.log('Updating companies table with:', companyUpdateData);
@@ -215,13 +224,22 @@ const CompanyInfoSheet: React.FC = () => {
         </div>
 
         <div>
-          <Label htmlFor="address">Address</Label>
-          <Textarea
-            id="address"
-            value={formData.address}
-            onChange={(e) => handleChange('address', e.target.value)}
-            placeholder="Enter complete address"
-            rows={3}
+          <Label htmlFor="addressLine1">Address Line 1</Label>
+          <Input
+            id="addressLine1"
+            value={formData.addressLine1}
+            onChange={(e) => handleChange('addressLine1', e.target.value)}
+            placeholder="Street address, building number"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="addressLine2">Address Line 2</Label>
+          <Input
+            id="addressLine2"
+            value={formData.addressLine2}
+            onChange={(e) => handleChange('addressLine2', e.target.value)}
+            placeholder="Area, landmark (optional)"
           />
         </div>
 
