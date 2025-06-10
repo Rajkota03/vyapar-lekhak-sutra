@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Upload, Trash2 } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +15,7 @@ const SignatureSheet: React.FC = () => {
   const { settings, updateSettings, isLoading, companyId } = useCompanySettings();
   
   const [signatureUrl, setSignatureUrl] = useState("");
+  const [signatureScale, setSignatureScale] = useState(1.0);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -28,6 +31,11 @@ const SignatureSheet: React.FC = () => {
     } else {
       console.log('No signature URL in settings, clearing local state');
       setSignatureUrl("");
+    }
+
+    if (settings?.signature_scale) {
+      console.log('Setting signature scale from settings:', settings.signature_scale);
+      setSignatureScale(Number(settings.signature_scale));
     }
   }, [settings, companyId, isLoading]);
 
@@ -153,13 +161,17 @@ const SignatureSheet: React.FC = () => {
         }
       }
       
-      // Update company settings to remove signature URL
-      await updateSettings({ signature_url: null });
+      // Update company settings to remove signature URL and scale
+      await updateSettings({ 
+        signature_url: null,
+        signature_scale: null 
+      });
       
       console.log('=== SIGNATURE DELETE SUCCESS ===');
       
       // Update local state immediately
       setSignatureUrl("");
+      setSignatureScale(1.0);
       
       toast({
         title: "Success",
@@ -175,6 +187,35 @@ const SignatureSheet: React.FC = () => {
       });
     }
   };
+
+  const handleScaleChange = async (value: number[]) => {
+    const newScale = value[0];
+    setSignatureScale(newScale);
+    
+    try {
+      await updateSettings({ signature_scale: newScale });
+      console.log('Signature scale updated to:', newScale);
+    } catch (error) {
+      console.error('Error updating signature scale:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update signature scale",
+      });
+    }
+  };
+
+  // Calculate preview dimensions - using a base of 150px width for signature preview
+  const previewBaseWidth = 150;
+  const previewBaseHeight = 60;
+  const previewWidth = previewBaseWidth * signatureScale;
+  const previewHeight = previewBaseHeight * signatureScale;
+
+  console.log('=== SIGNATURE SHEET DEBUG ===');
+  console.log('Current signatureUrl state:', signatureUrl);
+  console.log('Current signatureScale state:', signatureScale);
+  console.log('Settings from hook:', settings);
+  console.log('Company ID:', companyId);
 
   if (!companyId) {
     return (
@@ -207,18 +248,61 @@ const SignatureSheet: React.FC = () => {
         </div>
 
         {signatureUrl ? (
-          <div className="space-y-4">
-            <div className="border rounded-lg p-6 bg-gray-50">
-              <img 
-                src={signatureUrl} 
-                alt="Digital Signature" 
-                className="max-w-full max-h-24 mx-auto object-contain"
-                onError={() => {
-                  console.error('Failed to load signature image:', signatureUrl);
-                  setSignatureUrl("");
-                }}
-              />
+          <div className="space-y-6">
+            {/* Signature Preview Section */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-gray-700">Preview</h4>
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                <img 
+                  src={signatureUrl} 
+                  alt="Digital Signature" 
+                  className="object-contain border border-gray-200 shadow-sm"
+                  style={{ 
+                    height: `${previewHeight}px`,
+                    width: `${previewWidth}px`,
+                    maxHeight: '120px',
+                    maxWidth: '100%'
+                  }}
+                  onLoad={() => console.log('Signature preview loaded successfully')}
+                  onError={(e) => {
+                    console.error('Signature preview failed to load:', e);
+                    console.error('Failed URL:', signatureUrl);
+                    setSignatureUrl("");
+                  }}
+                  crossOrigin="anonymous"
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                This is how your signature will appear on invoices
+              </p>
             </div>
+
+            {/* Signature Size Control */}
+            <div className="space-y-4">
+              <label className="text-sm font-medium text-gray-700">
+                Signature Size
+              </label>
+              <div className="px-2">
+                <Slider
+                  value={[signatureScale]}
+                  onValueChange={handleScaleChange}
+                  max={3.0}
+                  min={0.3}
+                  step={0.1}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Small (0.3x)</span>
+                <span className="font-medium">Current: {signatureScale.toFixed(1)}x</span>
+                <span>Large (3.0x)</span>
+              </div>
+              <div className="text-xs text-gray-400 text-center">
+                PDF Dimensions: {Math.round(150 * signatureScale)}px × {Math.round(60 * signatureScale)}px
+              </div>
+            </div>
+
+            {/* Action Buttons */}
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -235,6 +319,14 @@ const SignatureSheet: React.FC = () => {
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
+            </div>
+
+            {/* Technical Details */}
+            <div className="bg-gray-50 p-3 rounded text-xs space-y-1">
+              <p><strong>Technical Details:</strong></p>
+              <p>Original URL: {signatureUrl.substring(0, 50)}...</p>
+              <p>Scale Factor: {signatureScale}x</p>
+              <p>PDF Dimensions: {Math.round(150 * signatureScale)}px × {Math.round(60 * signatureScale)}px</p>
             </div>
           </div>
         ) : (

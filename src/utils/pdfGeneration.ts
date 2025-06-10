@@ -94,6 +94,7 @@ export const generateInvoicePDF = async (
   let logoBase64: string | null = null;
   let signatureBase64: string | null = null;
   let logoScale = 0.3;
+  let signatureScale = 1.0;
 
   if (companySettings?.logo_url) {
     console.log('=== LOGO PROCESSING ===');
@@ -106,15 +107,21 @@ export const generateInvoicePDF = async (
     console.log('No logo URL found in company settings');
   }
 
-  // Process signature if enabled - FIXED THE LOGIC HERE
+  // Process signature - IMPROVED LOGIC: Check if signature exists in settings OR if invoice specifically enables it
   console.log('=== SIGNATURE PROCESSING DEBUG ===');
   console.log('Invoice show_my_signature setting:', invoiceData.show_my_signature);
   console.log('Company settings signature_url:', companySettings?.signature_url);
   
-  if (invoiceData.show_my_signature === true && companySettings?.signature_url) {
+  // Show signature if: 1) Invoice specifically enables it, OR 2) Signature exists in settings (even if invoice setting is undefined/false)
+  const shouldShowSignature = invoiceData.show_my_signature === true || 
+    (companySettings?.signature_url && invoiceData.show_my_signature !== false);
+  
+  if (shouldShowSignature && companySettings?.signature_url) {
     console.log('=== SIGNATURE PROCESSING ENABLED ===');
     console.log('Fetching signature from URL:', companySettings.signature_url);
     signatureBase64 = await getImageAsBase64(companySettings.signature_url);
+    signatureScale = Number(companySettings.signature_scale || 1.0);
+    console.log('Signature scale:', signatureScale);
     console.log('Signature base64 result:', signatureBase64 ? 'SUCCESS' : 'FAILED');
     if (signatureBase64) {
       console.log('✅ Signature will be added to PDF');
@@ -125,6 +132,7 @@ export const generateInvoicePDF = async (
     console.log('❌ Signature not enabled or no signature URL found');
     console.log('- show_my_signature:', invoiceData.show_my_signature);
     console.log('- signature_url exists:', !!companySettings?.signature_url);
+    console.log('- shouldShowSignature:', shouldShowSignature);
   }
 
   // Calculate totals
@@ -148,6 +156,16 @@ export const generateInvoicePDF = async (
   console.log('Base dimensions:', baseLogo);
   console.log('Scale factor:', logoScale);
   console.log('Final dimensions:', { width: logoWidth, height: logoHeight });
+
+  // Calculate signature dimensions based on scale
+  const baseSignature = { width: 150, height: 60 };
+  const signatureWidth = baseSignature.width * signatureScale;
+  const signatureHeight = baseSignature.height * signatureScale;
+  
+  console.log('=== SIGNATURE DIMENSIONS ===');
+  console.log('Base dimensions:', baseSignature);
+  console.log('Scale factor:', signatureScale);
+  console.log('Final dimensions:', { width: signatureWidth, height: signatureHeight });
 
   // Create header content with improved layout matching the reference image
   const headerContent = [];
@@ -266,7 +284,7 @@ export const generateInvoicePDF = async (
     });
   }
 
-  // Create signature section for bottom of page - IMPROVED POSITIONING
+  // Create signature section for bottom of page - IMPROVED POSITIONING WITH SCALE
   const signatureSection = [];
   if (signatureBase64) {
     console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
@@ -289,8 +307,8 @@ export const generateInvoicePDF = async (
               },
               {
                 image: signatureBase64,
-                width: 150,
-                height: 60,
+                width: signatureWidth,
+                height: signatureHeight,
                 margin: [0, 0, 0, 5]
               },
               {
@@ -299,7 +317,7 @@ export const generateInvoicePDF = async (
                     type: 'line',
                     x1: 0,
                     y1: 0,
-                    x2: 150,
+                    x2: signatureWidth,
                     y2: 0,
                     lineWidth: 1,
                     lineColor: '#000000'
