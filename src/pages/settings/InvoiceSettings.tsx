@@ -13,9 +13,7 @@ import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const InvoiceSettings: React.FC = () => {
   const navigate = useNavigate();
-  // This would get the company ID from context/auth
-  const companyId = "your-company-id"; // Replace with actual company ID
-  const { settings, updateSettings } = useCompanySettings(companyId);
+  const { settings, updateSettings } = useCompanySettings();
 
   const handleToggleReminder = async (checked: boolean) => {
     updateSettings({ overdue_reminder: checked });
