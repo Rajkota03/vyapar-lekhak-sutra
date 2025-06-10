@@ -1,11 +1,10 @@
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
 import { Client } from '@/hooks/useInvoiceData';
 
-// Initialize pdfMake with fonts
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+// Initialize pdfMake with fonts - correct way
+pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts;
 
 interface CompanyData {
   name: string;
