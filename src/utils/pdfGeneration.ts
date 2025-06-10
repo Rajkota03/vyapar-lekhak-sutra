@@ -107,14 +107,17 @@ export const generateInvoicePDF = async (
     console.log('No logo URL found in company settings');
   }
 
-  // SIMPLIFIED SIGNATURE LOGIC - Show signature if it exists in settings
+  // UPDATED SIGNATURE LOGIC - Show signature only if both URL exists AND setting is enabled
   console.log('=== SIGNATURE PROCESSING DEBUG ===');
   console.log('Invoice show_my_signature setting:', invoiceData.show_my_signature);
   console.log('Company settings signature_url:', companySettings?.signature_url);
   
-  // Show signature if there's a signature URL in settings (ignore invoice setting for now)
-  if (companySettings?.signature_url) {
+  // Show signature only if BOTH conditions are met:
+  // 1. There's a signature URL in settings
+  // 2. The invoice has show_my_signature enabled
+  if (companySettings?.signature_url && invoiceData.show_my_signature) {
     console.log('=== SIGNATURE PROCESSING ENABLED ===');
+    console.log('Both signature URL exists and show_my_signature is enabled');
     console.log('Fetching signature from URL:', companySettings.signature_url);
     signatureBase64 = await getImageAsBase64(companySettings.signature_url);
     signatureScale = Number(companySettings.signature_scale || 1.0);
@@ -126,7 +129,13 @@ export const generateInvoicePDF = async (
       console.log('❌ Failed to process signature image');
     }
   } else {
-    console.log('❌ No signature URL found in company settings');
+    if (!companySettings?.signature_url) {
+      console.log('❌ No signature URL found in company settings');
+    }
+    if (!invoiceData.show_my_signature) {
+      console.log('❌ Invoice show_my_signature setting is disabled');
+    }
+    console.log('❌ Signature will NOT be added to PDF');
   }
 
   // Calculate totals
@@ -447,8 +456,8 @@ export const generateInvoicePDF = async (
     }
   ];
 
-  // Add signature section if we have a signature
-  if (signatureBase64) {
+  // Add signature section if we have a signature AND the setting is enabled
+  if (signatureBase64 && invoiceData.show_my_signature) {
     console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
     mainContent.push(
       // Add space before signature
@@ -504,6 +513,12 @@ export const generateInvoicePDF = async (
     );
   } else {
     console.log('❌ No signature section added to PDF');
+    if (!signatureBase64) {
+      console.log('   - Reason: No signature image processed');
+    }
+    if (!invoiceData.show_my_signature) {
+      console.log('   - Reason: show_my_signature setting is disabled');
+    }
   }
 
   // Create document definition
@@ -620,7 +635,7 @@ export const generateInvoicePDF = async (
   };
 
   console.log('=== PDF GENERATION COMPLETE ===');
-  console.log('Signature included:', !!signatureBase64);
+  console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   return docDefinition;
 };
 
