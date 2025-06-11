@@ -1,3 +1,4 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -14,46 +15,15 @@ interface CompanyData {
   logo_url?: string;
 }
 
-// DEBUG FLAG - Set to true to enable visual alignment debugging
-const DEBUG_ALIGNMENT = true;
+// DEBUG FLAG - Set to false for production
+const DEBUG_ALIGNMENT = false;
 
-// Debug colors for visual alignment
-const DEBUG_COLORS = {
-  paymentBg: '#e8f4f8',
-  totalsBg: '#f8e8e8',
-  labelBg: '#fff2cc',
-  valueBg: '#e1f5fe',
-  border: '#ff0000',
-  grid: '#cccccc'
-};
-
-// ENHANCED Currency formatting function with FIXED-WIDTH DECIMAL ALIGNMENT
-const formatCurrencyAligned = (amount: number): string => {
-  console.log('=== FIXED-WIDTH DECIMAL ALIGNMENT ===');
-  console.log('Input amount:', amount);
-  
-  // Format with exactly 2 decimal places and Indian number formatting
-  const formatted = amount.toLocaleString('en-IN', { 
+// Currency formatting function with proper alignment
+const formatCurrency = (amount: number): string => {
+  return `₹${amount.toLocaleString('en-IN', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
-  });
-  
-  console.log('After toLocaleString:', formatted);
-  
-  // Add rupee symbol
-  const withRupee = `₹${formatted}`;
-  console.log('With rupee symbol:', withRupee);
-  
-  // FIXED-WIDTH PADDING: Ensure consistent width for decimal alignment
-  // Target width: 12 characters (including ₹ symbol)
-  // This accommodates amounts up to ₹99,99,999.00
-  const targetWidth = 12;
-  const padded = withRupee.padStart(targetWidth, ' ');
-  
-  console.log('Final padded result:', `"${padded}" (length: ${padded.length})`);
-  console.log('Visual representation:', padded.replace(/ /g, '·')); // Show spaces as dots
-  
-  return padded;
+  })}`;
 };
 
 // Function to convert image URL to base64
@@ -130,9 +100,8 @@ export const generateInvoicePDF = async (
   console.log('Invoice data:', invoiceData);
   console.log('Company data:', companyData);
   console.log('Show my signature setting:', invoiceData.show_my_signature);
-  console.log('DEBUG ALIGNMENT MODE:', DEBUG_ALIGNMENT ? 'ENABLED' : 'DISABLED');
   
-  // ENHANCED NOTES DEBUG LOGGING
+  // NOTES DEBUG LOGGING
   console.log('=== NOTES DEBUG IN PDF GENERATION ===');
   console.log('Invoice notes value:', invoiceData.notes);
   console.log('Notes type:', typeof invoiceData.notes);
@@ -159,14 +128,11 @@ export const generateInvoicePDF = async (
     console.log('No logo URL found in company settings');
   }
 
-  // UPDATED SIGNATURE LOGIC - Show signature only if both URL exists AND setting is enabled
+  // SIGNATURE LOGIC - Show signature only if both URL exists AND setting is enabled
   console.log('=== SIGNATURE PROCESSING DEBUG ===');
   console.log('Invoice show_my_signature setting:', invoiceData.show_my_signature);
   console.log('Company settings signature_url:', companySettings?.signature_url);
   
-  // Show signature only if BOTH conditions are met:
-  // 1. There's a signature URL in settings
-  // 2. The invoice has show_my_signature enabled
   if (companySettings?.signature_url && invoiceData.show_my_signature) {
     console.log('=== SIGNATURE PROCESSING ENABLED ===');
     console.log('Both signature URL exists and show_my_signature is enabled');
@@ -220,26 +186,16 @@ export const generateInvoicePDF = async (
   // Get payment instructions or use fallback
   const paymentInstructions = companySettings?.payment_note || 'Payment Instructions\nBank Name: [Bank Name]\nAccount No: [Account Number]\nIFSC: [IFSC Code]\nBranch: [Branch Name]';
 
-  // ENHANCED NOTES PROCESSING WITH DEBUG
+  // NOTES PROCESSING
   const hasNotes = invoiceData.notes && invoiceData.notes.trim() !== '';
   console.log('=== NOTES PROCESSING DECISION ===');
   console.log('Has notes (final decision):', hasNotes);
   console.log('Notes content that will be used:', hasNotes ? invoiceData.notes : 'No notes');
 
-  // FIXED-WIDTH DECIMAL ALIGNMENT: Use monospace font and exact positioning
-  const AMOUNT_COLUMN_WIDTH = 90; // Increased width to accommodate padding
-  
-  console.log('=== FIXED-WIDTH DECIMAL ALIGNMENT DEBUG ===');
-  console.log('Using FIXED-WIDTH approach with padding for perfect decimal alignment');
-  console.log('Amount column width:', AMOUNT_COLUMN_WIDTH);
-  console.log('Sample formatting test:');
-  lineItems.forEach((item, index) => {
-    console.log(`- Item ${index + 1}: ${formatCurrencyAligned(item.amount)}`);
-  });
-  console.log(`- Subtotal: ${formatCurrencyAligned(subtotal)}`);
-  console.log(`- Grand Total: ${formatCurrencyAligned(grandTotal)}`);
+  // Define consistent amount column width
+  const AMOUNT_COLUMN_WIDTH = 80;
 
-  // Create the main content array with minimal spacing
+  // Create the main content array
   const mainContent: any[] = [
     // SECTION 1: HEADER - Logo on left, company details on right
     {
@@ -340,11 +296,11 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 10]
     },
 
-    // SECTION 3: ITEMS TABLE - FIXED-WIDTH for perfect decimal alignment
+    // SECTION 3: ITEMS TABLE
     {
       table: {
         headerRows: 1,
-        widths: ['*', 50, 70, AMOUNT_COLUMN_WIDTH], // Fixed width for amount column
+        widths: ['*', 50, 70, AMOUNT_COLUMN_WIDTH],
         body: [
           // Header row
           [
@@ -353,27 +309,17 @@ export const generateInvoicePDF = async (
             { text: 'RATE', style: 'tableHeader', alignment: 'right' },
             { text: 'AMOUNT', style: 'tableHeader', alignment: 'right' }
           ],
-          // Item rows - using FIXED-WIDTH formatting with monospace font
+          // Item rows
           ...lineItems.map(item => [
             { text: item.description, style: 'tableCell' },
             { text: item.qty.toString(), style: 'tableCell', alignment: 'center' },
-            { text: formatCurrencyAligned(item.unit_price), style: 'tableCellMonospace', alignment: 'right' },
-            { 
-              text: formatCurrencyAligned(item.amount), 
-              style: 'tableCellMonospace', 
-              alignment: 'right',
-              ...(DEBUG_ALIGNMENT && { 
-                fillColor: '#ffffcc',
-                border: [1, 1, 1, 1],
-                borderColor: '#ff9900'
-              })
-            }
+            { text: formatCurrency(item.unit_price), style: 'tableCell', alignment: 'right' },
+            { text: formatCurrency(item.amount), style: 'tableCell', alignment: 'right' }
           ])
         ]
       },
       layout: {
         hLineWidth: (i: number, node: any) => {
-          // Header border and bottom border only
           if (i === 0 || i === 1) return 1; // Header
           if (i === lineItems.length + 1) return 1; // Bottom
           return 0;
@@ -388,7 +334,7 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 8]
     },
 
-    // SECTION 4: PAYMENT DETAILS AND TOTALS - FIXED-WIDTH alignment with table amounts
+    // SECTION 4: PAYMENT DETAILS AND TOTALS
     {
       columns: [
         {
@@ -397,205 +343,81 @@ export const generateInvoicePDF = async (
             {
               text: 'Payment Details',
               style: 'paymentSectionHeader',
-              margin: [0, 0, 0, 6],
-              ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.paymentBg })
+              margin: [0, 0, 0, 6]
             },
             {
               text: paymentInstructions,
               style: 'paymentDetails',
-              margin: [0, 0, 0, 0],
-              ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.paymentBg })
+              margin: [0, 0, 0, 0]
             }
-          ],
-          ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.paymentBg })
+          ]
         },
         {
           width: '40%',
           stack: [
-            // ALIGNMENT DEBUG HEADER
-            ...(DEBUG_ALIGNMENT ? [
-              {
-                text: '🎯 FIXED-WIDTH DECIMAL ALIGNMENT',
-                style: 'totalLabel',
-                fillColor: '#ccffcc',
-                alignment: 'center',
-                margin: [0, 0, 0, 3]
-              }
-            ] : []),
-            // Subtotal with FIXED-WIDTH and MONOSPACE FORMATTING
+            // Subtotal
             {
               columns: [
-                { 
-                  width: '*', 
-                  text: 'Subtotal', 
-                  style: 'totalLabel',
-                  ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
-                },
-                { 
-                  width: AMOUNT_COLUMN_WIDTH, // Same width as table amount column
-                  text: formatCurrencyAligned(subtotal), // Same formatting function with fixed-width
-                  style: 'totalValueMonospace', 
-                  alignment: 'right',
-                  ...(DEBUG_ALIGNMENT && { 
-                    fillColor: '#ccffcc',
-                    border: [2, 2, 2, 2],
-                    borderColor: '#00cc00'
-                  })
-                }
+                { width: '*', text: 'Subtotal', style: 'totalLabel' },
+                { width: AMOUNT_COLUMN_WIDTH, text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right' }
               ],
-              margin: [-10, 0, 0, 2], // Fine-tuned left adjustment
-              ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
+              margin: [0, 0, 0, 2]
             },
-            // Tax rows with FIXED-WIDTH and MONOSPACE FORMATTING
+            // Tax rows
             ...(invoiceData.use_igst ? [
               {
                 columns: [
-                  { 
-                    width: '*', 
-                    text: `IGST (${invoiceData.igst_pct}%)`, 
-                    style: 'totalLabel',
-                    ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
-                  },
-                  { 
-                    width: AMOUNT_COLUMN_WIDTH, // Same width
-                    text: formatCurrencyAligned(igstAmount), // Same formatting with fixed-width
-                    style: 'totalValueMonospace', 
-                    alignment: 'right',
-                    ...(DEBUG_ALIGNMENT && { 
-                      fillColor: '#ccffcc',
-                      border: [2, 2, 2, 2],
-                      borderColor: '#00cc00'
-                    })
-                  }
+                  { width: '*', text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel' },
+                  { width: AMOUNT_COLUMN_WIDTH, text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right' }
                 ],
-                margin: [-10, 0, 0, 2],
-                ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
+                margin: [0, 0, 0, 2]
               }
             ] : [
               {
                 columns: [
-                  { 
-                    width: '*', 
-                    text: `CGST (${invoiceData.cgst_pct}%)`, 
-                    style: 'totalLabel',
-                    ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
-                  },
-                  { 
-                    width: AMOUNT_COLUMN_WIDTH, // Same width
-                    text: formatCurrencyAligned(cgstAmount), // Same formatting with fixed-width
-                    style: 'totalValueMonospace', 
-                    alignment: 'right',
-                    ...(DEBUG_ALIGNMENT && { 
-                      fillColor: '#ccffcc',
-                      border: [2, 2, 2, 2],
-                      borderColor: '#00cc00'
-                    })
-                  }
+                  { width: '*', text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel' },
+                  { width: AMOUNT_COLUMN_WIDTH, text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right' }
                 ],
-                margin: [-10, 0, 0, 2],
-                ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
+                margin: [0, 0, 0, 2]
               },
               {
                 columns: [
-                  { 
-                    width: '*', 
-                    text: `SGST (${invoiceData.sgst_pct}%)`, 
-                    style: 'totalLabel',
-                    ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
-                  },
-                  { 
-                    width: AMOUNT_COLUMN_WIDTH, // Same width
-                    text: formatCurrencyAligned(sgstAmount), // Same formatting with fixed-width
-                    style: 'totalValueMonospace', 
-                    alignment: 'right',
-                    ...(DEBUG_ALIGNMENT && { 
-                      fillColor: '#ccffcc',
-                      border: [2, 2, 2, 2],
-                      borderColor: '#00cc00'
-                    })
-                  }
+                  { width: '*', text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel' },
+                  { width: AMOUNT_COLUMN_WIDTH, text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right' }
                 ],
-                margin: [-10, 0, 0, 2],
-                ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
+                margin: [0, 0, 0, 2]
               }
             ]),
-            // Line separator with DEBUG
+            // Line separator
             {
               canvas: [
                 {
                   type: 'line',
-                  x1: -10, y1: 3,
-                  x2: 190, y2: 3,
-                  lineWidth: DEBUG_ALIGNMENT ? 3 : 1,
-                  lineColor: DEBUG_ALIGNMENT ? DEBUG_COLORS.border : '#cccccc'
+                  x1: 0, y1: 3,
+                  x2: 180, y2: 3,
+                  lineWidth: 1,
+                  lineColor: '#cccccc'
                 }
               ],
               margin: [0, 3, 0, 5]
             },
-            // Grand Total with FIXED-WIDTH and MONOSPACE FORMATTING
+            // Grand Total
             {
               columns: [
-                { 
-                  width: '*', 
-                  text: 'GRAND TOTAL', 
-                  style: 'finalTotalLabel',
-                  ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
-                },
-                { 
-                  width: AMOUNT_COLUMN_WIDTH, // Same width
-                  text: formatCurrencyAligned(grandTotal), // Same formatting with fixed-width
-                  style: 'finalTotalValueMonospace', 
-                  alignment: 'right',
-                  ...(DEBUG_ALIGNMENT && { 
-                    fillColor: '#99ff99',
-                    border: [3, 3, 3, 3],
-                    borderColor: '#006600'
-                  })
-                }
+                { width: '*', text: 'GRAND TOTAL', style: 'finalTotalLabel' },
+                { width: AMOUNT_COLUMN_WIDTH, text: formatCurrency(grandTotal), style: 'finalTotalValue', alignment: 'right' }
               ],
-              fillColor: DEBUG_ALIGNMENT ? '#e8f5e8' : '#f5f5f5',
-              margin: [-10, 0, 0, 0]
-            },
-            // ENHANCED ALIGNMENT REFERENCE LINES (DEBUG ONLY)
-            ...(DEBUG_ALIGNMENT ? [
-              {
-                canvas: [
-                  // Decimal point alignment line - positioned exactly
-                  {
-                    type: 'line',
-                    x1: 140, y1: 0,
-                    x2: 140, y2: -120,
-                    lineWidth: 4,
-                    lineColor: '#ff0000', // Red to show decimal alignment
-                    dash: { length: 2 }
-                  },
-                  // Right edge alignment line
-                  {
-                    type: 'line',
-                    x1: 190, y1: 0,
-                    x2: 190, y2: -120,
-                    lineWidth: 4,
-                    lineColor: '#00cc00', // Green for right edge
-                    dash: { length: 2 }
-                  }
-                ],
-                margin: [0, 5, 0, 0]
-              }
-            ] : [])
-          ],
-          ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
+              fillColor: '#f5f5f5',
+              margin: [0, 0, 0, 0]
+            }
+          ]
         }
       ],
       columnGap: 20,
-      margin: [0, 0, 0, 12],
-      ...(DEBUG_ALIGNMENT && { 
-        fillColor: DEBUG_COLORS.grid,
-        border: [2, 2, 2, 2],
-        borderColor: DEBUG_COLORS.border
-      })
+      margin: [0, 0, 0, 12]
     },
 
-    // SECTION 5: NOTES (Separate section below payment and totals)
+    // SECTION 5: NOTES (if any)
     ...(hasNotes ? [
       {
         stack: [
@@ -614,7 +436,7 @@ export const generateInvoicePDF = async (
       }
     ] : []),
 
-    // SECTION 6: COMBINED FOOTER WITH SIGNATURE (with 45px left positioning)
+    // SECTION 6: FOOTER WITH SIGNATURE
     {
       stack: [
         {
@@ -657,13 +479,12 @@ export const generateInvoicePDF = async (
     }
   ];
 
-  // Create document definition with enhanced monospace styles for fixed-width alignment
+  // Create document definition with standard fonts only
   const docDefinition = {
     pageSize: 'A4',
     pageMargins: [30, 35, 30, 35],
     content: mainContent,
     styles: {
-      // ... keep existing code (all existing styles)
       companyName: {
         fontSize: 14,
         bold: true,
@@ -741,13 +562,6 @@ export const generateInvoicePDF = async (
         color: '#333333',
         margin: [0, 1, 0, 1]
       },
-      // NEW: Monospace styles for fixed-width decimal alignment
-      tableCellMonospace: {
-        fontSize: 9,
-        color: '#333333',
-        margin: [0, 1, 0, 1],
-        font: 'Courier' // Monospace font for consistent character width
-      },
       totalLabel: {
         fontSize: 9,
         color: '#666666'
@@ -755,12 +569,6 @@ export const generateInvoicePDF = async (
       totalValue: {
         fontSize: 9,
         color: '#333333'
-      },
-      // NEW: Monospace styles for totals section
-      totalValueMonospace: {
-        fontSize: 9,
-        color: '#333333',
-        font: 'Courier' // Monospace font for consistent character width
       },
       finalTotalLabel: {
         fontSize: 11,
@@ -771,13 +579,6 @@ export const generateInvoicePDF = async (
         fontSize: 11,
         bold: true,
         color: '#333333'
-      },
-      // NEW: Monospace style for final total
-      finalTotalValueMonospace: {
-        fontSize: 11,
-        bold: true,
-        color: '#333333',
-        font: 'Courier' // Monospace font for consistent character width
       },
       footer: {
         fontSize: 10,
@@ -805,14 +606,9 @@ export const generateInvoicePDF = async (
     }
   };
 
-  console.log('=== FIXED-WIDTH DECIMAL ALIGNMENT COMPLETE ===');
-  console.log('✅ PERFECT DECIMAL ALIGNMENT: Using fixed-width padding and monospace font');
-  console.log('Currency formatting function used:', 'formatCurrencyAligned with fixed-width padding');
-  console.log('Amount column width used:', AMOUNT_COLUMN_WIDTH);
-  console.log('Monospace font applied to all currency values');
+  console.log('=== PDF GENERATION COMPLETE ===');
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
-  console.log('DEBUG ALIGNMENT:', DEBUG_ALIGNMENT ? 'Visual debugging enabled with alignment guides' : 'Normal production mode');
   return docDefinition;
 };
 
