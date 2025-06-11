@@ -188,15 +188,8 @@ export const generateInvoicePDF = async (
   console.log('Has notes (final decision):', hasNotes);
   console.log('Notes content that will be used:', hasNotes ? invoiceData.notes : 'No notes');
 
-  // Create the main content array
+  // Create the main content array with minimal spacing
   const mainContent: any[] = [
-    // SECTION MARKER 1 - HEADER
-    {
-      text: '🔴 SECTION 1: HEADER (Logo on left, company details on right)',
-      style: 'sectionMarker',
-      margin: [0, 0, 0, 5]
-    },
-
     // SECTION 1: HEADER - Logo on left, company details on right
     {
       columns: [
@@ -234,14 +227,7 @@ export const generateInvoicePDF = async (
           ]
         }
       ],
-      margin: [0, 5, 0, 20]
-    },
-
-    // SECTION MARKER 2 - BILL TO + INVOICE DETAILS
-    {
-      text: '🟡 SECTION 2: BILL TO + INVOICE DETAILS (Bill to on left, invoice details on right)',
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
+      margin: [0, 0, 0, 12]
     },
 
     // SECTION 2: BILL TO + INVOICE DETAILS
@@ -300,14 +286,7 @@ export const generateInvoicePDF = async (
           ]
         }
       ],
-      margin: [0, 5, 0, 20]
-    },
-
-    // SECTION MARKER 3 - ITEMS TABLE
-    {
-      text: '🟢 SECTION 3: ITEMS TABLE (Clean table with only item rows)',
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
+      margin: [0, 0, 0, 10]
     },
 
     // SECTION 3: ITEMS TABLE (Clean and simple)
@@ -346,14 +325,7 @@ export const generateInvoicePDF = async (
         paddingTop: () => 4,
         paddingBottom: () => 4
       },
-      margin: [0, 5, 0, 15]
-    },
-
-    // SECTION MARKER 4 - PAYMENT DETAILS AND TOTALS (INDEPENDENT COLUMNS)
-    {
-      text: '🟠 SECTION 4: PAYMENT DETAILS AND TOTALS (Independent columns layout)',
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
+      margin: [0, 0, 0, 8]
     },
 
     // SECTION 4: INDEPENDENT PAYMENT DETAILS AND TOTALS COLUMNS
@@ -365,7 +337,7 @@ export const generateInvoicePDF = async (
             {
               text: 'Payment Details',
               style: 'paymentSectionHeader',
-              margin: [0, 0, 0, 8]
+              margin: [0, 0, 0, 6]
             },
             {
               text: paymentInstructions,
@@ -383,7 +355,7 @@ export const generateInvoicePDF = async (
                 { width: '*', text: 'Subtotal', style: 'totalLabel' },
                 { width: 'auto', text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right' }
               ],
-              margin: [0, 0, 0, 3]
+              margin: [0, 0, 0, 2]
             },
             // Tax rows
             ...(invoiceData.use_igst ? [
@@ -392,7 +364,7 @@ export const generateInvoicePDF = async (
                   { width: '*', text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel' },
                   { width: 'auto', text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right' }
                 ],
-                margin: [0, 0, 0, 3]
+                margin: [0, 0, 0, 2]
               }
             ] : [
               {
@@ -400,14 +372,14 @@ export const generateInvoicePDF = async (
                   { width: '*', text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel' },
                   { width: 'auto', text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right' }
                 ],
-                margin: [0, 0, 0, 3]
+                margin: [0, 0, 0, 2]
               },
               {
                 columns: [
                   { width: '*', text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel' },
                   { width: 'auto', text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right' }
                 ],
-                margin: [0, 0, 0, 3]
+                margin: [0, 0, 0, 2]
               }
             ]),
             // Line separator
@@ -415,13 +387,13 @@ export const generateInvoicePDF = async (
               canvas: [
                 {
                   type: 'line',
-                  x1: 0, y1: 5,
-                  x2: 200, y2: 5,
+                  x1: 0, y1: 3,
+                  x2: 200, y2: 3,
                   lineWidth: 1,
                   lineColor: '#cccccc'
                 }
               ],
-              margin: [0, 5, 0, 8]
+              margin: [0, 3, 0, 5]
             },
             // Grand Total
             {
@@ -436,14 +408,7 @@ export const generateInvoicePDF = async (
         }
       ],
       columnGap: 20,
-      margin: [0, 5, 0, 20]
-    },
-
-    // SECTION MARKER 5 - NOTES (SEPARATE SECTION BELOW)
-    {
-      text: '🔵 SECTION 5: NOTES (Separate section below payment and totals)',
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
+      margin: [0, 0, 0, 12]
     },
 
     // SECTION 5: NOTES (Separate section below payment and totals)
@@ -453,24 +418,17 @@ export const generateInvoicePDF = async (
           {
             text: 'Notes',
             style: 'sectionHeader',
-            margin: [0, 0, 0, 5]
+            margin: [0, 0, 0, 4]
           },
           {
             text: invoiceData.notes,
             style: 'notesContent',
-            margin: [0, 0, 0, 15]
+            margin: [0, 0, 0, 8]
           }
         ],
-        margin: [0, 5, 0, 15]
+        margin: [0, 0, 0, 8]
       }
     ] : []),
-
-    // SECTION MARKER 6 - FOOTER WITH SIGNATURE
-    {
-      text: '🟣 SECTION 6: FOOTER WITH SIGNATURE (Thank you message, company name, signature, then date)',
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
-    },
 
     // SECTION 6: COMBINED FOOTER WITH SIGNATURE (with 45px left positioning)
     {
@@ -479,7 +437,7 @@ export const generateInvoicePDF = async (
           text: 'Thank you for your business!',
           style: 'footer',
           alignment: 'left',
-          margin: [45, 8, 0, 8]
+          margin: [45, 5, 0, 5]
         },
         // Signature section (only if both URL exists AND setting is enabled)
         ...(signatureBase64 && invoiceData.show_my_signature ? [
@@ -490,7 +448,7 @@ export const generateInvoicePDF = async (
                 width: signatureWidth,
                 height: signatureHeight,
                 alignment: 'left',
-                margin: [45, 0, 0, 5]
+                margin: [45, 0, 0, 3]
               }
             ]
           }
@@ -499,7 +457,7 @@ export const generateInvoicePDF = async (
           text: companyData.name,
           style: 'footerCompany',
           alignment: 'left',
-          margin: [45, 0, 0, 10]
+          margin: [45, 0, 0, 5]
         },
         // Date section (only if signature is shown)
         ...(signatureBase64 && invoiceData.show_my_signature ? [
@@ -507,11 +465,11 @@ export const generateInvoicePDF = async (
             text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
             style: 'signatureDate',
             alignment: 'left',
-            margin: [45, 0, 0, 10]
+            margin: [45, 0, 0, 0]
           }
         ] : [])
       ],
-      margin: [0, 5, 0, 0]
+      margin: [0, 0, 0, 0]
     }
   ];
 
@@ -521,12 +479,6 @@ export const generateInvoicePDF = async (
     pageMargins: [30, 35, 30, 35],
     content: mainContent,
     styles: {
-      sectionMarker: {
-        fontSize: 12,
-        bold: true,
-        color: '#FF0000',
-        background: '#FFFF00'
-      },
       companyName: {
         fontSize: 14,
         bold: true,
