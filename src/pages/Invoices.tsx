@@ -13,7 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card } from "@/components/ui/primitives/Card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { handleSharePdf } from "@/utils/sharePdf";
@@ -211,14 +210,12 @@ const Invoices = () => {
     <DashboardLayout>
       <div className="relative min-h-screen pb-20">
         <div className="sticky top-0 z-10 bg-white p-4 border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-semibold">Invoices</h1>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8 gap-1">
-                  {filterStatus === 'all' ? 'All' : 
-                   filterStatus === 'sent' ? 'Sent' :
-                   filterStatus === 'paid' ? 'Paid' : 'Draft'}
+                  By Date
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -262,46 +259,40 @@ const Invoices = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : invoices && invoices.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-1">
               {invoices.map((invoice) => (
-                <Card 
+                <div 
                   key={invoice.id} 
-                  className="mb-3 overflow-hidden hover:shadow-md transition-shadow p-0 cursor-pointer"
+                  className="bg-white border-b border-gray-100 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => handleCardClick(invoice.id)}
                 >
-                  <div className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg">
                           {invoice.invoice_code || invoice.number || 'Draft Invoice'}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {invoice.clients?.name || 'No client'}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={getStatusBadgeVariant(invoice.status)}>
+                        <Badge 
+                          variant={getStatusBadgeVariant(invoice.status)}
+                          className="text-xs"
+                        >
                           {invoice.status || 'Draft'}
                         </Badge>
-                        <button
-                          className="p-2 hover:bg-gray-100 rounded"
-                          onClick={(e) => handlePdfShare(e, invoice.id)}
-                        >
-                          <FileText
-                            size={18}
-                            className="text-gray-500 hover:text-blue-600"
-                          />
-                        </button>
+                      </div>
+                      <p className="text-muted-foreground mb-2">
+                        {invoice.clients?.name || 'No client'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd MMM yyyy') : 'No date'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold mb-2">
+                        ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
-                    <div className="flex justify-between mt-3 text-sm">
-                      <span>
-                        {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-                      </span>
-                      <span className="font-medium">₹{invoice.total.toFixed(2)}</span>
-                    </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           ) : (
