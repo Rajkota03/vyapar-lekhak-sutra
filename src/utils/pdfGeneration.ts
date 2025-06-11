@@ -303,14 +303,14 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 20]
     },
 
-    // SECTION MARKER 3 - ITEMS TABLE WITH SEAMLESS TOTALS AND PAYMENT DETAILS
+    // SECTION MARKER 3 - ITEMS TABLE
     {
-      text: '🟢 SECTION 3: ITEMS TABLE WITH SEAMLESS TOTALS (Combined as one table with payment details)',
+      text: '🟢 SECTION 3: ITEMS TABLE (Clean table with only item rows)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 3: COMBINED ITEMS, TOTALS, AND PAYMENT DETAILS TABLE (NO GAP)
+    // SECTION 3: ITEMS TABLE (Clean and simple)
     {
       table: {
         headerRows: 1,
@@ -329,78 +329,18 @@ export const generateInvoicePDF = async (
             { text: item.qty.toString(), style: 'tableCell', alignment: 'center' },
             { text: formatCurrency(item.unit_price), style: 'tableCell', alignment: 'right' },
             { text: formatCurrency(item.amount), style: 'tableCell', alignment: 'right' }
-          ]),
-          // Spacer row for visual separation
-          [
-            { text: '', border: [false, false, false, false] },
-            { text: '', border: [false, false, false, false] },
-            { text: '', border: [false, false, false, false] },
-            { text: '', border: [false, false, false, false] }
-          ],
-          // Payment details and totals row (side by side)
-          [
-            { 
-              text: [
-                { text: 'Payment Details\n', style: 'paymentSectionHeader' },
-                { text: paymentInstructions, style: 'paymentDetailsInTable' }
-              ], 
-              colSpan: 2, 
-              border: [false, false, false, false],
-              margin: [0, 5, 0, 0]
-            },
-            { text: '', border: [false, false, false, false] },
-            { text: 'Subtotal', style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
-            { text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
-          ],
-          // Tax rows (empty left, totals on right)
-          ...(invoiceData.use_igst ? [
-            [
-              { text: '', colSpan: 2, border: [false, false, false, false] },
-              { text: '', border: [false, false, false, false] },
-              { text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
-              { text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
-            ]
-          ] : [
-            [
-              { text: '', colSpan: 2, border: [false, false, false, false] },
-              { text: '', border: [false, false, false, false] },
-              { text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
-              { text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
-            ],
-            [
-              { text: '', colSpan: 2, border: [false, false, false, false] },
-              { text: '', border: [false, false, false, false] },
-              { text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
-              { text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
-            ]
-          ]),
-          // Total row with line
-          [
-            { text: '', colSpan: 2, border: [false, false, false, false] },
-            { text: '', border: [false, false, false, false] },
-            { text: 'Total', style: 'grandTotalLabel', alignment: 'right', border: [false, true, false, false] },
-            { text: formatCurrency(grandTotal), style: 'grandTotalValue', alignment: 'right', border: [false, true, false, false] }
-          ],
-          // GRAND TOTAL row (highlighted)
-          [
-            { text: '', colSpan: 2, border: [false, false, false, false] },
-            { text: '', border: [false, false, false, false] },
-            { text: 'GRAND TOTAL', style: 'finalTotalLabel', alignment: 'right', fillColor: '#f5f5f5', border: [false, false, false, false] },
-            { text: formatCurrency(grandTotal), style: 'finalTotalValueCompact', alignment: 'right', fillColor: '#f5f5f5', border: [false, false, false, false] }
-          ]
+          ])
         ]
       },
       layout: {
         hLineWidth: (i: number, node: any) => {
-          // Only show borders for the header row and the items section
-          if (i === 0 || i === 1) return 1; // Header border
-          if (i === lineItems.length + 1) return 1; // Bottom of items
-          return 0; // No other borders
+          // Header border and bottom border only
+          if (i === 0 || i === 1) return 1; // Header
+          if (i === lineItems.length + 1) return 1; // Bottom
+          return 0;
         },
         vLineWidth: () => 0,
-        hLineColor: (i: number, node: any) => {
-          return i === 0 || i === 1 ? '#000000' : '#cccccc';
-        },
+        hLineColor: () => '#000000',
         paddingLeft: () => 6,
         paddingRight: () => 6,
         paddingTop: () => 4,
@@ -409,14 +349,104 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 15]
     },
 
-    // SECTION MARKER 6 - NOTES (SEPARATE SECTION BELOW)
+    // SECTION MARKER 4 - PAYMENT DETAILS AND TOTALS (INDEPENDENT COLUMNS)
     {
-      text: '🔵 SECTION 6: NOTES (Separate section below payment and totals)',
+      text: '🟠 SECTION 4: PAYMENT DETAILS AND TOTALS (Independent columns layout)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 6: NOTES (Separate section below payment and totals)
+    // SECTION 4: INDEPENDENT PAYMENT DETAILS AND TOTALS COLUMNS
+    {
+      columns: [
+        {
+          width: '60%',
+          stack: [
+            {
+              text: 'Payment Details',
+              style: 'paymentSectionHeader',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: paymentInstructions,
+              style: 'paymentDetails',
+              margin: [0, 0, 0, 0]
+            }
+          ]
+        },
+        {
+          width: '40%',
+          stack: [
+            // Subtotal
+            {
+              columns: [
+                { width: '*', text: 'Subtotal', style: 'totalLabel' },
+                { width: 'auto', text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right' }
+              ],
+              margin: [0, 0, 0, 3]
+            },
+            // Tax rows
+            ...(invoiceData.use_igst ? [
+              {
+                columns: [
+                  { width: '*', text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel' },
+                  { width: 'auto', text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right' }
+                ],
+                margin: [0, 0, 0, 3]
+              }
+            ] : [
+              {
+                columns: [
+                  { width: '*', text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel' },
+                  { width: 'auto', text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right' }
+                ],
+                margin: [0, 0, 0, 3]
+              },
+              {
+                columns: [
+                  { width: '*', text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel' },
+                  { width: 'auto', text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right' }
+                ],
+                margin: [0, 0, 0, 3]
+              }
+            ]),
+            // Line separator
+            {
+              canvas: [
+                {
+                  type: 'line',
+                  x1: 0, y1: 5,
+                  x2: 200, y2: 5,
+                  lineWidth: 1,
+                  lineColor: '#cccccc'
+                }
+              ],
+              margin: [0, 5, 0, 8]
+            },
+            // Grand Total
+            {
+              columns: [
+                { width: '*', text: 'GRAND TOTAL', style: 'finalTotalLabel' },
+                { width: 'auto', text: formatCurrency(grandTotal), style: 'finalTotalValue', alignment: 'right' }
+              ],
+              fillColor: '#f5f5f5',
+              margin: [0, 0, 0, 0]
+            }
+          ]
+        }
+      ],
+      columnGap: 20,
+      margin: [0, 5, 0, 20]
+    },
+
+    // SECTION MARKER 5 - NOTES (SEPARATE SECTION BELOW)
+    {
+      text: '🔵 SECTION 5: NOTES (Separate section below payment and totals)',
+      style: 'sectionMarker',
+      margin: [0, 10, 0, 5]
+    },
+
+    // SECTION 5: NOTES (Separate section below payment and totals)
     ...(hasNotes ? [
       {
         stack: [
@@ -435,14 +465,14 @@ export const generateInvoicePDF = async (
       }
     ] : []),
 
-    // SECTION MARKER 5 - FOOTER WITH SIGNATURE
+    // SECTION MARKER 6 - FOOTER WITH SIGNATURE
     {
-      text: '🟣 SECTION 5: FOOTER WITH SIGNATURE (Thank you message, company name, signature, then date)',
+      text: '🟣 SECTION 6: FOOTER WITH SIGNATURE (Thank you message, company name, signature, then date)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (with 45px left positioning)
+    // SECTION 6: COMBINED FOOTER WITH SIGNATURE (with 45px left positioning)
     {
       stack: [
         {
@@ -549,17 +579,17 @@ export const generateInvoicePDF = async (
         color: '#666666'
       },
       paymentSectionHeader: {
-        fontSize: 9,
+        fontSize: 10,
         bold: true,
         color: '#333333'
       },
-      paymentDetailsInTable: {
-        fontSize: 8,
+      paymentDetails: {
+        fontSize: 9,
         color: '#666666',
-        lineHeight: 1.3
+        lineHeight: 1.4
       },
       notesContent: {
-        fontSize: 8,
+        fontSize: 9,
         color: '#666666',
         lineHeight: 1.3
       },
@@ -582,22 +612,12 @@ export const generateInvoicePDF = async (
         fontSize: 9,
         color: '#333333'
       },
-      grandTotalLabel: {
-        fontSize: 10,
-        bold: true,
-        color: '#333333'
-      },
-      grandTotalValue: {
-        fontSize: 10,
-        bold: true,
-        color: '#333333'
-      },
       finalTotalLabel: {
         fontSize: 11,
         bold: true,
         color: '#333333'
       },
-      finalTotalValueCompact: {
+      finalTotalValue: {
         fontSize: 11,
         bold: true,
         color: '#333333'
