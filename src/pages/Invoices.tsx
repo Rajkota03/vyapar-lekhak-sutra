@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,18 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronDown } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
-
 type Invoice = {
   id: string;
   invoice_code: string | null;
@@ -29,15 +22,17 @@ type Invoice = {
     name: string;
   } | null;
 };
-
 type FilterStatus = "all" | "sent" | "paid" | "draft";
 type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
 type SortDirection = 'asc' | 'desc' | null;
-
 const Invoices = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
@@ -46,20 +41,22 @@ const Invoices = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Fetch user's companies
-  const { data: companies, isLoading: isLoadingCompanies, error: companiesError } = useQuery({
+  const {
+    data: companies,
+    isLoading: isLoadingCompanies,
+    error: companiesError
+  } = useQuery({
     queryKey: ['companies', user?.id],
     queryFn: async () => {
       if (!user) {
         console.log('No user available for fetching companies');
         return [];
       }
-      
       console.log('Fetching companies for user:', user.id);
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('owner_id', user.id);
-        
+      const {
+        data,
+        error
+      } = await supabase.from('companies').select('*').eq('owner_id', user.id);
       if (error) {
         console.error('Error fetching companies:', error);
         throw error;
@@ -67,7 +64,7 @@ const Invoices = () => {
       console.log('Companies fetched successfully:', data?.length || 0, 'companies');
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user
   });
 
   // Set first company as selected if not already set
@@ -79,19 +76,20 @@ const Invoices = () => {
   }, [companies, selectedCompanyId]);
 
   // Fetch invoices with improved error handling
-  const { data: invoices, isLoading: isLoadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
+  const {
+    data: invoices,
+    isLoading: isLoadingInvoices,
+    error: invoicesError,
+    refetch: refetchInvoices
+  } = useQuery({
     queryKey: ['invoices', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) {
         console.log('No company selected or user not available for fetching invoices');
         return [];
       }
-      
       console.log('Fetching invoices for company:', selectedCompanyId, 'with status filter:', filterStatus);
-      
-      let query = supabase
-        .from('invoices')
-        .select(`
+      let query = supabase.from('invoices').select(`
           id,
           invoice_code,
           number,
@@ -99,25 +97,25 @@ const Invoices = () => {
           total,
           status,
           clients ( name )
-        `)
-        .eq('company_id', selectedCompanyId);
-        
+        `).eq('company_id', selectedCompanyId);
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
       }
-      
-      query = query.order('created_at', { ascending: false });
-        
-      const { data: invoicesData, error } = await query;
+      query = query.order('created_at', {
+        ascending: false
+      });
+      const {
+        data: invoicesData,
+        error
+      } = await query;
       if (error) {
         console.error('Error fetching invoices:', error);
         throw error;
       }
-      
       console.log('Invoices fetched successfully:', invoicesData?.length || 0, 'invoices');
       return invoicesData as Invoice[] || [];
     },
-    enabled: !!selectedCompanyId && !!user,
+    enabled: !!selectedCompanyId && !!user
   });
 
   // Force refresh invoices when component mounts
@@ -135,11 +133,9 @@ const Invoices = () => {
   // Sort invoices
   const sortedInvoices = React.useMemo(() => {
     if (!invoices || !sortField || !sortDirection) return invoices || [];
-
     return [...invoices].sort((a, b) => {
       let aValue: any;
       let bValue: any;
-
       switch (sortField) {
         case 'number':
           aValue = a.invoice_code || a.number || '';
@@ -164,7 +160,6 @@ const Invoices = () => {
         default:
           return 0;
       }
-
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -188,95 +183,73 @@ const Invoices = () => {
 
   // Loading state
   if (isLoadingCompanies) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="flex justify-center items-center h-[50vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
   if (companiesError || invoicesError) {
-    console.error('Error loading data:', { companiesError, invoicesError });
-    return (
-      <DashboardLayout>
+    console.error('Error loading data:', {
+      companiesError,
+      invoicesError
+    });
+    return <DashboardLayout>
         <div className="text-center py-8">
           <p className="text-red-500 mb-4">Error loading data. Please try refreshing the page.</p>
           <Button onClick={() => window.location.reload()}>
             Refresh Page
           </Button>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
   if (!user) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="text-center py-8">
           <p className="text-muted-foreground">Please log in to view invoices</p>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
   if (!companies || companies.length === 0) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">You need to create a company before creating invoices.</p>
           <Button onClick={() => navigate('/company/new')}>
             Create Company
           </Button>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
   const handleInvoiceClick = (invoiceId: string) => {
     console.log('Clicking on invoice:', invoiceId);
     navigate(`/invoices/${invoiceId}`);
   };
-
   const handleCreateInvoice = () => {
     // Clear any cached invoice data
-    queryClient.removeQueries({ queryKey: ['invoice'] });
+    queryClient.removeQueries({
+      queryKey: ['invoice']
+    });
     navigate('/invoices/new');
   };
-
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
+  return <DashboardLayout>
+      <div className="space-y-6 bg-white">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-          <Button 
-            onClick={handleCreateInvoice}
-            size="icon"
-            className="h-12 w-12 rounded-full bg-black hover:bg-gray-800 text-white"
-          >
+          <Button onClick={handleCreateInvoice} size="icon" className="h-12 w-12 rounded-full bg-black hover:bg-gray-800 text-white">
             <Plus className="h-6 w-6" />
           </Button>
         </div>
 
         {/* Company Selector */}
-        {companies && companies.length > 1 && (
-          <div className="flex items-center space-x-2">
+        {companies && companies.length > 1 && <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Company:</label>
-            <select
-              value={selectedCompanyId || ''}
-              onChange={(e) => setSelectedCompanyId(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
+            <select value={selectedCompanyId || ''} onChange={e => setSelectedCompanyId(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              {companies.map(company => <option key={company.id} value={company.id}>
                   {company.name}
-                </option>
-              ))}
+                </option>)}
             </select>
-          </div>
-        )}
+          </div>}
 
         {/* Filter and Sort Controls */}
         <div className="flex items-center justify-between">
@@ -306,14 +279,7 @@ const Invoices = () => {
           </div>
 
           {/* Sort Dropdown */}
-          {isMobile ? (
-            <MobileSortDropdown
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-            />
-          ) : (
-            <div className="flex items-center space-x-2">
+          {isMobile ? <MobileSortDropdown sortField={sortField} sortDirection={sortDirection} onSort={handleSort} /> : <div className="flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -339,35 +305,20 @@ const Invoices = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Invoices Table */}
-        {isLoadingInvoices ? (
-          <div className="flex justify-center p-8">
+        {isLoadingInvoices ? <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : sortedInvoices && sortedInvoices.length > 0 ? (
-          <InvoiceTable
-            invoices={sortedInvoices}
-            onInvoiceClick={handleInvoiceClick}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={!isMobile ? handleSort : undefined}
-          />
-        ) : (
-          <div className="text-center py-12 border rounded-md">
+          </div> : sortedInvoices && sortedInvoices.length > 0 ? <InvoiceTable invoices={sortedInvoices} onInvoiceClick={handleInvoiceClick} sortField={sortField} sortDirection={sortDirection} onSort={!isMobile ? handleSort : undefined} /> : <div className="text-center py-12 border rounded-md">
             <p className="text-muted-foreground mb-4">No invoices found</p>
             <Button variant="outline" onClick={handleCreateInvoice}>
               <Plus className="mr-2 h-4 w-4" />
               Create your first invoice
             </Button>
-          </div>
-        )}
+          </div>}
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default Invoices;
