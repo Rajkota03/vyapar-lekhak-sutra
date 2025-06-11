@@ -34,11 +34,22 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
       <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow className="border-none">
-            <TableHead className={`${isMobile ? 'w-full' : 'w-[45%]'} py-3 px-3 text-left`}>
-              <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
-            </TableHead>
-            {!isMobile && (
+            {isMobile ? (
+              <TableHead className="w-full py-3 px-3 text-left">
+                <div className="flex justify-between items-center">
+                  <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
+                  <div className="flex items-center gap-2">
+                    <EditableQuantityLabel companyId={effectiveCompanyId} />
+                    <CaptionText className="font-medium uppercase tracking-wide">×</CaptionText>
+                    <CaptionText className="font-medium uppercase tracking-wide">Price</CaptionText>
+                  </div>
+                </div>
+              </TableHead>
+            ) : (
               <>
+                <TableHead className="w-[45%] py-3 px-3 text-left">
+                  <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
+                </TableHead>
                 <TableHead className="w-[12%] py-3 px-2 text-center">
                   <EditableQuantityLabel companyId={effectiveCompanyId} />
                 </TableHead>
