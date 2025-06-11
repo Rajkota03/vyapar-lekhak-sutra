@@ -100,6 +100,7 @@ export type Database = {
           overdue_reminder: boolean | null
           payment_note: string | null
           payment_qr_url: string | null
+          quantity_column_label: string | null
           quote_title: string | null
           sac_code: string | null
           signature_scale: number | null
@@ -125,6 +126,7 @@ export type Database = {
           overdue_reminder?: boolean | null
           payment_note?: string | null
           payment_qr_url?: string | null
+          quantity_column_label?: string | null
           quote_title?: string | null
           sac_code?: string | null
           signature_scale?: number | null
@@ -150,6 +152,7 @@ export type Database = {
           overdue_reminder?: boolean | null
           payment_note?: string | null
           payment_qr_url?: string | null
+          quantity_column_label?: string | null
           quote_title?: string | null
           sac_code?: string | null
           signature_scale?: number | null
