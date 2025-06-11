@@ -128,6 +128,20 @@
       /* Drawer content adjustments for iOS */
       [data-vaul-drawer] {
         max-height: 85dvh !important;
+        background: hsl(var(--background)) !important;
+      }
+      
+      [data-vaul-drawer][data-vaul-drawer-direction="bottom"] {
+        border-top-left-radius: 10px !important;
+        border-top-right-radius: 10px !important;
+        background: hsl(var(--background)) !important;
+        min-height: 50vh !important;
+      }
+      
+      /* Ensure drawer overlay is properly styled */
+      [data-vaul-overlay] {
+        background: rgba(0, 0, 0, 0.8) !important;
+        backdrop-filter: blur(2px) !important;
       }
     }
   }
@@ -172,6 +186,18 @@
     overflow-x: hidden;
     box-sizing: border-box;
     position: relative;
+    background: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Force proper drawer background on iOS */
+  @supports (-webkit-touch-callout: none) {
+    .mobile-drawer-safe {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      will-change: transform;
+      background-color: hsl(var(--background)) !important;
+    }
   }
 
   /* Form elements safety on mobile */
@@ -187,6 +213,7 @@
       max-width: 100vw !important;
       overflow-x: hidden !important;
       box-sizing: border-box !important;
+      background: hsl(var(--background)) !important;
     }
     
     /* Container safety */

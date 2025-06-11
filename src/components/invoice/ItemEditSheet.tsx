@@ -10,12 +10,14 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerDescription,
 } from "@/components/ui/drawer";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { LineItem } from "./types/InvoiceTypes";
 import { formatNumber } from "@/utils/formatNumber";
@@ -41,6 +43,11 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    console.log('=== ITEM EDIT SHEET DEBUG ===');
+    console.log('isOpen:', isOpen);
+    console.log('isMobile:', isMobile);
+    console.log('line:', line);
+    
     if (line) {
       setEditedLine({
         ...line,
@@ -50,9 +57,12 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
         sgst: line.sgst || 0,
       });
     }
-  }, [line]);
+  }, [line, isOpen, isMobile]);
 
-  if (!editedLine) return null;
+  if (!editedLine) {
+    console.log('No edited line, returning null');
+    return null;
+  }
 
   const handleSave = () => {
     if (!editedLine.description.trim() || editedLine.unit_price <= 0) {
@@ -76,7 +86,7 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
   const calculatedAmount = (editedLine.qty * editedLine.unit_price) - (editedLine.discount_amount || 0);
 
   const FormContent = () => (
-    <div className="space-y-6 w-full mobile-safe">
+    <div className="space-y-6 w-full mobile-safe bg-background">
       {/* Item Name */}
       <div className="space-y-3 w-full">
         <label>
@@ -231,19 +241,24 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
     </div>
   );
 
+  console.log('Rendering ItemEditSheet, isMobile:', isMobile);
+
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="mobile-drawer-safe max-h-[85dvh] h-[85dvh] w-full max-w-full">
-          <DrawerHeader className="flex flex-row items-center justify-between p-4 border-b w-full mobile-safe">
-            <DrawerTitle className="text-lg font-semibold">Item</DrawerTitle>
+        <DrawerContent className="mobile-drawer-safe bg-background">
+          <DrawerHeader className="flex flex-row items-center justify-between p-4 border-b w-full mobile-safe bg-background">
+            <DrawerTitle className="text-lg font-semibold text-foreground">Item</DrawerTitle>
             <div className="flex items-center gap-2">
               <Button onClick={handleSave} className="text-blue-600 hover:text-blue-700 p-0 h-auto font-semibold" variant="ghost">
                 Save
               </Button>
             </div>
           </DrawerHeader>
-          <div className="overflow-y-auto p-4 pb-8 w-full mobile-safe flex-1">
+          <DrawerDescription className="sr-only">
+            Edit item details including name, price, quantity, and other properties.
+          </DrawerDescription>
+          <div className="overflow-y-auto p-4 pb-8 w-full mobile-safe flex-1 bg-background">
             <FormContent />
           </div>
         </DrawerContent>
@@ -260,6 +275,9 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
             Save
           </Button>
         </DialogHeader>
+        <DialogDescription className="sr-only">
+          Edit item details including name, price, quantity, and other properties.
+        </DialogDescription>
         <FormContent />
       </DialogContent>
     </Dialog>
