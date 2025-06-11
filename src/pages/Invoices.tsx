@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +13,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -188,105 +195,147 @@ const Invoices = () => {
     navigate('/invoices/new');
   };
 
+  const getStatusBadge = (status: string | null) => {
+    if (!status) return null;
+    
+    const statusConfig = {
+      draft: { label: "Draft", variant: "secondary" as const },
+      sent: { label: "Sent", variant: "default" as const },
+      paid: { label: "Paid", variant: "default" as const }
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig];
+    if (!config) return null;
+    
+    return (
+      <Badge variant={config.variant} className="text-xs">
+        {config.label}
+      </Badge>
+    );
+  };
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white p-4 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold">Invoices</h1>
-            <Button 
-              className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg"
-              onClick={handleCreateInvoice}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Invoice
-            </Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+            <p className="text-muted-foreground">
+              Manage your invoices and track payments
+            </p>
           </div>
-
-          {companies && companies.length > 1 && (
-            <div className="mt-2">
-              <select
-                value={selectedCompanyId || ''}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                className="w-full p-2 border rounded text-sm"
-              >
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <Button onClick={handleCreateInvoice}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Invoice
+          </Button>
         </div>
 
-        {/* Content */}
-        <div className="p-4">
+        {/* Company Selector */}
+        {companies && companies.length > 1 && (
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Company:</label>
+            <select
+              value={selectedCompanyId || ''}
+              onChange={(e) => setSelectedCompanyId(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Filter Dropdown */}
+        <div className="flex items-center space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Filter: {filterStatus === 'all' ? 'All' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setFilterStatus('all')}>
+                All
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterStatus('draft')}>
+                Draft
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterStatus('sent')}>
+                Sent
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterStatus('paid')}>
+                Paid
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Invoices Table */}
+        <div className="rounded-md border">
           {isLoadingInvoices ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : invoices && invoices.length > 0 ? (
-            <div className="bg-white rounded-lg shadow-sm">
-              {/* Card Header */}
-              <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold mb-2">Invoice List</h2>
-                <p className="text-gray-600">Manage your invoices</p>
-              </div>
-
-              {/* Table Header */}
-              <div className="px-6 py-3 border-b bg-gray-50">
-                <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-600">
-                  <div>Invoice Number</div>
-                  <div>Client</div>
-                  <div>Issue Date</div>
-                </div>
-              </div>
-
-              {/* Table Body */}
-              <div className="divide-y divide-gray-100">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[150px]">Invoice #</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="hidden sm:table-cell text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {invoices.map((invoice) => (
-                  <div 
-                    key={invoice.id} 
-                    className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  <TableRow 
+                    key={invoice.id}
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleInvoiceClick(invoice.id)}
                   >
-                    <div className="grid grid-cols-3 gap-4 items-center">
-                      <div className="font-medium text-gray-900">
-                        {invoice.invoice_code || invoice.number || 'Draft Invoice'}
+                    <TableCell className="font-medium">
+                      {invoice.invoice_code || invoice.number || 'Draft'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div>{invoice.clients?.name || 'No client'}</div>
+                        <div className="sm:hidden text-xs text-muted-foreground">
+                          {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+                        </div>
+                        <div className="sm:hidden">
+                          {getStatusBadge(invoice.status)}
+                        </div>
                       </div>
-                      <div className="text-gray-700">
-                        {invoice.clients?.name || 'No client'}
-                      </div>
-                      <div className="text-gray-600">
-                        {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-                      </div>
-                    </div>
-                  </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell text-center">
+                      {getStatusBadge(invoice.status)}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </div>
+              </TableBody>
+            </Table>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <p className="text-gray-600 mb-4">No invoices yet</p>
-              <Button 
-                variant="outline" 
-                onClick={handleCreateInvoice}
-              >
-                Create Invoice
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No invoices found</p>
+              <Button variant="outline" onClick={handleCreateInvoice}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create your first invoice
               </Button>
             </div>
           )}
         </div>
-
-        {/* Floating Action Button */}
-        <Button
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full p-0 shadow-lg bg-gray-900 hover:bg-gray-800"
-          onClick={handleCreateInvoice}
-        >
-          <Plus size={24} />
-        </Button>
       </div>
     </DashboardLayout>
   );
