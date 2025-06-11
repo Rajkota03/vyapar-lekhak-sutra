@@ -29,21 +29,21 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
         className="border-b last:border-none cursor-pointer hover:bg-accent/50 transition-colors"
         onClick={() => onEditItem(index)}
       >
-        <TableCell className="py-3 px-3">
-          <BodyText className="font-medium">
+        <TableCell className="w-[45%] py-3 px-3 text-left">
+          <BodyText className="font-medium truncate">
             {item.description}
           </BodyText>
         </TableCell>
-        <TableCell className="py-3 px-2 text-center">
+        <TableCell className="w-[12%] py-3 px-2 text-center">
           <BodyText>{item.qty}</BodyText>
         </TableCell>
-        <TableCell className="py-3 px-2 text-right">
+        <TableCell className="w-[18%] py-3 px-2 text-right">
           <BodyText>₹{formatNumber(item.unit_price)}</BodyText>
         </TableCell>
-        <TableCell className="py-3 px-2 text-right">
-          <BodyText className="font-semibold">₹{item.amount.toFixed(2)}</BodyText>
+        <TableCell className="w-[18%] py-3 px-2 text-right">
+          <BodyText className="font-semibold">₹{formatNumber(item.amount)}</BodyText>
         </TableCell>
-        <TableCell className="py-3 px-2">
+        <TableCell className="w-[7%] py-3 px-2">
           <PremiumButton
             variant="ghost"
             size="sm"
