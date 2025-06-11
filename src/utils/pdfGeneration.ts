@@ -1,3 +1,4 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -13,6 +14,19 @@ interface CompanyData {
   gstin?: string;
   logo_url?: string;
 }
+
+// DEBUG FLAG - Set to true to enable visual alignment debugging
+const DEBUG_ALIGNMENT = true;
+
+// Debug colors for visual alignment
+const DEBUG_COLORS = {
+  paymentBg: '#e8f4f8',
+  totalsBg: '#f8e8e8',
+  labelBg: '#fff2cc',
+  valueBg: '#e1f5fe',
+  border: '#ff0000',
+  grid: '#cccccc'
+};
 
 // Function to convert image URL to base64
 const getImageAsBase64 = async (url: string): Promise<string | null> => {
@@ -88,6 +102,7 @@ export const generateInvoicePDF = async (
   console.log('Invoice data:', invoiceData);
   console.log('Company data:', companyData);
   console.log('Show my signature setting:', invoiceData.show_my_signature);
+  console.log('DEBUG ALIGNMENT MODE:', DEBUG_ALIGNMENT ? 'ENABLED' : 'DISABLED');
   
   // ENHANCED NOTES DEBUG LOGGING
   console.log('=== NOTES DEBUG IN PDF GENERATION ===');
@@ -328,7 +343,7 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 8]
     },
 
-    // SECTION 4: INDEPENDENT PAYMENT DETAILS AND TOTALS COLUMNS
+    // SECTION 4: PAYMENT DETAILS AND TOTALS WITH DEBUG VISUALIZATION
     {
       columns: [
         {
@@ -337,78 +352,202 @@ export const generateInvoicePDF = async (
             {
               text: 'Payment Details',
               style: 'paymentSectionHeader',
-              margin: [0, 0, 0, 6]
+              margin: [0, 0, 0, 6],
+              ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.paymentBg })
             },
             {
               text: paymentInstructions,
               style: 'paymentDetails',
-              margin: [0, 0, 0, 0]
+              margin: [0, 0, 0, 0],
+              ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.paymentBg })
             }
-          ]
+          ],
+          ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.paymentBg })
         },
         {
           width: '40%',
           stack: [
-            // Subtotal
+            // ALIGNMENT DEBUG HEADER
+            ...(DEBUG_ALIGNMENT ? [
+              {
+                text: '🎯 TOTALS ALIGNMENT DEBUG',
+                style: 'totalLabel',
+                fillColor: '#ffcccc',
+                alignment: 'center',
+                margin: [0, 0, 0, 3]
+              }
+            ] : []),
+            // Subtotal with DEBUG
             {
               columns: [
-                { width: '*', text: 'Subtotal', style: 'totalLabel' },
-                { width: 'auto', text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right' }
+                { 
+                  width: '*', 
+                  text: 'Subtotal', 
+                  style: 'totalLabel',
+                  ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
+                },
+                { 
+                  width: 80, 
+                  text: formatCurrency(subtotal), 
+                  style: 'totalValue', 
+                  alignment: 'right',
+                  ...(DEBUG_ALIGNMENT && { 
+                    fillColor: DEBUG_COLORS.valueBg,
+                    border: [1, 1, 1, 1],
+                    borderColor: DEBUG_COLORS.border
+                  })
+                }
               ],
-              margin: [0, 0, 0, 2]
+              margin: [0, 0, 0, 2],
+              ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
             },
-            // Tax rows
+            // Tax rows with DEBUG
             ...(invoiceData.use_igst ? [
               {
                 columns: [
-                  { width: '*', text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel' },
-                  { width: 'auto', text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right' }
+                  { 
+                    width: '*', 
+                    text: `IGST (${invoiceData.igst_pct}%)`, 
+                    style: 'totalLabel',
+                    ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
+                  },
+                  { 
+                    width: 80, 
+                    text: formatCurrency(igstAmount), 
+                    style: 'totalValue', 
+                    alignment: 'right',
+                    ...(DEBUG_ALIGNMENT && { 
+                      fillColor: DEBUG_COLORS.valueBg,
+                      border: [1, 1, 1, 1],
+                      borderColor: DEBUG_COLORS.border
+                    })
+                  }
                 ],
-                margin: [0, 0, 0, 2]
+                margin: [0, 0, 0, 2],
+                ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
               }
             ] : [
               {
                 columns: [
-                  { width: '*', text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel' },
-                  { width: 'auto', text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right' }
+                  { 
+                    width: '*', 
+                    text: `CGST (${invoiceData.cgst_pct}%)`, 
+                    style: 'totalLabel',
+                    ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
+                  },
+                  { 
+                    width: 80, 
+                    text: formatCurrency(cgstAmount), 
+                    style: 'totalValue', 
+                    alignment: 'right',
+                    ...(DEBUG_ALIGNMENT && { 
+                      fillColor: DEBUG_COLORS.valueBg,
+                      border: [1, 1, 1, 1],
+                      borderColor: DEBUG_COLORS.border
+                    })
+                  }
                 ],
-                margin: [0, 0, 0, 2]
+                margin: [0, 0, 0, 2],
+                ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
               },
               {
                 columns: [
-                  { width: '*', text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel' },
-                  { width: 'auto', text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right' }
+                  { 
+                    width: '*', 
+                    text: `SGST (${invoiceData.sgst_pct}%)`, 
+                    style: 'totalLabel',
+                    ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
+                  },
+                  { 
+                    width: 80, 
+                    text: formatCurrency(sgstAmount), 
+                    style: 'totalValue', 
+                    alignment: 'right',
+                    ...(DEBUG_ALIGNMENT && { 
+                      fillColor: DEBUG_COLORS.valueBg,
+                      border: [1, 1, 1, 1],
+                      borderColor: DEBUG_COLORS.border
+                    })
+                  }
                 ],
-                margin: [0, 0, 0, 2]
+                margin: [0, 0, 0, 2],
+                ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
               }
             ]),
-            // Line separator
+            // Line separator with DEBUG
             {
               canvas: [
                 {
                   type: 'line',
                   x1: 0, y1: 3,
                   x2: 200, y2: 3,
-                  lineWidth: 1,
-                  lineColor: '#cccccc'
+                  lineWidth: DEBUG_ALIGNMENT ? 3 : 1,
+                  lineColor: DEBUG_ALIGNMENT ? DEBUG_COLORS.border : '#cccccc'
                 }
               ],
               margin: [0, 3, 0, 5]
             },
-            // Grand Total
+            // Grand Total with ENHANCED DEBUG
             {
               columns: [
-                { width: '*', text: 'GRAND TOTAL', style: 'finalTotalLabel' },
-                { width: 'auto', text: formatCurrency(grandTotal), style: 'finalTotalValue', alignment: 'right' }
+                { 
+                  width: '*', 
+                  text: 'GRAND TOTAL', 
+                  style: 'finalTotalLabel',
+                  ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
+                },
+                { 
+                  width: 80, 
+                  text: formatCurrency(grandTotal), 
+                  style: 'finalTotalValue', 
+                  alignment: 'right',
+                  ...(DEBUG_ALIGNMENT && { 
+                    fillColor: '#b3e5fc',
+                    border: [2, 2, 2, 2],
+                    borderColor: '#0066cc'
+                  })
+                }
               ],
-              fillColor: '#f5f5f5',
+              fillColor: DEBUG_ALIGNMENT ? '#fff3e0' : '#f5f5f5',
               margin: [0, 0, 0, 0]
-            }
-          ]
+            },
+            // ALIGNMENT REFERENCE LINES (DEBUG ONLY)
+            ...(DEBUG_ALIGNMENT ? [
+              {
+                canvas: [
+                  // Vertical alignment line for amounts
+                  {
+                    type: 'line',
+                    x1: 120, y1: 0,
+                    x2: 120, y2: -120,
+                    lineWidth: 2,
+                    lineColor: '#ff6600',
+                    dash: { length: 3 }
+                  },
+                  // Right margin line
+                  {
+                    type: 'line',
+                    x1: 200, y1: 0,
+                    x2: 200, y2: -120,
+                    lineWidth: 2,
+                    lineColor: '#ff0066',
+                    dash: { length: 3 }
+                  }
+                ],
+                margin: [0, 5, 0, 0]
+              }
+            ] : [])
+          ],
+          ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
         }
       ],
       columnGap: 20,
-      margin: [0, 0, 0, 12]
+      margin: [0, 0, 0, 12],
+      ...(DEBUG_ALIGNMENT && { 
+        fillColor: DEBUG_COLORS.grid,
+        border: [2, 2, 2, 2],
+        borderColor: DEBUG_COLORS.border
+      })
     },
 
     // SECTION 5: NOTES (Separate section below payment and totals)
@@ -604,6 +743,7 @@ export const generateInvoicePDF = async (
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
   console.log('Notes content in final PDF:', hasNotes ? invoiceData.notes : 'No notes');
+  console.log('DEBUG ALIGNMENT:', DEBUG_ALIGNMENT ? 'Colors and borders added for debugging' : 'Normal production mode');
   return docDefinition;
 };
 
