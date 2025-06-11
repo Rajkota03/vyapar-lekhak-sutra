@@ -1,4 +1,3 @@
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -171,12 +170,12 @@ export const generateInvoicePDF = async (
   console.log('Scale factor:', signatureScale);
   console.log('Final dimensions:', { width: signatureWidth, height: signatureHeight });
 
-  // Create header content with improved layout matching the reference image
+  // Create header content with improved layout
   const headerContent = [];
   
   if (logoBase64) {
     console.log('=== CREATING HEADER WITH LOGO ===');
-    // Header with logo on left and company details on right
+    // Header with logo and company details
     headerContent.push({
       columns: [
         {
@@ -192,10 +191,6 @@ export const generateInvoicePDF = async (
         },
         {
           width: '*',
-          text: '' // spacer
-        },
-        {
-          width: 200,
           stack: [
             {
               text: 'Invoice',
@@ -219,18 +214,7 @@ export const generateInvoicePDF = async (
               text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
               style: 'companyGstin',
               alignment: 'right',
-              margin: [0, 0, 0, 8]
-            },
-            {
-              text: `Invoice #: ${invoiceData.number}`,
-              style: 'invoiceNumber',
-              alignment: 'right',
-              margin: [0, 0, 0, 3]
-            },
-            {
-              text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
-              style: 'invoiceDate',
-              alignment: 'right'
+              margin: [0, 0, 0, 0]
             }
           ]
         }
@@ -239,7 +223,7 @@ export const generateInvoicePDF = async (
     });
   } else {
     console.log('=== CREATING HEADER WITHOUT LOGO ===');
-    // Header without logo but maintaining the layout structure
+    // Header without logo
     headerContent.push({
       columns: [
         {
@@ -269,17 +253,6 @@ export const generateInvoicePDF = async (
               style: 'invoiceTitle',
               alignment: 'right',
               margin: [0, 0, 0, 8]
-            },
-            {
-              text: `Invoice #: ${invoiceData.number}`,
-              style: 'invoiceNumber',
-              alignment: 'right',
-              margin: [0, 0, 0, 3]
-            },
-            {
-              text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
-              style: 'invoiceDate',
-              alignment: 'right'
             }
           ]
         }
@@ -293,27 +266,61 @@ export const generateInvoicePDF = async (
     // Header Section
     ...headerContent,
 
-    // Bill To Section
+    // Bill To Section with Invoice Details on the right
     {
-      text: 'BILL TO',
-      style: 'sectionHeader',
-      margin: [0, 0, 0, 5]
-    },
-    {
-      stack: [
+      columns: [
         {
-          text: clientData.name,
-          style: 'clientName',
-          margin: [0, 0, 0, 3]
+          width: '50%',
+          stack: [
+            {
+              text: 'BILL TO',
+              style: 'sectionHeader',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: clientData.name,
+              style: 'clientName',
+              margin: [0, 0, 0, 3]
+            },
+            {
+              text: clientData.billing_address || '',
+              style: 'clientAddress',
+              margin: [0, 0, 0, 3]
+            },
+            {
+              text: clientData.gstin ? `GSTIN: ${clientData.gstin}` : '',
+              style: 'clientGstin'
+            }
+          ]
         },
         {
-          text: clientData.billing_address || '',
-          style: 'clientAddress',
-          margin: [0, 0, 0, 3]
-        },
-        {
-          text: clientData.gstin ? `GSTIN: ${clientData.gstin}` : '',
-          style: 'clientGstin'
+          width: '50%',
+          stack: [
+            {
+              text: `Invoice #: ${invoiceData.number}`,
+              style: 'invoiceNumber',
+              alignment: 'right',
+              margin: [0, 0, 0, 3]
+            },
+            {
+              text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
+              style: 'invoiceDate',
+              alignment: 'right',
+              margin: [0, 0, 0, 10]
+            },
+            {
+              text: 'BANK DETAILS',
+              style: 'sectionHeader',
+              alignment: 'right',
+              margin: [0, 10, 0, 5]
+            },
+            {
+              text: companySettings?.bank_details || 'Bank Name: [Bank Name]\nAccount No: [Account Number]\nIFSC: [IFSC Code]\nBranch: [Branch Name]',
+              style: 'bankDetails',
+              alignment: 'right',
+              margin: [0, 0, 0, 0]
+            }
+          ]
         }
       ],
       margin: [0, 0, 0, 20]
@@ -573,6 +580,11 @@ export const generateInvoicePDF = async (
       clientGstin: {
         fontSize: 10,
         color: '#666666'
+      },
+      bankDetails: {
+        fontSize: 9,
+        color: '#666666',
+        lineHeight: 1.3
       },
       tableHeader: {
         fontSize: 10,
