@@ -223,17 +223,6 @@ const InvoiceEdit = () => {
           <Section className="pt-6">
             <InvoiceMeta selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
 
-            {/* Smaller header with date and invoice code */}
-            <div className="flex justify-between items-center text-sm font-medium text-muted-foreground mt-4 mb-6">
-              <span>{format(selectedDate, 'dd MMM yyyy')}</span>
-              <div className="text-right">
-                <div>#{existingInvoice?.number || invoiceCode}</div>
-                {existingInvoice?.invoice_code && (
-                  <CaptionText>#{existingInvoice.invoice_code}</CaptionText>
-                )}
-              </div>
-            </div>
-
             <ClientSection selectedClient={selectedClient} setSelectedClient={setSelectedClient} clients={clients} companyId={selectedCompanyId || ""} />
 
             <ItemsSection lineItems={lineItems} setLineItems={setLineItems} items={items} selectedCompanyId={selectedCompanyId} />
@@ -305,3 +294,5 @@ const InvoiceEdit = () => {
 };
 
 export default InvoiceEdit;
+
+}
