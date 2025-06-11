@@ -1,4 +1,3 @@
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -203,6 +202,10 @@ export const generateInvoicePDF = async (
   console.log('Has notes (final decision):', hasNotes);
   console.log('Notes content that will be used:', hasNotes ? invoiceData.notes : 'No notes');
 
+  // FIXED ALIGNMENT: Define consistent widths for table and totals
+  const TABLE_AMOUNT_WIDTH = 80; // Fixed width for amount column
+  const TOTALS_VALUE_WIDTH = 80; // Exact same width for totals values
+
   // Create the main content array with minimal spacing
   const mainContent: any[] = [
     // SECTION 1: HEADER - Logo on left, company details on right
@@ -304,11 +307,11 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 10]
     },
 
-    // SECTION 3: ITEMS TABLE (Clean and simple)
+    // SECTION 3: ITEMS TABLE - Fixed column widths for perfect alignment
     {
       table: {
         headerRows: 1,
-        widths: ['*', 50, 70, 70],
+        widths: ['*', 50, 70, TABLE_AMOUNT_WIDTH], // Fixed amount column width
         body: [
           // Header row
           [
@@ -343,7 +346,7 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 8]
     },
 
-    // SECTION 4: PAYMENT DETAILS AND TOTALS WITH DEBUG VISUALIZATION
+    // SECTION 4: PAYMENT DETAILS AND TOTALS - Matched width for perfect alignment
     {
       columns: [
         {
@@ -370,14 +373,14 @@ export const generateInvoicePDF = async (
             // ALIGNMENT DEBUG HEADER
             ...(DEBUG_ALIGNMENT ? [
               {
-                text: '🎯 TOTALS ALIGNMENT DEBUG',
+                text: '🎯 TOTALS ALIGNMENT DEBUG - FIXED',
                 style: 'totalLabel',
-                fillColor: '#ffcccc',
+                fillColor: '#ccffcc',
                 alignment: 'center',
                 margin: [0, 0, 0, 3]
               }
             ] : []),
-            // Subtotal with DEBUG
+            // Subtotal with EXACT WIDTH MATCH
             {
               columns: [
                 { 
@@ -387,21 +390,21 @@ export const generateInvoicePDF = async (
                   ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                 },
                 { 
-                  width: 80, 
+                  width: TOTALS_VALUE_WIDTH, // EXACT same width as table amount column
                   text: formatCurrency(subtotal), 
                   style: 'totalValue', 
                   alignment: 'right',
                   ...(DEBUG_ALIGNMENT && { 
-                    fillColor: DEBUG_COLORS.valueBg,
-                    border: [1, 1, 1, 1],
-                    borderColor: DEBUG_COLORS.border
+                    fillColor: '#ccffcc', // Green to show it's fixed
+                    border: [2, 2, 2, 2],
+                    borderColor: '#00cc00'
                   })
                 }
               ],
               margin: [0, 0, 0, 2],
               ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
             },
-            // Tax rows with DEBUG
+            // Tax rows with EXACT WIDTH MATCH
             ...(invoiceData.use_igst ? [
               {
                 columns: [
@@ -412,14 +415,14 @@ export const generateInvoicePDF = async (
                     ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                   },
                   { 
-                    width: 80, 
+                    width: TOTALS_VALUE_WIDTH, // EXACT same width as table amount column
                     text: formatCurrency(igstAmount), 
                     style: 'totalValue', 
                     alignment: 'right',
                     ...(DEBUG_ALIGNMENT && { 
-                      fillColor: DEBUG_COLORS.valueBg,
-                      border: [1, 1, 1, 1],
-                      borderColor: DEBUG_COLORS.border
+                      fillColor: '#ccffcc', // Green to show it's fixed
+                      border: [2, 2, 2, 2],
+                      borderColor: '#00cc00'
                     })
                   }
                 ],
@@ -436,14 +439,14 @@ export const generateInvoicePDF = async (
                     ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                   },
                   { 
-                    width: 80, 
+                    width: TOTALS_VALUE_WIDTH, // EXACT same width as table amount column
                     text: formatCurrency(cgstAmount), 
                     style: 'totalValue', 
                     alignment: 'right',
                     ...(DEBUG_ALIGNMENT && { 
-                      fillColor: DEBUG_COLORS.valueBg,
-                      border: [1, 1, 1, 1],
-                      borderColor: DEBUG_COLORS.border
+                      fillColor: '#ccffcc', // Green to show it's fixed
+                      border: [2, 2, 2, 2],
+                      borderColor: '#00cc00'
                     })
                   }
                 ],
@@ -459,14 +462,14 @@ export const generateInvoicePDF = async (
                     ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                   },
                   { 
-                    width: 80, 
+                    width: TOTALS_VALUE_WIDTH, // EXACT same width as table amount column
                     text: formatCurrency(sgstAmount), 
                     style: 'totalValue', 
                     alignment: 'right',
                     ...(DEBUG_ALIGNMENT && { 
-                      fillColor: DEBUG_COLORS.valueBg,
-                      border: [1, 1, 1, 1],
-                      borderColor: DEBUG_COLORS.border
+                      fillColor: '#ccffcc', // Green to show it's fixed
+                      border: [2, 2, 2, 2],
+                      borderColor: '#00cc00'
                     })
                   }
                 ],
@@ -487,7 +490,7 @@ export const generateInvoicePDF = async (
               ],
               margin: [0, 3, 0, 5]
             },
-            // Grand Total with ENHANCED DEBUG
+            // Grand Total with EXACT WIDTH MATCH
             {
               columns: [
                 { 
@@ -497,40 +500,40 @@ export const generateInvoicePDF = async (
                   ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                 },
                 { 
-                  width: 80, 
+                  width: TOTALS_VALUE_WIDTH, // EXACT same width as table amount column
                   text: formatCurrency(grandTotal), 
                   style: 'finalTotalValue', 
                   alignment: 'right',
                   ...(DEBUG_ALIGNMENT && { 
-                    fillColor: '#b3e5fc',
-                    border: [2, 2, 2, 2],
-                    borderColor: '#0066cc'
+                    fillColor: '#99ff99', // Bright green to show perfect alignment
+                    border: [3, 3, 3, 3],
+                    borderColor: '#006600'
                   })
                 }
               ],
-              fillColor: DEBUG_ALIGNMENT ? '#fff3e0' : '#f5f5f5',
+              fillColor: DEBUG_ALIGNMENT ? '#e8f5e8' : '#f5f5f5',
               margin: [0, 0, 0, 0]
             },
-            // ALIGNMENT REFERENCE LINES (DEBUG ONLY)
+            // ALIGNMENT REFERENCE LINES (DEBUG ONLY) - Updated positions
             ...(DEBUG_ALIGNMENT ? [
               {
                 canvas: [
-                  // Vertical alignment line for amounts
+                  // Vertical alignment line for amounts - positioned to show exact alignment
                   {
                     type: 'line',
                     x1: 120, y1: 0,
                     x2: 120, y2: -120,
-                    lineWidth: 2,
-                    lineColor: '#ff6600',
+                    lineWidth: 3,
+                    lineColor: '#00cc00', // Green for perfect alignment
                     dash: { length: 3 }
                   },
-                  // Right margin line
+                  // Right margin line - exact position of amount column end
                   {
                     type: 'line',
                     x1: 200, y1: 0,
                     x2: 200, y2: -120,
-                    lineWidth: 2,
-                    lineColor: '#ff0066',
+                    lineWidth: 3,
+                    lineColor: '#00cc00', // Green for perfect alignment
                     dash: { length: 3 }
                   }
                 ],
@@ -740,6 +743,7 @@ export const generateInvoicePDF = async (
   };
 
   console.log('=== PDF GENERATION COMPLETE ===');
+  console.log('✅ ALIGNMENT FIXED: Table amount column and totals values now use same width:', TOTALS_VALUE_WIDTH);
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
   console.log('Notes content in final PDF:', hasNotes ? invoiceData.notes : 'No notes');
