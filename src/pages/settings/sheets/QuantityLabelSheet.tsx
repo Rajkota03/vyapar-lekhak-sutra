@@ -7,7 +7,7 @@ import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import SheetLayout from "@/components/ui/SheetLayout";
+import { SheetLayout } from "@/components/ui/SheetLayout";
 
 const QuantityLabelSheet = () => {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const QuantityLabelSheet = () => {
   ];
 
   return (
-    <SheetLayout>
+    <SheetLayout title="Quantity Label">
       <div className="flex items-center gap-3 p-4 border-b">
         <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft className="h-5 w-5" />
