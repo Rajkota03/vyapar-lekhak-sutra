@@ -173,13 +173,88 @@ export const generateInvoicePDF = async (
   // Get payment instructions or use fallback
   const paymentInstructions = companySettings?.payment_note || 'Payment Instructions\nBank Name: [Bank Name]\nAccount No: [Account Number]\nIFSC: [IFSC Code]\nBranch: [Branch Name]';
 
-  // Create the main content array with optimized spacing
+  // Section height calculations (approximate)
+  const sectionHeights = {
+    HEADER: 60,           // Company info + invoice title
+    BILL_TO_PAYMENT: 80,  // Bill to + payment instructions
+    ITEMS_TABLE: 100 + (lineItems.length * 18), // Header + rows
+    TOTALS: 80,           // Tax calculations + grand total
+    FOOTER: 30,           // Thank you message
+    SIGNATURE: signatureBase64 && invoiceData.show_my_signature ? 60 : 0
+  };
+
+  const pageHeight = 841.89; // A4 height in points
+  const pageMargins = 70; // Top + bottom margins
+  const availableHeight = pageHeight - pageMargins;
+  const usedHeight = Object.values(sectionHeights).reduce((sum, h) => sum + h, 0);
+  const remainingHeight = availableHeight - usedHeight;
+
+  // Helper function to create section marker
+  const createSectionMarker = (sectionName: string, height: number, color: string = '#ff0000') => ({
+    canvas: [
+      // Top border
+      {
+        type: 'line',
+        x1: 0,
+        y1: 0,
+        x2: 535, // Page width minus margins
+        y2: 0,
+        lineWidth: 1,
+        lineColor: color,
+        dash: { length: 3 }
+      },
+      // Left border
+      {
+        type: 'line',
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: height,
+        lineWidth: 1,
+        lineColor: color,
+        dash: { length: 3 }
+      },
+      // Right border
+      {
+        type: 'line',
+        x1: 535,
+        y1: 0,
+        x2: 535,
+        y2: height,
+        lineWidth: 1,
+        lineColor: color,
+        dash: { length: 3 }
+      }
+    ],
+    margin: [0, 0, 0, 0],
+    absolutePosition: { x: 30, y: 'auto' }
+  });
+
+  // Helper function to create section label
+  const createSectionLabel = (sectionName: string, height: number, available: number) => ({
+    text: `${sectionName} | Used: ${height}pt | Available: +${available.toFixed(0)}pt`,
+    style: 'sectionDebug',
+    background: '#ffff00',
+    margin: [2, 1, 2, 1]
+  });
+
+  // Create the main content array with debug markers
   const mainContent: any[] = [
-    // Compact Header Section - Logo and Company Info side by side, Invoice title on right
+    // DEBUG: Page info
+    {
+      text: `🔍 DEBUG MODE - Page: ${availableHeight}pt total | Used: ${usedHeight}pt | Free: ${remainingHeight.toFixed(0)}pt`,
+      style: 'debugInfo',
+      background: '#e0e0e0',
+      margin: [0, 0, 0, 5]
+    },
+
+    // SECTION 1: HEADER
+    createSectionLabel('HEADER', sectionHeights.HEADER, remainingHeight * 0.1),
+    createSectionMarker('HEADER', sectionHeights.HEADER, '#ff0000'),
     {
       columns: [
         {
-          width: logoBase64 ? 70 : 1, // Small width for logo or minimal if no logo
+          width: logoBase64 ? 70 : 1,
           stack: logoBase64 ? [
             {
               image: logoBase64,
@@ -231,10 +306,12 @@ export const generateInvoicePDF = async (
           ]
         }
       ],
-      margin: [0, 0, 0, 12]
+      margin: [0, 5, 0, 12]
     },
 
-    // Compact Bill To and Payment Instructions in two columns
+    // SECTION 2: BILL TO + PAYMENT
+    createSectionLabel('BILL_TO_PAYMENT', sectionHeights.BILL_TO_PAYMENT, remainingHeight * 0.15),
+    createSectionMarker('BILL_TO_PAYMENT', sectionHeights.BILL_TO_PAYMENT, '#00ff00'),
     {
       columns: [
         {
@@ -277,10 +354,12 @@ export const generateInvoicePDF = async (
           ]
         }
       ],
-      margin: [0, 0, 0, 15]
+      margin: [0, 5, 0, 15]
     },
 
-    // Compact Items Table with reduced padding
+    // SECTION 3: ITEMS TABLE
+    createSectionLabel('ITEMS_TABLE', sectionHeights.ITEMS_TABLE, remainingHeight * 0.4),
+    createSectionMarker('ITEMS_TABLE', sectionHeights.ITEMS_TABLE, '#0000ff'),
     {
       table: {
         headerRows: 1,
@@ -315,10 +394,12 @@ export const generateInvoicePDF = async (
         paddingTop: () => 4,
         paddingBottom: () => 4
       },
-      margin: [0, 0, 0, 10]
+      margin: [0, 5, 0, 10]
     },
 
-    // Compact Totals Section - aligned to the right like in sample
+    // SECTION 4: TOTALS
+    createSectionLabel('TOTALS', sectionHeights.TOTALS, remainingHeight * 0.2),
+    createSectionMarker('TOTALS', sectionHeights.TOTALS, '#ff00ff'),
     {
       columns: [
         {
@@ -368,10 +449,10 @@ export const generateInvoicePDF = async (
           }
         }
       ],
-      margin: [0, 0, 0, 8]
+      margin: [0, 5, 0, 8]
     },
 
-    // Final Grand Total Section with background like sample
+    // Final Grand Total Section
     {
       columns: [
         {
@@ -403,7 +484,9 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 10]
     },
 
-    // Compact Footer
+    // SECTION 5: FOOTER
+    createSectionLabel('FOOTER', sectionHeights.FOOTER, remainingHeight * 0.1),
+    createSectionMarker('FOOTER', sectionHeights.FOOTER, '#ffaa00'),
     {
       text: 'Thank you for your business!',
       style: 'footer',
@@ -414,7 +497,7 @@ export const generateInvoicePDF = async (
       text: companyData.name,
       style: 'footerCompany',
       alignment: 'center',
-      margin: [0, 0, 0, 0]
+      margin: [0, 0, 0, 5]
     }
   ];
 
@@ -422,7 +505,9 @@ export const generateInvoicePDF = async (
   if (signatureBase64 && invoiceData.show_my_signature) {
     console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
     mainContent.push(
-      // Compact signature section
+      // SECTION 6: SIGNATURE
+      createSectionLabel('SIGNATURE', sectionHeights.SIGNATURE, remainingHeight * 0.15),
+      createSectionMarker('SIGNATURE', sectionHeights.SIGNATURE, '#00ffff'),
       {
         columns: [
           {
@@ -462,44 +547,46 @@ export const generateInvoicePDF = async (
           },
           {
             width: '50%',
-            text: '' // Empty space on right
+            text: ''
           }
         ],
-        margin: [0, 0, 0, 0]
+        margin: [0, 5, 0, 0]
       }
     );
-  } else {
-    console.log('❌ No signature section added to PDF');
-    if (!signatureBase64) {
-      console.log('   - Reason: No signature image processed');
-    }
-    if (!invoiceData.show_my_signature) {
-      console.log('   - Reason: show_my_signature setting is disabled');
-    }
   }
 
   // Create document definition with optimized margins
   const docDefinition = {
     pageSize: 'A4',
-    pageMargins: [30, 35, 30, 35], // Reduced margins from [40, 50, 40, 50]
+    pageMargins: [30, 35, 30, 35],
     content: mainContent,
     styles: {
+      debugInfo: {
+        fontSize: 8,
+        bold: true,
+        color: '#000000'
+      },
+      sectionDebug: {
+        fontSize: 7,
+        bold: true,
+        color: '#000000'
+      },
       companyName: {
-        fontSize: 14, // Reduced from 16
+        fontSize: 14,
         bold: true,
         color: '#333333'
       },
       companyAddress: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#666666',
         lineHeight: 1.1
       },
       companyGstin: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#666666'
       },
       invoiceTitle: {
-        fontSize: 24, // Reduced from 28
+        fontSize: 24,
         bold: true,
         color: '#333333'
       },
@@ -513,22 +600,22 @@ export const generateInvoicePDF = async (
         color: '#666666'
       },
       sectionHeader: {
-        fontSize: 10, // Reduced from 12
+        fontSize: 10,
         bold: true,
         color: '#333333'
       },
       clientName: {
-        fontSize: 12, // Reduced from 14
+        fontSize: 12,
         bold: true,
         color: '#333333'
       },
       clientAddress: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#666666',
         lineHeight: 1.1
       },
       clientGstin: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#666666'
       },
       paymentInstructions: {
@@ -537,60 +624,60 @@ export const generateInvoicePDF = async (
         lineHeight: 1.2
       },
       tableHeader: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         bold: true,
         color: '#333333',
         fillColor: '#f5f5f5'
       },
       tableCell: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#333333',
         margin: [0, 1, 0, 1]
       },
       totalLabel: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#666666'
       },
       totalValue: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#333333'
       },
       grandTotalLabel: {
-        fontSize: 10, // Reduced from 12
+        fontSize: 10,
         bold: true,
         color: '#333333'
       },
       grandTotalValue: {
-        fontSize: 10, // Reduced from 12
+        fontSize: 10,
         bold: true,
         color: '#333333'
       },
       finalTotalLabel: {
-        fontSize: 12, // Reduced from 14
+        fontSize: 12,
         bold: true,
         color: '#333333'
       },
       finalTotalValue: {
-        fontSize: 14, // Reduced from 16
+        fontSize: 14,
         bold: true,
         color: '#333333'
       },
       footer: {
-        fontSize: 10, // Reduced from 12
+        fontSize: 10,
         color: '#666666'
       },
       footerCompany: {
-        fontSize: 10, // Reduced from 12
+        fontSize: 10,
         bold: true,
         color: '#333333'
       },
       signatureTitle: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#666666',
         bold: true
       },
       signatureLabel: {
-        fontSize: 9, // Reduced from 10
+        fontSize: 9,
         color: '#333333',
         bold: true
       }
