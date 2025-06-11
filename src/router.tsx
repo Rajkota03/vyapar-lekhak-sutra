@@ -1,21 +1,21 @@
-import React from "react";
+
 import { createBrowserRouter } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
-import CreateCompany from "./pages/CreateCompany";
-import InvoiceList from "./pages/InvoiceList";
+import Invoices from "./pages/Invoices";
 import InvoiceEdit from "./pages/InvoiceEdit";
+import InvoiceList from "./pages/InvoiceList";
 import ItemList from "./pages/ItemList";
+import CreateCompany from "./pages/CreateCompany";
 import Settings from "./pages/Settings";
 import GeneralSettings from "./pages/settings/GeneralSettings";
 import CompanySettings from "./pages/settings/CompanySettings";
 import InvoiceSettings from "./pages/settings/InvoiceSettings";
 import CustomizationSettings from "./pages/settings/CustomizationSettings";
 import UserSettings from "./pages/settings/UserSettings";
+import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
-import QuantityLabelSheet from "./pages/settings/sheets/QuantityLabelSheet";
 
 export const router = createBrowserRouter([
   {
@@ -28,57 +28,107 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
-  },
-  {
-    path: "/create-company",
-    element: <ProtectedRoute><CreateCompany /></ProtectedRoute>,
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/invoices",
-    element: <ProtectedRoute><InvoiceList /></ProtectedRoute>,
+    element: (
+      <ProtectedRoute>
+        <Invoices />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/invoices/new",
-    element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>,
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/invoices/:id",
-    element: <ProtectedRoute><InvoiceEdit /></ProtectedRoute>,
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/invoice-list",
+    element: (
+      <ProtectedRoute>
+        <InvoiceList />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/items",
-    element: <ProtectedRoute><ItemList /></ProtectedRoute>,
+    element: (
+      <ProtectedRoute>
+        <ItemList />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/company/new",
+    element: (
+      <ProtectedRoute>
+        <CreateCompany />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/settings",
-    element: <ProtectedRoute><Settings /></ProtectedRoute>,
-    children: [
-      {
-        path: "general",
-        element: <GeneralSettings />,
-      },
-      {
-        path: "company",
-        element: <CompanySettings />,
-      },
-      {
-        path: "invoice",
-        element: <InvoiceSettings />,
-      },
-      {
-        path: "customization",
-        element: <CustomizationSettings />,
-      },
-      {
-        path: "customization/quantity-label",
-        element: <QuantityLabelSheet />,
-      },
-      {
-        path: "user",
-        element: <UserSettings />,
-      },
-    ],
+    element: (
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/general",
+    element: (
+      <ProtectedRoute>
+        <GeneralSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/company",
+    element: (
+      <ProtectedRoute>
+        <CompanySettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/invoices",
+    element: (
+      <ProtectedRoute>
+        <InvoiceSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/customization",
+    element: (
+      <ProtectedRoute>
+        <CustomizationSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/user",
+    element: (
+      <ProtectedRoute>
+        <UserSettings />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "*",
