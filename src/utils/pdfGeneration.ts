@@ -401,99 +401,33 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 15]
     },
 
-    // SECTION MARKER 4 - PAYMENT DETAILS BESIDE TOTALS RECAP
+    // SECTION MARKER 6 - PAYMENT DETAILS & NOTES (AFTER TOTALS)
     {
-      text: '🔵 SECTION 4: PAYMENT DETAILS (Left side, beside totals recap)',
+      text: '🔵 SECTION 6: PAYMENT DETAILS & NOTES (After seamless totals)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 4: PAYMENT DETAILS (Left side, totals recap on right)
+    // SECTION 6: PAYMENT DETAILS & NOTES (Full width, after totals)
     {
-      columns: [
+      stack: [
         {
-          width: '60%',
-          stack: [
-            {
-              text: 'Payment Details',
-              style: 'sectionHeader',
-              margin: [0, 0, 0, 5]
-            },
-            {
-              text: paymentInstructions,
-              style: 'paymentDetails',
-              margin: [0, 0, 0, 0]
-            }
-          ]
+          text: 'Payment Details',
+          style: 'sectionHeader',
+          margin: [0, 0, 0, 5]
         },
         {
-          width: '40%',
-          stack: [
-            {
-              text: 'Amount Summary',
-              style: 'sectionHeader',
-              alignment: 'right',
-              margin: [0, 0, 0, 5]
-            },
-            {
-              table: {
-                widths: ['*', 'auto'],
-                body: [
-                  [
-                    { text: 'Subtotal:', style: 'totalLabelSmall', alignment: 'right', border: [false, false, false, false] },
-                    { text: formatCurrency(subtotal), style: 'totalValueSmall', alignment: 'right', border: [false, false, false, false] }
-                  ],
-                  ...(invoiceData.use_igst ? [
-                    [
-                      { text: `IGST (${invoiceData.igst_pct}%):`, style: 'totalLabelSmall', alignment: 'right', border: [false, false, false, false] },
-                      { text: formatCurrency(igstAmount), style: 'totalValueSmall', alignment: 'right', border: [false, false, false, false] }
-                    ]
-                  ] : [
-                    [
-                      { text: `CGST (${invoiceData.cgst_pct}%):`, style: 'totalLabelSmall', alignment: 'right', border: [false, false, false, false] },
-                      { text: formatCurrency(cgstAmount), style: 'totalValueSmall', alignment: 'right', border: [false, false, false, false] }
-                    ],
-                    [
-                      { text: `SGST (${invoiceData.sgst_pct}%):`, style: 'totalLabelSmall', alignment: 'right', border: [false, false, false, false] },
-                      { text: formatCurrency(sgstAmount), style: 'totalValueSmall', alignment: 'right', border: [false, false, false, false] }
-                    ]
-                  ]),
-                  [
-                    { text: 'TOTAL:', style: 'finalTotalLabelSmall', alignment: 'right', border: [false, true, false, false] },
-                    { text: formatCurrency(grandTotal), style: 'finalTotalValueSmall', alignment: 'right', border: [false, true, false, false] }
-                  ]
-                ]
-              },
-              layout: {
-                hLineWidth: (i: number, node: any) => {
-                  // Only show line above the total
-                  return i === node.table.body.length - 1 ? 1 : 0;
-                },
-                vLineWidth: () => 0,
-                hLineColor: () => '#333333',
-                paddingLeft: () => 8,
-                paddingRight: () => 0,
-                paddingTop: () => 2,
-                paddingBottom: () => 2
-              }
-            }
-          ]
-        }
-      ],
-      margin: [0, 5, 0, 20]
-    },
-
-    // SECTION MARKER 5 - NOTES SECTION (SEPARATE)
-    {
-      text: '🟣 SECTION 5: NOTES SECTION (Separate section, full width)',
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
-    },
-
-    // SECTION 5: NOTES SECTION (Only if notes exist)
-    ...(hasNotes ? [
-      {
-        stack: [
+          text: paymentInstructions,
+          style: 'paymentDetails',
+          margin: [0, 0, 0, 15]
+        },
+        // ENHANCED NOTES SECTION WITH DEBUG MARKERS
+        ...(hasNotes ? [
+          {
+            text: '🟣 NOTES SECTION BEING ADDED',
+            style: 'sectionMarker',
+            margin: [0, 0, 0, 2]
+          },
           {
             text: 'Notes',
             style: 'sectionHeader',
@@ -504,19 +438,25 @@ export const generateInvoicePDF = async (
             style: 'notesContent',
             margin: [0, 0, 0, 15]
           }
-        ],
-        margin: [0, 5, 0, 15]
-      }
-    ] : []),
+        ] : [
+          {
+            text: '🟣 NO NOTES - SECTION SKIPPED',
+            style: 'sectionMarker',
+            margin: [0, 0, 0, 2]
+          }
+        ])
+      ],
+      margin: [0, 5, 0, 15]
+    },
 
-    // SECTION MARKER 6 - FOOTER WITH SIGNATURE
+    // SECTION MARKER 5 - FOOTER WITH SIGNATURE
     {
-      text: '🟢 SECTION 6: FOOTER WITH SIGNATURE (Thank you message, company name, signature, then date)',
+      text: '🟣 SECTION 5: FOOTER WITH SIGNATURE (Thank you message, company name, signature, then date)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 6: COMBINED FOOTER WITH SIGNATURE (with 45px left positioning)
+    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (with 45px left positioning)
     {
       stack: [
         {
@@ -651,14 +591,6 @@ export const generateInvoicePDF = async (
         fontSize: 9,
         color: '#333333'
       },
-      totalLabelSmall: {
-        fontSize: 8,
-        color: '#666666'
-      },
-      totalValueSmall: {
-        fontSize: 8,
-        color: '#333333'
-      },
       grandTotalLabel: {
         fontSize: 10,
         bold: true,
@@ -676,16 +608,6 @@ export const generateInvoicePDF = async (
       },
       finalTotalValueCompact: {
         fontSize: 11,
-        bold: true,
-        color: '#333333'
-      },
-      finalTotalLabelSmall: {
-        fontSize: 9,
-        bold: true,
-        color: '#333333'
-      },
-      finalTotalValueSmall: {
-        fontSize: 9,
         bold: true,
         color: '#333333'
       },
