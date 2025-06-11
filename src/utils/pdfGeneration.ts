@@ -175,6 +175,13 @@ export const generateInvoicePDF = async (
 
   // Create the main content array
   const mainContent: any[] = [
+    // SECTION MARKER 1 - HEADER
+    {
+      text: '🔴 SECTION 1: HEADER (Should be at top with logo + company details)',
+      style: 'sectionMarker',
+      margin: [0, 0, 0, 5]
+    },
+
     // SECTION 1: HEADER
     {
       columns: [
@@ -234,6 +241,13 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 12]
     },
 
+    // SECTION MARKER 2 - BILL TO + PAYMENT
+    {
+      text: '🟡 SECTION 2: BILL TO + PAYMENT (Should show client details and payment instructions)',
+      style: 'sectionMarker',
+      margin: [0, 10, 0, 5]
+    },
+
     // SECTION 2: BILL TO + PAYMENT
     {
       columns: [
@@ -280,6 +294,13 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 15]
     },
 
+    // SECTION MARKER 3 - ITEMS TABLE
+    {
+      text: '🟢 SECTION 3: ITEMS TABLE (Should list all invoice items)',
+      style: 'sectionMarker',
+      margin: [0, 10, 0, 5]
+    },
+
     // SECTION 3: ITEMS TABLE
     {
       table: {
@@ -316,6 +337,13 @@ export const generateInvoicePDF = async (
         paddingBottom: () => 4
       },
       margin: [0, 5, 0, 10]
+    },
+
+    // SECTION MARKER 4 - TOTALS
+    {
+      text: '🔵 SECTION 4: TOTALS (Should show subtotal, taxes, and grand total)',
+      style: 'sectionMarker',
+      margin: [0, 10, 0, 5]
     },
 
     // SECTION 4: TOTALS
@@ -403,6 +431,13 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 10]
     },
 
+    // SECTION MARKER 5 - FOOTER
+    {
+      text: '🟣 SECTION 5: FOOTER (Should show thank you message)',
+      style: 'sectionMarker',
+      margin: [0, 10, 0, 5]
+    },
+
     // SECTION 5: FOOTER
     {
       text: 'Thank you for your business!',
@@ -421,6 +456,14 @@ export const generateInvoicePDF = async (
   // Add signature section if we have a signature AND the setting is enabled
   if (signatureBase64 && invoiceData.show_my_signature) {
     console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
+    
+    // Add section marker first
+    mainContent.push({
+      text: '🟤 SECTION 6: SIGNATURE (Should show authorized signature)',
+      style: 'sectionMarker',
+      margin: [0, 10, 0, 5]
+    });
+    
     mainContent.push(
       // SECTION 6: SIGNATURE
       {
@@ -468,6 +511,13 @@ export const generateInvoicePDF = async (
         margin: [0, 5, 0, 0]
       }
     );
+  } else {
+    // Add debug marker even when signature is not shown
+    mainContent.push({
+      text: `❌ SECTION 6: SIGNATURE NOT SHOWN - Signature URL: ${companySettings?.signature_url ? 'EXISTS' : 'MISSING'}, Toggle: ${invoiceData.show_my_signature ? 'ON' : 'OFF'}`,
+      style: 'sectionMarker',
+      margin: [0, 10, 0, 5]
+    });
   }
 
   // Create document definition with optimized margins
@@ -476,6 +526,12 @@ export const generateInvoicePDF = async (
     pageMargins: [30, 35, 30, 35],
     content: mainContent,
     styles: {
+      sectionMarker: {
+        fontSize: 12,
+        bold: true,
+        color: '#FF0000',
+        background: '#FFFF00'
+      },
       companyName: {
         fontSize: 14,
         bold: true,

@@ -164,12 +164,30 @@ const InvoiceEdit = () => {
     console.log('Show my signature:', formValues.showMySignature);
     console.log('Require client signature:', formValues.requireClientSignature);
     
+    // Add additional logging for signature settings
+    console.log('=== SIGNATURE TOGGLE DEBUG ===');
+    console.log('Form showMySignature value being saved:', formValues.showMySignature);
+    console.log('Form requireClientSignature value being saved:', formValues.requireClientSignature);
+    
     saveInvoiceMutation.mutate({
       navigate,
       taxConfig: formValues.taxConfig as TaxConfig,
       showMySignature: formValues.showMySignature,
       requireClientSignature: formValues.requireClientSignature
     });
+  };
+
+  // Log signature toggle changes for debugging
+  const handleShowMySignatureChange = (value: boolean) => {
+    console.log('=== SIGNATURE TOGGLE CHANGED ===');
+    console.log('New show_my_signature value:', value);
+    form.setValue('showMySignature', value);
+  };
+
+  const handleRequireClientSignatureChange = (value: boolean) => {
+    console.log('=== CLIENT SIGNATURE TOGGLE CHANGED ===');
+    console.log('New require_client_signature value:', value);
+    form.setValue('requireClientSignature', value);
   };
 
   // Loading state
@@ -219,8 +237,8 @@ const InvoiceEdit = () => {
             <SignatureSection 
               showMySignature={form.watch('showMySignature')}
               requireClientSignature={form.watch('requireClientSignature')}
-              onShowMySignatureChange={(value) => form.setValue('showMySignature', value)}
-              onRequireClientSignatureChange={(value) => form.setValue('requireClientSignature', value)}
+              onShowMySignatureChange={handleShowMySignatureChange}
+              onRequireClientSignatureChange={handleRequireClientSignatureChange}
             />
           </div>
         </div>
