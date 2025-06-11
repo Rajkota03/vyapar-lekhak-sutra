@@ -79,7 +79,8 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
             defaultValue={invoiceNumber}
             onBlur={(e) => handleNumberSave(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="h-6 text-sm font-medium text-right border-0 p-1 focus:ring-1 focus:ring-primary w-24"
+            className="h-auto text-sm font-medium text-right border-0 bg-muted/50 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary min-w-0 w-auto"
+            style={{ width: `${Math.max(invoiceNumber.length * 0.6, 4)}em` }}
             autoFocus
             onFocus={(e) => e.target.select()}
           />
