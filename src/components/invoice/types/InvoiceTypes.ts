@@ -1,3 +1,4 @@
+
 export interface LineItem {
   id?: string;
   item_id?: string;
@@ -50,4 +51,5 @@ export interface Invoice {
   igst_pct?: number;
   show_my_signature?: boolean;
   require_client_signature?: boolean;
+  notes?: string;
 }
