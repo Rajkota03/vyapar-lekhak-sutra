@@ -427,80 +427,46 @@ export const generateInvoicePDF = async (
 
     // SECTION MARKER 5 - FOOTER WITH SIGNATURE
     {
-      text: '🟣 SECTION 5: FOOTER WITH SIGNATURE (Thank you message, signature, then company name)',
+      text: '🟣 SECTION 5: FOOTER WITH SIGNATURE (Thank you message, company name, signature, then date)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 5: COMBINED FOOTER WITH SIGNATURE
+    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (matching reference image)
     {
       stack: [
         {
           text: 'Thank you for your business!',
           style: 'footer',
           alignment: 'center',
-          margin: [0, 8, 0, 10]
+          margin: [0, 8, 0, 8]
         },
-        // Signature section (only if both URL exists AND setting is enabled)
-        ...(signatureBase64 && invoiceData.show_my_signature ? [
-          {
-            columns: [
-              {
-                width: '*',
-                text: ''
-              },
-              {
-                width: 'auto',
-                stack: [
-                  {
-                    text: 'Authorized Signature',
-                    style: 'signatureTitle',
-                    alignment: 'center',
-                    margin: [0, 0, 0, 5]
-                  },
-                  {
-                    image: signatureBase64,
-                    width: signatureWidth,
-                    height: signatureHeight,
-                    alignment: 'center',
-                    margin: [0, 0, 0, 2]
-                  },
-                  {
-                    canvas: [
-                      {
-                        type: 'line',
-                        x1: 0,
-                        y1: 0,
-                        x2: signatureWidth,
-                        y2: 0,
-                        lineWidth: 1,
-                        lineColor: '#000000'
-                      }
-                    ],
-                    alignment: 'center',
-                    margin: [0, 0, 0, 2]
-                  },
-                  {
-                    text: companyData.name,
-                    style: 'signatureLabel',
-                    alignment: 'center',
-                    margin: [0, 0, 0, 10]
-                  }
-                ]
-              },
-              {
-                width: '*',
-                text: ''
-              }
-            ]
-          }
-        ] : []),
         {
           text: companyData.name,
           style: 'footerCompany',
           alignment: 'center',
-          margin: [0, 0, 0, 5]
-        }
+          margin: [0, 0, 0, 10]
+        },
+        // Signature section (only if both URL exists AND setting is enabled)
+        ...(signatureBase64 && invoiceData.show_my_signature ? [
+          {
+            stack: [
+              {
+                image: signatureBase64,
+                width: signatureWidth,
+                height: signatureHeight,
+                alignment: 'center',
+                margin: [0, 0, 0, 5]
+              },
+              {
+                text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
+                style: 'signatureDate',
+                alignment: 'center',
+                margin: [0, 0, 0, 10]
+              }
+            ]
+          }
+        ] : [])
       ],
       margin: [0, 5, 0, 0]
     }
@@ -631,6 +597,10 @@ export const generateInvoicePDF = async (
         fontSize: 9,
         color: '#333333',
         bold: true
+      },
+      signatureDate: {
+        fontSize: 9,
+        color: '#333333'
       }
     }
   };
