@@ -1,3 +1,4 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -461,20 +462,14 @@ export const generateInvoicePDF = async (
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (with right positioning)
+    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (with 45px left positioning)
     {
       stack: [
         {
           text: 'Thank you for your business!',
           style: 'footer',
-          alignment: 'right',
-          margin: [0, 8, 40, 8]
-        },
-        {
-          text: companyData.name,
-          style: 'footerCompany',
-          alignment: 'right',
-          margin: [0, 0, 40, 10]
+          alignment: 'left',
+          margin: [45, 8, 0, 8]
         },
         // Signature section (only if both URL exists AND setting is enabled)
         ...(signatureBase64 && invoiceData.show_my_signature ? [
@@ -484,16 +479,25 @@ export const generateInvoicePDF = async (
                 image: signatureBase64,
                 width: signatureWidth,
                 height: signatureHeight,
-                alignment: 'right',
-                margin: [0, 0, 40, 5]
-              },
-              {
-                text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
-                style: 'signatureDate',
-                alignment: 'right',
-                margin: [0, 0, 40, 10]
+                alignment: 'left',
+                margin: [45, 0, 0, 5]
               }
             ]
+          }
+        ] : []),
+        {
+          text: companyData.name,
+          style: 'footerCompany',
+          alignment: 'left',
+          margin: [45, 0, 0, 10]
+        },
+        // Date section (only if signature is shown)
+        ...(signatureBase64 && invoiceData.show_my_signature ? [
+          {
+            text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
+            style: 'signatureDate',
+            alignment: 'left',
+            margin: [45, 0, 0, 10]
           }
         ] : [])
       ],
