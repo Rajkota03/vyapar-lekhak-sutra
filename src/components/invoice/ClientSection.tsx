@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Plus, X, UserPlus, Edit, User } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -33,7 +33,7 @@ const ClientSection: React.FC<ClientSectionProps> = ({
 }) => {
   const { currentCompany } = useCompany();
   const [clientModalOpen, setClientModalOpen] = useState(false);
-  const [newClientModalOpen, setNewClientModalOpen] = useState(false);
+  const [editClientModalOpen, setEditClientModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Use the companyId from props, fallback to currentCompany.id, or use empty string
@@ -66,7 +66,7 @@ const ClientSection: React.FC<ClientSectionProps> = ({
     console.log('=== OPENING NEW CLIENT MODAL ===');
     console.log('Company ID:', effectiveCompanyId);
     setClientModalOpen(false);
-    setNewClientModalOpen(true);
+    setEditClientModalOpen(true);
   };
 
   const handleEditClient = () => {
@@ -77,7 +77,7 @@ const ClientSection: React.FC<ClientSectionProps> = ({
     console.log('=== OPENING EDIT CLIENT MODAL ===');
     console.log('Company ID:', effectiveCompanyId);
     console.log('Selected client:', selectedClient);
-    setNewClientModalOpen(true);
+    setEditClientModalOpen(true);
   };
 
   const ClientSearchModal = () => (
@@ -109,7 +109,7 @@ const ClientSection: React.FC<ClientSectionProps> = ({
                 console.log("Import from contacts");
               }}
             >
-              <UserPlus className="h-4 w-4 mr-2" /> Import from your contacts
+              <Plus className="h-4 w-4 mr-2" /> Import from your contacts
             </Button>
           </div>
           
@@ -178,29 +178,12 @@ const ClientSection: React.FC<ClientSectionProps> = ({
           <PremiumButton
             variant="ghost"
             className="p-0 h-auto text-left justify-start hover:bg-transparent group-hover:text-primary transition-colors"
-            onClick={() => setClientModalOpen(true)}
+            onClick={handleEditClient}
           >
             <BodyText className="text-lg font-medium">
               {selectedClient.name}
             </BodyText>
           </PremiumButton>
-          
-          {/* Additional client details - shown only if available */}
-          {(selectedClient.email || selectedClient.phone || selectedClient.billing_address) && (
-            <div className="mt-1 space-y-1 opacity-60 group-hover:opacity-80 transition-opacity">
-              {selectedClient.email && (
-                <CaptionText className="text-muted-foreground">{selectedClient.email}</CaptionText>
-              )}
-              {selectedClient.phone && (
-                <CaptionText className="text-muted-foreground">{selectedClient.phone}</CaptionText>
-              )}
-              {selectedClient.billing_address && (
-                <CaptionText className="text-muted-foreground whitespace-pre-line">
-                  {selectedClient.billing_address}
-                </CaptionText>
-              )}
-            </div>
-          )}
         </div>
       ) : (
         <PremiumButton 
@@ -216,10 +199,10 @@ const ClientSection: React.FC<ClientSectionProps> = ({
       {/* Client search modal */}
       <ClientSearchModal />
       
-      {/* Add/Edit client modal */}
+      {/* Edit client modal - opens when clicking on existing client name */}
       <ClientModal 
-        open={newClientModalOpen} 
-        onOpenChange={setNewClientModalOpen} 
+        open={editClientModalOpen} 
+        onOpenChange={setEditClientModalOpen} 
         companyId={effectiveCompanyId} 
         onClientSelected={handleSelectClient} 
         existingClient={selectedClient} 
