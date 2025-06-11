@@ -1,4 +1,3 @@
-
 import React from "react";
 import { X } from "lucide-react";
 import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
@@ -6,7 +5,6 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { LineItem } from "./types/InvoiceTypes";
 import { formatNumber } from "@/utils/formatNumber";
 import { BodyText } from "@/components/ui/primitives/Typography";
-
 interface LineItemRowProps {
   item: LineItem;
   index: number;
@@ -14,19 +12,14 @@ interface LineItemRowProps {
   removeLineItem: (index: number) => void;
   onEditItem: (index: number) => void;
 }
-
 const LineItemRow: React.FC<LineItemRowProps> = ({
   item,
   index,
   updateLineItem,
   removeLineItem,
-  onEditItem,
+  onEditItem
 }) => {
-  return (
-    <TableRow 
-      className="border-b last:border-none cursor-pointer hover:bg-accent/50 transition-colors"
-      onClick={() => onEditItem(index)}
-    >
+  return <TableRow className="border-b last:border-none cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => onEditItem(index)}>
       <TableCell className="w-[45%] py-3 px-3 text-left">
         <BodyText className="font-medium truncate">
           {item.description}
@@ -42,20 +35,8 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
         <BodyText className="font-semibold">₹{formatNumber(item.amount)}</BodyText>
       </TableCell>
       <TableCell className="w-[7%] py-3 px-2">
-        <PremiumButton
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            removeLineItem(index);
-          }}
-          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-        >
-          <X className="h-4 w-4" />
-        </PremiumButton>
+        
       </TableCell>
-    </TableRow>
-  );
+    </TableRow>;
 };
-
 export default LineItemRow;
