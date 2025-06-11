@@ -1,21 +1,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { useCompany } from "@/context/CompanyContext";
 
-export const useCompanySettings = () => {
+export const useCompanySettings = (companyId?: string) => {
   const queryClient = useQueryClient();
-  const { currentCompany } = useCompany();
-  const companyId = currentCompany?.id;
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['company-settings', companyId],
     queryFn: async () => {
       if (!companyId) return null;
-      
-      console.log('=== FETCHING COMPANY SETTINGS ===');
-      console.log('Company ID:', companyId);
       
       const { data, error } = await supabase
         .from('company_settings')
@@ -23,24 +16,15 @@ export const useCompanySettings = () => {
         .eq('company_id', companyId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching company settings:', error);
-        throw error;
-      }
-      
-      console.log('Fetched company settings:', data);
+      if (error) throw error;
       return data;
     },
     enabled: !!companyId,
   });
 
-  const updateSettingsMutation = useMutation({
+  const updateSettings = useMutation({
     mutationFn: async (updates: any) => {
-      if (!companyId) throw new Error('No company selected');
-
-      console.log('=== UPDATING COMPANY SETTINGS ===');
-      console.log('Company ID:', companyId);
-      console.log('Updates:', updates);
+      if (!companyId) throw new Error('Company ID required');
 
       const { data, error } = await supabase
         .from('company_settings')
@@ -52,43 +36,52 @@ export const useCompanySettings = () => {
         .select()
         .single();
 
-      if (error) {
-        console.error('Error updating company settings:', error);
-        throw error;
-      }
-      
-      console.log('Updated company settings result:', data);
+      if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      console.log('=== SETTINGS UPDATE SUCCESS ===');
-      console.log('Updated data:', data);
-      // Invalidate and refetch
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['company-settings', companyId] });
-      toast({
-        title: "Success",
-        description: "Settings saved successfully",
-      });
-    },
-    onError: (error) => {
-      console.error('=== SETTINGS UPDATE ERROR ===');
-      console.error('Error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save settings",
-      });
     },
   });
 
+  // Helper getters with fallbacks
+  const getters = {
+    get quantityLabel() {
+      return settings?.quantity_column_label || 'QTY';
+    },
+    get invoiceNumberPrefix() {
+      return settings?.invoice_number_prefix || 'INV';
+    },
+    get defaultDueDays() {
+      return settings?.due_days || 30;
+    },
+    get defaultCgstPct() {
+      return settings?.default_cgst_pct || 9;
+    },
+    get defaultSgstPct() {
+      return settings?.default_sgst_pct || 9;
+    },
+    get defaultIgstPct() {
+      return settings?.default_igst_pct || 18;
+    },
+    get showMySignature() {
+      return settings?.show_my_signature ?? true;
+    },
+    get requireClientSignature() {
+      return settings?.require_client_signature ?? false;
+    },
+    get defaultNote() {
+      return settings?.default_note || '';
+    },
+    get paymentNote() {
+      return settings?.payment_note || 'Thank you for your business!';
+    },
+  };
+
   return {
-    settings,
+    settings: settings ? { ...settings, ...getters } : null,
     isLoading,
-    updateSettings: updateSettingsMutation.mutate,
-    isUpdating: updateSettingsMutation.isPending,
-    companyId,
-    currentCompany,
-    // Add getter for quantity label with default fallback
-    quantityLabel: settings?.quantity_label || 'QTY',
+    updateSettings: updateSettings.mutate,
+    isUpdating: updateSettings.isPending,
   };
 };
