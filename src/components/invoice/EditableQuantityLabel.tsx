@@ -69,7 +69,7 @@ const EditableQuantityLabel: React.FC<EditableQuantityLabelProps> = ({ companyId
 
   return (
     <div 
-      className="font-medium uppercase tracking-wide cursor-pointer hover:bg-gray-100 rounded px-1 py-1 transition-colors text-xs text-muted-foreground"
+      className="font-medium uppercase tracking-wide cursor-pointer hover:bg-blue-50 rounded px-1 py-1 transition-colors text-xs text-blue-600 border border-dashed border-blue-300 hover:border-blue-400"
       onClick={handleClick}
     >
       {quantityLabel}
