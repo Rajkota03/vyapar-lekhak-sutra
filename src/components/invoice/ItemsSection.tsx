@@ -129,18 +129,18 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
         )}
       </div>
 
-      <div className="rounded-md bg-white shadow-sm border">
-        {lineItems.length > 0 ? (
-          <ItemsTable 
-            lineItems={lineItems}
-            updateLineItem={updateLineItem}
-            removeLineItem={removeLineItem}
-            onEditItem={handleEditItem}
-          />
-        ) : (
+      {lineItems.length > 0 ? (
+        <ItemsTable 
+          lineItems={lineItems}
+          updateLineItem={updateLineItem}
+          removeLineItem={removeLineItem}
+          onEditItem={handleEditItem}
+        />
+      ) : (
+        <div className="rounded-md bg-white shadow-sm border">
           <NoItemsView onAddItem={handleOpenItemPicker} />
-        )}
-      </div>
+        </div>
+      )}
 
       {lineItems.length > 0 && (
         <Button

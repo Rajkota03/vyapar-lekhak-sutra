@@ -2,7 +2,6 @@
 import React from "react";
 import { Plus } from "lucide-react";
 import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
-import { ModernCard } from "@/components/ui/primitives/ModernCard";
 import {
   Table,
   TableBody,
@@ -29,41 +28,37 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
   onEditItem,
 }) => {
   return (
-    <ModernCard variant="outlined" padding="sm">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-none">
-              <TableHead className="w-[40%] py-3 px-3">
-                <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
-              </TableHead>
-              <TableHead className="text-center py-3 px-2">
-                <CaptionText className="font-medium uppercase tracking-wide">Qty</CaptionText>
-              </TableHead>
-              <TableHead className="text-right py-3 px-2">
-                <CaptionText className="font-medium uppercase tracking-wide">Price</CaptionText>
-              </TableHead>
-              <TableHead className="text-right py-3 px-2">
-                <CaptionText className="font-medium uppercase tracking-wide">Amount</CaptionText>
-              </TableHead>
-              <TableHead className="w-[50px] py-3 px-2"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lineItems.map((item, index) => (
-              <LineItemRow
-                key={index}
-                item={item}
-                index={index}
-                updateLineItem={updateLineItem}
-                removeLineItem={removeLineItem}
-                onEditItem={onEditItem}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </ModernCard>
+    <Table>
+      <TableHeader>
+        <TableRow className="border-none">
+          <TableHead className="w-[40%] py-3 px-3">
+            <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
+          </TableHead>
+          <TableHead className="text-center py-3 px-2">
+            <CaptionText className="font-medium uppercase tracking-wide">Qty</CaptionText>
+          </TableHead>
+          <TableHead className="text-right py-3 px-2">
+            <CaptionText className="font-medium uppercase tracking-wide">Price</CaptionText>
+          </TableHead>
+          <TableHead className="text-right py-3 px-2">
+            <CaptionText className="font-medium uppercase tracking-wide">Amount</CaptionText>
+          </TableHead>
+          <TableHead className="w-[50px] py-3 px-2"></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {lineItems.map((item, index) => (
+          <LineItemRow
+            key={index}
+            item={item}
+            index={index}
+            updateLineItem={updateLineItem}
+            removeLineItem={removeLineItem}
+            onEditItem={onEditItem}
+          />
+        ))}
+      </TableBody>
+    </Table>
   );
 };
 
