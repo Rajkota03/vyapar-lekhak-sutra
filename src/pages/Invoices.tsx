@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
+import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
+
 type Invoice = {
   id: string;
   invoice_code: string | null;
@@ -231,14 +233,21 @@ const Invoices = () => {
     });
     navigate('/invoices/new');
   };
+
+  const floatingActions = [
+    {
+      label: "New Invoice",
+      onClick: handleCreateInvoice,
+      variant: "primary" as const,
+      icon: <Plus className="h-5 w-5" />
+    }
+  ];
+
   return <DashboardLayout>
       <div className="space-y-6 bg-white">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-          <Button onClick={handleCreateInvoice} size="icon" className="h-12 w-12 rounded-full bg-black hover:bg-gray-800 text-white">
-            <Plus className="h-6 w-6" />
-          </Button>
         </div>
 
         {/* Company Selector */}
@@ -318,6 +327,12 @@ const Invoices = () => {
               Create your first invoice
             </Button>
           </div>}
+
+        {/* Floating Action Button */}
+        <FloatingActionBar
+          actions={floatingActions}
+          show={true}
+        />
       </div>
     </DashboardLayout>;
 };
