@@ -239,6 +239,7 @@ export type Database = {
           igst_pct: number | null
           invoice_code: string | null
           issue_date: string
+          notes: string | null
           number: string
           pdf_url: string | null
           require_client_signature: boolean | null
@@ -262,6 +263,7 @@ export type Database = {
           igst_pct?: number | null
           invoice_code?: string | null
           issue_date: string
+          notes?: string | null
           number: string
           pdf_url?: string | null
           require_client_signature?: boolean | null
@@ -285,6 +287,7 @@ export type Database = {
           igst_pct?: number | null
           invoice_code?: string | null
           issue_date?: string
+          notes?: string | null
           number?: string
           pdf_url?: string | null
           require_client_signature?: boolean | null
