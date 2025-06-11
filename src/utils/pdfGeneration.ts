@@ -90,6 +90,15 @@ export const generateInvoicePDF = async (
   console.log('Company data:', companyData);
   console.log('Show my signature setting:', invoiceData.show_my_signature);
   
+  // ENHANCED NOTES DEBUG LOGGING
+  console.log('=== NOTES DEBUG IN PDF GENERATION ===');
+  console.log('Invoice notes value:', invoiceData.notes);
+  console.log('Notes type:', typeof invoiceData.notes);
+  console.log('Notes length:', invoiceData.notes?.length);
+  console.log('Notes trimmed length:', invoiceData.notes?.trim?.()?.length);
+  console.log('Notes is truthy:', !!invoiceData.notes);
+  console.log('Notes after trim is truthy:', !!(invoiceData.notes?.trim?.()));
+  
   // Get company settings for logo and signature
   const companySettings = await getCompanySettings(invoiceData.company_id);
   let logoBase64: string | null = null;
@@ -173,6 +182,12 @@ export const generateInvoicePDF = async (
 
   // Get payment instructions or use fallback
   const paymentInstructions = companySettings?.payment_note || 'Payment Instructions\nBank Name: [Bank Name]\nAccount No: [Account Number]\nIFSC: [IFSC Code]\nBranch: [Branch Name]';
+
+  // ENHANCED NOTES PROCESSING WITH DEBUG
+  const hasNotes = invoiceData.notes && invoiceData.notes.trim() !== '';
+  console.log('=== NOTES PROCESSING DECISION ===');
+  console.log('Has notes (final decision):', hasNotes);
+  console.log('Notes content that will be used:', hasNotes ? invoiceData.notes : 'No notes');
 
   // Create the main content array
   const mainContent: any[] = [
@@ -362,8 +377,13 @@ export const generateInvoicePDF = async (
               style: 'paymentDetails',
               margin: [0, 0, 10, 15]
             },
-            // Notes section (optional)
-            ...(invoiceData.notes ? [
+            // ENHANCED NOTES SECTION WITH DEBUG MARKERS
+            ...(hasNotes ? [
+              {
+                text: '🟣 NOTES SECTION BEING ADDED',
+                style: 'sectionMarker',
+                margin: [0, 0, 0, 2]
+              },
               {
                 text: 'Notes',
                 style: 'sectionHeader',
@@ -374,7 +394,13 @@ export const generateInvoicePDF = async (
                 style: 'notesContent',
                 margin: [0, 0, 10, 0]
               }
-            ] : [])
+            ] : [
+              {
+                text: '🟣 NO NOTES - SECTION SKIPPED',
+                style: 'sectionMarker',
+                margin: [0, 0, 0, 2]
+              }
+            ])
           ]
         },
         {
@@ -645,6 +671,8 @@ export const generateInvoicePDF = async (
 
   console.log('=== PDF GENERATION COMPLETE ===');
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
+  console.log('Notes included:', hasNotes);
+  console.log('Notes content in final PDF:', hasNotes ? invoiceData.notes : 'No notes');
   return docDefinition;
 };
 
