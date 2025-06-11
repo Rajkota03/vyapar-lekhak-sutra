@@ -346,7 +346,7 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 8]
     },
 
-    // SECTION 4: PAYMENT DETAILS AND TOTALS - Matched width for perfect alignment
+    // SECTION 4: PAYMENT DETAILS AND TOTALS - Adjusted positioning for better alignment
     {
       columns: [
         {
@@ -373,14 +373,14 @@ export const generateInvoicePDF = async (
             // ALIGNMENT DEBUG HEADER
             ...(DEBUG_ALIGNMENT ? [
               {
-                text: '🎯 TOTALS ALIGNMENT DEBUG - FIXED',
+                text: '🎯 TOTALS MOVED LEFT FOR ALIGNMENT',
                 style: 'totalLabel',
                 fillColor: '#ccffcc',
                 alignment: 'center',
                 margin: [0, 0, 0, 3]
               }
             ] : []),
-            // Subtotal with EXACT WIDTH MATCH
+            // Subtotal with EXACT WIDTH MATCH and LEFT ADJUSTMENT
             {
               columns: [
                 { 
@@ -401,10 +401,10 @@ export const generateInvoicePDF = async (
                   })
                 }
               ],
-              margin: [0, 0, 0, 2],
+              margin: [-15, 0, 0, 2], // MOVED LEFT by 15 units for better alignment
               ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
             },
-            // Tax rows with EXACT WIDTH MATCH
+            // Tax rows with EXACT WIDTH MATCH and LEFT ADJUSTMENT
             ...(invoiceData.use_igst ? [
               {
                 columns: [
@@ -426,7 +426,7 @@ export const generateInvoicePDF = async (
                     })
                   }
                 ],
-                margin: [0, 0, 0, 2],
+                margin: [-15, 0, 0, 2], // MOVED LEFT by 15 units for better alignment
                 ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
               }
             ] : [
@@ -450,7 +450,7 @@ export const generateInvoicePDF = async (
                     })
                   }
                 ],
-                margin: [0, 0, 0, 2],
+                margin: [-15, 0, 0, 2], // MOVED LEFT by 15 units for better alignment
                 ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
               },
               {
@@ -473,7 +473,7 @@ export const generateInvoicePDF = async (
                     })
                   }
                 ],
-                margin: [0, 0, 0, 2],
+                margin: [-15, 0, 0, 2], // MOVED LEFT by 15 units for better alignment
                 ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
               }
             ]),
@@ -482,15 +482,15 @@ export const generateInvoicePDF = async (
               canvas: [
                 {
                   type: 'line',
-                  x1: 0, y1: 3,
-                  x2: 200, y2: 3,
+                  x1: -15, y1: 3, // Start line 15 units to the left
+                  x2: 185, y2: 3, // End line adjusted accordingly
                   lineWidth: DEBUG_ALIGNMENT ? 3 : 1,
                   lineColor: DEBUG_ALIGNMENT ? DEBUG_COLORS.border : '#cccccc'
                 }
               ],
               margin: [0, 3, 0, 5]
             },
-            // Grand Total with EXACT WIDTH MATCH
+            // Grand Total with EXACT WIDTH MATCH and LEFT ADJUSTMENT
             {
               columns: [
                 { 
@@ -512,26 +512,26 @@ export const generateInvoicePDF = async (
                 }
               ],
               fillColor: DEBUG_ALIGNMENT ? '#e8f5e8' : '#f5f5f5',
-              margin: [0, 0, 0, 0]
+              margin: [-15, 0, 0, 0] // MOVED LEFT by 15 units for better alignment
             },
             // ALIGNMENT REFERENCE LINES (DEBUG ONLY) - Updated positions
             ...(DEBUG_ALIGNMENT ? [
               {
                 canvas: [
-                  // Vertical alignment line for amounts - positioned to show exact alignment
+                  // Vertical alignment line for amounts - adjusted for new position
                   {
                     type: 'line',
-                    x1: 120, y1: 0,
-                    x2: 120, y2: -120,
+                    x1: 105, y1: 0, // Moved left by 15 units
+                    x2: 105, y2: -120,
                     lineWidth: 3,
                     lineColor: '#00cc00', // Green for perfect alignment
                     dash: { length: 3 }
                   },
-                  // Right margin line - exact position of amount column end
+                  // Right margin line - adjusted for new position
                   {
                     type: 'line',
-                    x1: 200, y1: 0,
-                    x2: 200, y2: -120,
+                    x1: 185, y1: 0, // Moved left by 15 units
+                    x2: 185, y2: -120,
                     lineWidth: 3,
                     lineColor: '#00cc00', // Green for perfect alignment
                     dash: { length: 3 }
@@ -743,7 +743,7 @@ export const generateInvoicePDF = async (
   };
 
   console.log('=== PDF GENERATION COMPLETE ===');
-  console.log('✅ ALIGNMENT FIXED: Table amount column and totals values now use same width:', TOTALS_VALUE_WIDTH);
+  console.log('✅ ALIGNMENT ADJUSTED: Totals moved 15 units left for better alignment with table amounts');
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
   console.log('Notes content in final PDF:', hasNotes ? invoiceData.notes : 'No notes');
