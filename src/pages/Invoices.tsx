@@ -239,7 +239,7 @@ const Invoices = () => {
       label: "New Invoice",
       onClick: handleCreateInvoice,
       variant: "primary" as const,
-      icon: <Plus className="h-5 w-5" />
+      icon: <Plus className="h-6 w-6" />
     }
   ];
 
