@@ -1,3 +1,4 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -200,31 +201,31 @@ export const generateInvoicePDF = async (
               text: 'Invoice',
               style: 'invoiceTitle',
               alignment: 'right',
-              margin: [0, 0, 0, 15]
+              margin: [0, 0, 0, 10]
             },
             {
               text: companyData.name,
               style: 'companyName',
               alignment: 'right',
-              margin: [0, 0, 0, 8]
+              margin: [0, 0, 0, 5]
             },
             {
               text: companyData.address || '',
               style: 'companyAddress',
               alignment: 'right',
-              margin: [0, 0, 0, 5]
+              margin: [0, 0, 0, 3]
             },
             {
               text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
               style: 'companyGstin',
               alignment: 'right',
-              margin: [0, 0, 0, 10]
+              margin: [0, 0, 0, 8]
             },
             {
               text: `Invoice #: ${invoiceData.number}`,
               style: 'invoiceNumber',
               alignment: 'right',
-              margin: [0, 0, 0, 5]
+              margin: [0, 0, 0, 3]
             },
             {
               text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
@@ -234,7 +235,7 @@ export const generateInvoicePDF = async (
           ]
         }
       ],
-      margin: [0, 0, 0, 30]
+      margin: [0, 0, 0, 20]
     });
   } else {
     console.log('=== CREATING HEADER WITHOUT LOGO ===');
@@ -247,12 +248,12 @@ export const generateInvoicePDF = async (
             {
               text: companyData.name,
               style: 'companyName',
-              margin: [0, 0, 0, 5]
+              margin: [0, 0, 0, 3]
             },
             {
               text: companyData.address || '',
               style: 'companyAddress',
-              margin: [0, 0, 0, 5]
+              margin: [0, 0, 0, 3]
             },
             {
               text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
@@ -267,13 +268,13 @@ export const generateInvoicePDF = async (
               text: 'Invoice',
               style: 'invoiceTitle',
               alignment: 'right',
-              margin: [0, 0, 0, 10]
+              margin: [0, 0, 0, 8]
             },
             {
               text: `Invoice #: ${invoiceData.number}`,
               style: 'invoiceNumber',
               alignment: 'right',
-              margin: [0, 0, 0, 5]
+              margin: [0, 0, 0, 3]
             },
             {
               text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
@@ -283,7 +284,7 @@ export const generateInvoicePDF = async (
           ]
         }
       ],
-      margin: [0, 0, 0, 30]
+      margin: [0, 0, 0, 20]
     });
   }
 
@@ -296,26 +297,26 @@ export const generateInvoicePDF = async (
     {
       text: 'BILL TO',
       style: 'sectionHeader',
-      margin: [0, 0, 0, 10]
+      margin: [0, 0, 0, 5]
     },
     {
       stack: [
         {
           text: clientData.name,
           style: 'clientName',
-          margin: [0, 0, 0, 5]
+          margin: [0, 0, 0, 3]
         },
         {
           text: clientData.billing_address || '',
           style: 'clientAddress',
-          margin: [0, 0, 0, 5]
+          margin: [0, 0, 0, 3]
         },
         {
           text: clientData.gstin ? `GSTIN: ${clientData.gstin}` : '',
           style: 'clientGstin'
         }
       ],
-      margin: [0, 0, 0, 30]
+      margin: [0, 0, 0, 20]
     },
 
     // Items Table
@@ -350,10 +351,10 @@ export const generateInvoicePDF = async (
         },
         paddingLeft: () => 8,
         paddingRight: () => 8,
-        paddingTop: () => 8,
-        paddingBottom: () => 8
+        paddingTop: () => 6,
+        paddingBottom: () => 6
       },
-      margin: [0, 0, 0, 30]
+      margin: [0, 0, 0, 15]
     },
 
     // Totals Section
@@ -401,12 +402,12 @@ export const generateInvoicePDF = async (
             hLineColor: () => '#000000',
             paddingLeft: () => 8,
             paddingRight: () => 8,
-            paddingTop: () => 6,
-            paddingBottom: () => 6
+            paddingTop: () => 4,
+            paddingBottom: () => 4
           }
         }
       ],
-      margin: [0, 0, 0, 40]
+      margin: [0, 0, 0, 20]
     },
 
     // Grand Total Section
@@ -433,12 +434,12 @@ export const generateInvoicePDF = async (
             fillColor: '#f5f5f5',
             paddingLeft: () => 8,
             paddingRight: () => 8,
-            paddingTop: () => 10,
-            paddingBottom: () => 10
+            paddingTop: () => 8,
+            paddingBottom: () => 8
           }
         }
       ],
-      margin: [0, 0, 0, 20]
+      margin: [0, 0, 0, 15]
     },
 
     // Footer
@@ -446,13 +447,13 @@ export const generateInvoicePDF = async (
       text: 'Thank you for your business!',
       style: 'footer',
       alignment: 'center',
-      margin: [0, 20, 0, 0]
+      margin: [0, 15, 0, 0]
     },
     {
       text: companyData.name,
       style: 'footerCompany',
       alignment: 'center',
-      margin: [0, 5, 0, 0]
+      margin: [0, 3, 0, 0]
     }
   ];
 
@@ -463,7 +464,7 @@ export const generateInvoicePDF = async (
       // Add space before signature
       {
         text: '',
-        margin: [0, 30, 0, 0]
+        margin: [0, 20, 0, 0]
       },
       // Signature section - positioned in bottom left
       {
@@ -474,13 +475,13 @@ export const generateInvoicePDF = async (
               {
                 text: 'Authorized Signature',
                 style: 'signatureTitle',
-                margin: [0, 0, 0, 10]
+                margin: [0, 0, 0, 8]
               },
               {
                 image: signatureBase64,
                 width: signatureWidth,
                 height: signatureHeight,
-                margin: [0, 0, 0, 5]
+                margin: [0, 0, 0, 3]
               },
               {
                 canvas: [
@@ -494,7 +495,7 @@ export const generateInvoicePDF = async (
                     lineColor: '#000000'
                   }
                 ],
-                margin: [0, 0, 0, 5]
+                margin: [0, 0, 0, 3]
               },
               {
                 text: companyData.name,
@@ -524,7 +525,7 @@ export const generateInvoicePDF = async (
   // Create document definition
   const docDefinition = {
     pageSize: 'A4',
-    pageMargins: [40, 60, 40, 60],
+    pageMargins: [40, 50, 40, 50],
     content: mainContent,
     styles: {
       companyName: {
@@ -535,7 +536,7 @@ export const generateInvoicePDF = async (
       companyAddress: {
         fontSize: 10,
         color: '#666666',
-        lineHeight: 1.3
+        lineHeight: 1.2
       },
       companyGstin: {
         fontSize: 10,
@@ -582,7 +583,7 @@ export const generateInvoicePDF = async (
       tableCell: {
         fontSize: 10,
         color: '#333333',
-        margin: [0, 2, 0, 2]
+        margin: [0, 1, 0, 1]
       },
       totalLabel: {
         fontSize: 10,
