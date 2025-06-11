@@ -432,19 +432,19 @@ export const generateInvoicePDF = async (
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (matching reference image)
+    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (left-aligned)
     {
       stack: [
         {
           text: 'Thank you for your business!',
           style: 'footer',
-          alignment: 'center',
+          alignment: 'left',
           margin: [0, 8, 0, 8]
         },
         {
           text: companyData.name,
           style: 'footerCompany',
-          alignment: 'center',
+          alignment: 'left',
           margin: [0, 0, 0, 10]
         },
         // Signature section (only if both URL exists AND setting is enabled)
@@ -455,13 +455,13 @@ export const generateInvoicePDF = async (
                 image: signatureBase64,
                 width: signatureWidth,
                 height: signatureHeight,
-                alignment: 'center',
+                alignment: 'left',
                 margin: [0, 0, 0, 5]
               },
               {
                 text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
                 style: 'signatureDate',
-                alignment: 'center',
+                alignment: 'left',
                 margin: [0, 0, 0, 10]
               }
             ]
@@ -636,3 +636,5 @@ export const getInvoicePDFBlob = async (
     });
   });
 };
+
+}
