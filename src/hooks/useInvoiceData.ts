@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -192,13 +191,15 @@ export const useInvoiceData = () => {
       taxConfig,
       showMySignature,
       requireClientSignature,
-      notes
+      notes,
+      invoiceNumber
     }: {
       navigate: any;
       taxConfig: TaxConfig;
       showMySignature: boolean;
       requireClientSignature: boolean;
       notes?: string;
+      invoiceNumber?: string;
     }) => {
       console.log('=== SAVE INVOICE MUTATION START ===');
       console.log('Selected Company ID:', selectedCompanyId);
@@ -208,6 +209,7 @@ export const useInvoiceData = () => {
       console.log('Show my signature:', showMySignature);
       console.log('Require client signature:', requireClientSignature);
       console.log('Notes being saved:', notes);
+      console.log('Invoice number:', invoiceNumber);
       
       if (!selectedClient || !selectedCompanyId) {
         const errorMsg = `Missing required data - Client: ${!!selectedClient}, Company: ${!!selectedCompanyId}`;
@@ -250,9 +252,12 @@ export const useInvoiceData = () => {
         console.log('=== UPDATING EXISTING INVOICE ===');
         console.log('Existing invoice ID:', existingInvoice.id);
         
+        // Include invoice number in update if provided
+        const updateData = invoiceNumber ? { ...invoiceData, number: invoiceNumber } : invoiceData;
+        
         const { data: updatedInvoice, error: updateError } = await supabase
           .from('invoices')
-          .update(invoiceData)
+          .update(updateData)
           .eq('id', existingInvoice.id)
           .select()
           .single();
@@ -281,21 +286,25 @@ export const useInvoiceData = () => {
       } else {
         console.log('=== CREATING NEW INVOICE ===');
         
-        // Generate invoice number
-        const { data: invoiceNumber, error: numberError } = await supabase
-          .rpc('next_invoice_number', { p_company_id: selectedCompanyId });
+        // Use provided invoice number or generate one
+        let finalInvoiceNumber = invoiceNumber;
+        if (!finalInvoiceNumber) {
+          const { data: generatedNumber, error: numberError } = await supabase
+            .rpc('next_invoice_number', { p_company_id: selectedCompanyId });
 
-        if (numberError) {
-          console.error('Error generating invoice number:', numberError);
-          throw numberError;
+          if (numberError) {
+            console.error('Error generating invoice number:', numberError);
+            throw numberError;
+          }
+          finalInvoiceNumber = generatedNumber;
         }
 
-        console.log('Generated invoice number:', invoiceNumber);
+        console.log('Final invoice number:', finalInvoiceNumber);
 
         const newInvoiceData = {
           ...invoiceData,
-          number: invoiceNumber,
-          invoice_code: invoiceNumber
+          number: finalInvoiceNumber,
+          invoice_code: finalInvoiceNumber
         };
 
         console.log('New invoice data:', newInvoiceData);
