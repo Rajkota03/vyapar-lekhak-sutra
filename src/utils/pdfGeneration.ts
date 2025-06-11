@@ -347,20 +347,33 @@ export const generateInvoicePDF = async (
           width: '60%',
           stack: [
             {
-              text: '🆕 SECTION 6: ADDITIONAL CONTENT',
+              text: '🆕 SECTION 6: PAYMENT DETAILS & NOTES',
               style: 'sectionMarker',
               margin: [0, 0, 0, 5]
             },
             {
-              text: 'Additional Information',
+              text: 'Payment Details',
               style: 'sectionHeader',
               margin: [0, 0, 0, 5]
             },
             {
-              text: 'This is section 6 content that appears beside the totals. You can add any content here like terms & conditions, notes, or other important information.',
-              style: 'additionalContent',
-              margin: [0, 0, 10, 0]
-            }
+              text: paymentInstructions,
+              style: 'paymentDetails',
+              margin: [0, 0, 10, 15]
+            },
+            // Notes section (optional)
+            ...(invoiceData.notes ? [
+              {
+                text: 'Notes',
+                style: 'sectionHeader',
+                margin: [0, 0, 0, 5]
+              },
+              {
+                text: invoiceData.notes,
+                style: 'notesContent',
+                margin: [0, 0, 10, 0]
+              }
+            ] : [])
           ]
         },
         {
@@ -448,20 +461,20 @@ export const generateInvoicePDF = async (
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (with more right positioning)
+    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (with right positioning)
     {
       stack: [
         {
           text: 'Thank you for your business!',
           style: 'footer',
-          alignment: 'left',
-          margin: [40, 8, 0, 8]
+          alignment: 'right',
+          margin: [0, 8, 40, 8]
         },
         {
           text: companyData.name,
           style: 'footerCompany',
-          alignment: 'left',
-          margin: [40, 0, 0, 10]
+          alignment: 'right',
+          margin: [0, 0, 40, 10]
         },
         // Signature section (only if both URL exists AND setting is enabled)
         ...(signatureBase64 && invoiceData.show_my_signature ? [
@@ -471,14 +484,14 @@ export const generateInvoicePDF = async (
                 image: signatureBase64,
                 width: signatureWidth,
                 height: signatureHeight,
-                alignment: 'left',
-                margin: [40, 0, 0, 5]
+                alignment: 'right',
+                margin: [0, 0, 40, 5]
               },
               {
                 text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
                 style: 'signatureDate',
-                alignment: 'left',
-                margin: [40, 0, 0, 10]
+                alignment: 'right',
+                margin: [0, 0, 40, 10]
               }
             ]
           }
@@ -551,10 +564,15 @@ export const generateInvoicePDF = async (
         fontSize: 9,
         color: '#666666'
       },
-      paymentInstructions: {
+      paymentDetails: {
         fontSize: 8,
         color: '#666666',
-        lineHeight: 1.2
+        lineHeight: 1.3
+      },
+      notesContent: {
+        fontSize: 8,
+        color: '#666666',
+        lineHeight: 1.3
       },
       tableHeader: {
         fontSize: 9,
@@ -617,11 +635,6 @@ export const generateInvoicePDF = async (
       signatureDate: {
         fontSize: 9,
         color: '#333333'
-      },
-      additionalContent: {
-        fontSize: 9,
-        color: '#666666',
-        lineHeight: 1.3
       }
     }
   };
