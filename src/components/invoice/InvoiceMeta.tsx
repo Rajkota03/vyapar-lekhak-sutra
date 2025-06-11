@@ -26,6 +26,9 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   const [isEditingNumber, setIsEditingNumber] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
+  console.log('Calendar open state:', isCalendarOpen);
+  console.log('Selected date:', selectedDate);
+
   const handleNumberSave = (value: string) => {
     if (onInvoiceNumberChange && value.trim()) {
       onInvoiceNumberChange(value.trim());
@@ -56,13 +59,20 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   };
 
   const handleDateSelect = (date: Date | undefined) => {
+    console.log('Date selected:', date);
     if (date) {
       setSelectedDate(date);
       setIsCalendarOpen(false);
     }
   };
 
+  const handleCalendarToggle = (open: boolean) => {
+    console.log('Calendar toggle:', open);
+    setIsCalendarOpen(open);
+  };
+
   const handleDateClick = () => {
+    console.log('Date clicked, opening calendar');
     setIsCalendarOpen(true);
   };
 
@@ -71,24 +81,24 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   return (
     <div className="flex justify-between items-center py-2">
       <div className="flex items-center gap-2">
-        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+        <Popover open={isCalendarOpen} onOpenChange={handleCalendarToggle}>
           <PopoverTrigger asChild>
             <PremiumButton 
               variant="ghost" 
               size="sm"
               className="p-1 h-auto text-muted-foreground hover:bg-transparent"
-              onClick={() => setIsCalendarOpen(true)}
+              onClick={handleDateClick}
             >
               <CalendarIcon className="h-4 w-4" />
             </PremiumButton>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0 z-[60]" align="start">
             <CalendarComponent 
               mode="single" 
               selected={selectedDate} 
               onSelect={handleDateSelect}
               initialFocus
-              className="p-3"
+              className="p-3 pointer-events-auto"
             />
           </PopoverContent>
         </Popover>
