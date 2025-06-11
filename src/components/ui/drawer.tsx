@@ -42,25 +42,10 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background max-w-full overflow-x-hidden",
-        "mobile-drawer-safe",
-        // iOS specific fixes
-        "touch-pan-y",
-        // Ensure proper visibility on mobile
-        "min-h-[50vh] max-h-[85vh]",
-        // Force hardware acceleration
-        "will-change-transform transform-gpu",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+        "min-h-[50vh] max-h-[90vh] overflow-y-auto",
         className
       )}
-      style={{
-        // Ensure content is visible on iOS
-        WebkitTransform: 'translateZ(0)',
-        transform: 'translateZ(0)',
-        // Force proper height calculation
-        height: 'auto',
-        minHeight: '50vh',
-        maxHeight: '85vh'
-      }}
       {...props}
     >
       <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
@@ -75,7 +60,7 @@ const DrawerHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("grid gap-1.5 p-4 text-center sm:text-left max-w-full overflow-x-hidden bg-background", className)}
+    className={cn("grid gap-1.5 p-4 text-center sm:text-left bg-background", className)}
     {...props}
   />
 )
@@ -86,7 +71,7 @@ const DrawerFooter = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("mt-auto flex flex-col gap-2 p-4 max-w-full overflow-x-hidden bg-background", className)}
+    className={cn("mt-auto flex flex-col gap-2 p-4 bg-background", className)}
     {...props}
   />
 )

@@ -86,9 +86,9 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
   const calculatedAmount = (editedLine.qty * editedLine.unit_price) - (editedLine.discount_amount || 0);
 
   const FormContent = () => (
-    <div className="space-y-6 w-full mobile-safe bg-background">
+    <div className="space-y-6 w-full">
       {/* Item Name */}
-      <div className="space-y-3 w-full">
+      <div className="space-y-3">
         <label>
           <CaptionText className="text-muted-foreground font-medium">
             Name <span className="text-red-500">*</span>
@@ -97,13 +97,13 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
         <Input
           value={editedLine.description}
           onChange={(e) => setEditedLine({ ...editedLine, description: e.target.value })}
-          className="h-12 text-base bg-background border-border focus:border-primary w-full max-w-full"
+          className="h-12 text-base"
           placeholder="Item name"
         />
       </div>
 
       {/* Product Code */}
-      <div className="space-y-3 w-full">
+      <div className="space-y-3">
         <label>
           <CaptionText className="text-muted-foreground font-medium">
             Product Code
@@ -111,14 +111,14 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
         </label>
         <Input
           value={editedLine.item?.code || ''}
-          className="h-12 text-base bg-muted/50 border-border w-full max-w-full"
+          className="h-12 text-base bg-muted/50"
           placeholder="Optional code"
           disabled
         />
       </div>
 
       {/* Price */}
-      <div className="space-y-3 w-full">
+      <div className="space-y-3">
         <label>
           <CaptionText className="text-muted-foreground font-medium">
             Price
@@ -128,14 +128,14 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
           type="number"
           value={editedLine.unit_price}
           onChange={(e) => setEditedLine({ ...editedLine, unit_price: Number(e.target.value) })}
-          className="h-12 text-base bg-background border-border focus:border-primary w-full max-w-full"
+          className="h-12 text-base"
           min="0"
           step="0.01"
         />
       </div>
 
       {/* Quantity */}
-      <div className="space-y-3 w-full">
+      <div className="space-y-3">
         <label>
           <CaptionText className="text-muted-foreground font-medium">
             Quantity
@@ -145,13 +145,13 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
           type="number"
           value={editedLine.qty}
           onChange={(e) => setEditedLine({ ...editedLine, qty: Number(e.target.value) })}
-          className="h-12 text-base bg-background border-border focus:border-primary w-full max-w-full"
+          className="h-12 text-base"
           min="1"
         />
       </div>
 
       {/* Discount */}
-      <div className="space-y-3 w-full">
+      <div className="space-y-3">
         <label>
           <CaptionText className="text-muted-foreground font-medium">
             Discount (INR)
@@ -161,21 +161,21 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
           type="number"
           value={editedLine.discount_amount || 0}
           onChange={(e) => setEditedLine({ ...editedLine, discount_amount: Number(e.target.value) })}
-          className="h-12 text-base bg-background border-border focus:border-primary w-full max-w-full"
+          className="h-12 text-base"
           min="0"
           step="0.01"
         />
       </div>
 
       {/* Add Photo Button */}
-      <Button variant="outline" className="w-full h-12 border-dashed max-w-full">
+      <Button variant="outline" className="w-full h-12 border-dashed">
         <Plus className="h-4 w-4 mr-2" />
         Add Photo
       </Button>
 
       {/* Tax Settings */}
-      <div className="space-y-4 w-full">
-        <div className="flex items-center justify-between py-2 w-full">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between py-2">
           <div>
             <BodyText className="font-medium">CGST (9%)</BodyText>
           </div>
@@ -187,7 +187,7 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
             })}
           />
         </div>
-        <div className="flex items-center justify-between py-2 w-full">
+        <div className="flex items-center justify-between py-2">
           <div>
             <BodyText className="font-medium">SGST (9%)</BodyText>
           </div>
@@ -202,15 +202,15 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
       </div>
 
       {/* Amount Display */}
-      <div className="bg-muted/30 rounded-xl p-4 w-full">
-        <div className="flex justify-between items-center w-full">
+      <div className="bg-muted/30 rounded-xl p-4">
+        <div className="flex justify-between items-center">
           <BodyText className="font-medium text-muted-foreground">Amount</BodyText>
           <BodyText className="text-xl font-semibold">₹{formatNumber(calculatedAmount)}</BodyText>
         </div>
       </div>
 
       {/* Description */}
-      <div className="space-y-3 w-full">
+      <div className="space-y-3">
         <label>
           <CaptionText className="text-muted-foreground font-medium">
             Description
@@ -220,10 +220,10 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
           value={editedLine.note || ''}
           onChange={(e) => setEditedLine({ ...editedLine, note: e.target.value })}
           placeholder="Additional notes or description..."
-          className="min-h-[80px] bg-background border-border focus:border-primary resize-none w-full max-w-full"
+          className="min-h-[80px] resize-none"
           rows={3}
         />
-        <div className="text-right w-full">
+        <div className="text-right">
           <CaptionText className="text-muted-foreground">
             {(editedLine.note || '').length}/5000
           </CaptionText>
@@ -234,7 +234,7 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
       <Button
         onClick={handleDelete}
         variant="ghost"
-        className="w-full h-12 text-red-500 hover:text-red-600 hover:bg-red-50 max-w-full"
+        className="w-full h-12 text-red-500 hover:text-red-600 hover:bg-red-50"
       >
         Delete
       </Button>
@@ -246,9 +246,9 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="mobile-drawer-safe bg-background">
-          <DrawerHeader className="flex flex-row items-center justify-between p-4 border-b w-full mobile-safe bg-background">
-            <DrawerTitle className="text-lg font-semibold text-foreground">Item</DrawerTitle>
+        <DrawerContent>
+          <DrawerHeader className="flex flex-row items-center justify-between p-4 border-b">
+            <DrawerTitle className="text-lg font-semibold">Item</DrawerTitle>
             <div className="flex items-center gap-2">
               <Button onClick={handleSave} className="text-blue-600 hover:text-blue-700 p-0 h-auto font-semibold" variant="ghost">
                 Save
@@ -258,7 +258,7 @@ const ItemEditSheet: React.FC<ItemEditSheetProps> = ({
           <DrawerDescription className="sr-only">
             Edit item details including name, price, quantity, and other properties.
           </DrawerDescription>
-          <div className="overflow-y-auto p-4 pb-8 w-full mobile-safe flex-1 bg-background">
+          <div className="overflow-y-auto p-4 pb-8 flex-1">
             <FormContent />
           </div>
         </DrawerContent>
