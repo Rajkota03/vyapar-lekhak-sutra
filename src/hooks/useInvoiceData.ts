@@ -135,6 +135,7 @@ export const useInvoiceData = () => {
       }
       
       console.log('Invoice fetched:', data);
+      console.log('Invoice notes from database:', data.notes);
       setSelectedDate(new Date(data.issue_date));
       
       // Fetch the client data
@@ -206,7 +207,7 @@ export const useInvoiceData = () => {
       console.log('Tax config:', taxConfig);
       console.log('Show my signature:', showMySignature);
       console.log('Require client signature:', requireClientSignature);
-      console.log('Notes:', notes);
+      console.log('Notes being saved:', notes);
       
       if (!selectedClient || !selectedCompanyId) {
         const errorMsg = `Missing required data - Client: ${!!selectedClient}, Company: ${!!selectedCompanyId}`;
@@ -262,6 +263,7 @@ export const useInvoiceData = () => {
         }
 
         console.log('Updated invoice:', updatedInvoice);
+        console.log('Updated invoice notes:', updatedInvoice.notes);
         savedInvoice = updatedInvoice;
 
         // Delete existing line items
@@ -356,8 +358,15 @@ export const useInvoiceData = () => {
       console.log('- require_client_signature:', savedInvoice.require_client_signature);
       console.log('- notes:', savedInvoice.notes);
       
+      // ENHANCED INVALIDATION - Invalidate ALL related queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoice', savedInvoice.id] });
+      queryClient.invalidateQueries({ queryKey: ['invoice', invoiceId] });
+      
+      // Force refetch the current invoice to ensure fresh data
+      queryClient.refetchQueries({ queryKey: ['invoice', savedInvoice.id] });
+      
+      console.log('=== QUERIES INVALIDATED FOR FRESH DATA ===');
       
       toast({
         title: "Success",

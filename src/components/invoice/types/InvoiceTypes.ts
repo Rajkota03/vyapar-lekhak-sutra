@@ -51,5 +51,5 @@ export interface Invoice {
   igst_pct?: number;
   show_my_signature?: boolean;
   require_client_signature?: boolean;
-  notes?: string;
+  notes?: string | null;
 }
