@@ -24,25 +24,29 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   isEditing = false
 }) => {
   const [isEditingNumber, setIsEditingNumber] = useState(false);
-  const [tempNumber, setTempNumber] = useState(invoiceNumber);
 
-  const handleNumberSave = () => {
-    if (onInvoiceNumberChange && tempNumber.trim()) {
-      onInvoiceNumberChange(tempNumber.trim());
+  const handleNumberSave = (value: string) => {
+    if (onInvoiceNumberChange && value.trim()) {
+      onInvoiceNumberChange(value.trim());
     }
     setIsEditingNumber(false);
   };
 
   const handleNumberCancel = () => {
-    setTempNumber(invoiceNumber);
     setIsEditingNumber(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleNumberSave();
+      handleNumberSave(e.currentTarget.value);
     } else if (e.key === 'Escape') {
       handleNumberCancel();
+    }
+  };
+
+  const handleClick = () => {
+    if (isEditing) {
+      setIsEditingNumber(true);
     }
   };
 
@@ -72,17 +76,17 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
       <div className="flex items-center gap-2">
         {isEditingNumber ? (
           <Input
-            value={tempNumber}
-            onChange={(e) => setTempNumber(e.target.value)}
-            onBlur={handleNumberSave}
+            defaultValue={invoiceNumber}
+            onBlur={(e) => handleNumberSave(e.target.value)}
             onKeyDown={handleKeyDown}
             className="h-6 text-sm font-medium text-right border-0 p-1 focus:ring-1 focus:ring-primary w-24"
             autoFocus
+            onFocus={(e) => e.target.select()}
           />
         ) : (
           <div 
             className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors"
-            onClick={() => isEditing && setIsEditingNumber(true)}
+            onClick={handleClick}
           >
             <BodyText className="font-medium text-foreground">{invoiceNumber}</BodyText>
           </div>
