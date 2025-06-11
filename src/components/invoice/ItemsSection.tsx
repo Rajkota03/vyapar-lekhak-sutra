@@ -135,6 +135,7 @@ const ItemsSection: React.FC<ItemsSectionProps> = ({
           updateLineItem={updateLineItem}
           removeLineItem={removeLineItem}
           onEditItem={handleEditItem}
+          selectedCompanyId={effectiveCompanyId}
         />
       ) : (
         <div className="rounded-md bg-white shadow-sm border">

@@ -1,4 +1,3 @@
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -110,12 +109,17 @@ export const generateInvoicePDF = async (
   console.log('Notes is truthy:', !!invoiceData.notes);
   console.log('Notes after trim is truthy:', !!(invoiceData.notes?.trim?.()));
   
-  // Get company settings for logo and signature
+  // Get company settings for logo, signature, and quantity label
   const companySettings = await getCompanySettings(invoiceData.company_id);
   let logoBase64: string | null = null;
   let signatureBase64: string | null = null;
   let logoScale = 0.3;
   let signatureScale = 1.0;
+
+  // Get custom quantity label from company settings
+  const quantityLabel = companySettings?.quantity_column_label || 'QTY';
+  console.log('=== QUANTITY LABEL DEBUG ===');
+  console.log('Custom quantity label:', quantityLabel);
 
   if (companySettings?.logo_url) {
     console.log('=== LOGO PROCESSING ===');
@@ -302,10 +306,10 @@ export const generateInvoicePDF = async (
         headerRows: 1,
         widths: ['*', 50, 70, AMOUNT_COLUMN_WIDTH],
         body: [
-          // Header row
+          // Header row - using custom quantity label
           [
             { text: 'DESCRIPTION', style: 'tableHeader' },
-            { text: 'QTY', style: 'tableHeader', alignment: 'center' },
+            { text: quantityLabel.toUpperCase(), style: 'tableHeader', alignment: 'center' },
             { text: 'RATE', style: 'tableHeader', alignment: 'right' },
             { text: 'AMOUNT', style: 'tableHeader', alignment: 'right' }
           ],
@@ -609,6 +613,7 @@ export const generateInvoicePDF = async (
   console.log('=== PDF GENERATION COMPLETE ===');
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
+  console.log('Custom quantity label used:', quantityLabel);
   return docDefinition;
 };
 

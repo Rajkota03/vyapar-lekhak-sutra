@@ -4,26 +4,30 @@ import { Plus } from "lucide-react";
 import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import LineItemRow from "./LineItemRow";
+import EditableQuantityLabel from "./EditableQuantityLabel";
 import { LineItem } from "./types/InvoiceTypes";
 import { CaptionText } from "@/components/ui/primitives/Typography";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { useCompany } from "@/context/CompanyContext";
 
 interface ItemsTableProps {
   lineItems: LineItem[];
   updateLineItem: (index: number, field: string, value: number) => void;
   removeLineItem: (index: number) => void;
   onEditItem: (index: number) => void;
+  selectedCompanyId?: string | null;
 }
 
 const ItemsTable: React.FC<ItemsTableProps> = ({
   lineItems,
   updateLineItem,
   removeLineItem,
-  onEditItem
+  onEditItem,
+  selectedCompanyId
 }) => {
   const isMobile = useIsMobile();
-  const { quantityLabel } = useCompanySettings();
+  const { currentCompany } = useCompany();
+  const effectiveCompanyId = selectedCompanyId || currentCompany?.id;
 
   return (
     <div className="w-full overflow-hidden">
@@ -35,7 +39,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
                 <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
               </TableHead>
               <TableHead className="w-[12%] py-3 px-2 text-center">
-                <CaptionText className="font-medium uppercase tracking-wide">{quantityLabel}</CaptionText>
+                <EditableQuantityLabel companyId={effectiveCompanyId} />
               </TableHead>
               <TableHead className="w-[18%] py-3 px-2 text-right">
                 <CaptionText className="font-medium uppercase tracking-wide">Price</CaptionText>

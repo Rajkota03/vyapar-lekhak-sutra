@@ -47,8 +47,7 @@ export const useCompanySettings = (companyId?: string) => {
   // Helper getters with fallbacks - using correct database column names
   const getters = {
     get quantityLabel() {
-      // Note: Database doesn't have quantity_column_label yet, using default
-      return 'QTY';
+      return settings?.quantity_column_label || 'QTY';
     },
     get invoiceNumberPrefix() {
       return settings?.invoice_prefix || 'INV';
