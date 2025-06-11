@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, FileText } from "lucide-react";
+import { Plus, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
-import { handleSharePdf } from "@/utils/sharePdf";
 import { useToast } from "@/hooks/use-toast";
 
 type Invoice = {
@@ -127,19 +126,6 @@ const Invoices = () => {
     console.log('Current invoices data:', invoices);
   }, [invoices]);
 
-  const getStatusBadgeVariant = (status: string | null) => {
-    switch (status) {
-      case 'paid':
-        return 'secondary';
-      case 'sent':
-        return 'default';
-      case 'draft':
-        return 'outline';
-      default:
-        return 'outline';
-    }
-  };
-
   // Loading state
   if (isLoadingCompanies) {
     return (
@@ -191,13 +177,9 @@ const Invoices = () => {
     );
   }
 
-  const handleCardClick = (invoiceId: string) => {
+  const handleInvoiceClick = (invoiceId: string) => {
+    console.log('Clicking on invoice:', invoiceId);
     navigate(`/invoices/${invoiceId}`);
-  };
-
-  const handlePdfShare = async (e: React.MouseEvent, invoiceId: string) => {
-    e.stopPropagation();
-    await handleSharePdf(invoiceId);
   };
 
   const handleCreateInvoice = () => {
@@ -208,32 +190,18 @@ const Invoices = () => {
 
   return (
     <DashboardLayout>
-      <div className="relative min-h-screen pb-20">
-        <div className="sticky top-0 z-10 bg-white p-4 border-b">
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white p-4 border-b">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold">Invoices</h1>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
-                  By Date
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setFilterStatus("all")}>
-                  All
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterStatus("sent")}>
-                  Sent
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterStatus("paid")}>
-                  Paid
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterStatus("draft")}>
-                  Draft
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <h1 className="text-2xl font-bold">Invoices</h1>
+            <Button 
+              className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg"
+              onClick={handleCreateInvoice}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Invoice
+            </Button>
           </div>
 
           {companies && companies.length > 1 && (
@@ -253,55 +221,57 @@ const Invoices = () => {
           )}
         </div>
 
+        {/* Content */}
         <div className="p-4">
           {isLoadingInvoices ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : invoices && invoices.length > 0 ? (
-            <div className="space-y-1">
-              {invoices.map((invoice) => (
-                <div 
-                  key={invoice.id} 
-                  className="bg-white border-b border-gray-100 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => handleCardClick(invoice.id)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg">
-                          {invoice.invoice_code || invoice.number || 'Draft Invoice'}
-                        </h3>
-                        <Badge 
-                          variant={getStatusBadgeVariant(invoice.status)}
-                          className="text-xs"
-                        >
-                          {invoice.status || 'Draft'}
-                        </Badge>
+            <div className="bg-white rounded-lg shadow-sm">
+              {/* Card Header */}
+              <div className="p-6 border-b">
+                <h2 className="text-xl font-semibold mb-2">Invoice List</h2>
+                <p className="text-gray-600">Manage your invoices</p>
+              </div>
+
+              {/* Table Header */}
+              <div className="px-6 py-3 border-b bg-gray-50">
+                <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-600">
+                  <div>Invoice Number</div>
+                  <div>Client</div>
+                  <div>Issue Date</div>
+                </div>
+              </div>
+
+              {/* Table Body */}
+              <div className="divide-y divide-gray-100">
+                {invoices.map((invoice) => (
+                  <div 
+                    key={invoice.id} 
+                    className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => handleInvoiceClick(invoice.id)}
+                  >
+                    <div className="grid grid-cols-3 gap-4 items-center">
+                      <div className="font-medium text-gray-900">
+                        {invoice.invoice_code || invoice.number || 'Draft Invoice'}
                       </div>
-                      <p className="text-muted-foreground mb-2">
+                      <div className="text-gray-700">
                         {invoice.clients?.name || 'No client'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd MMM yyyy') : 'No date'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold mb-2">
-                        ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <div className="text-gray-600">
+                        {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No invoices yet</p>
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <p className="text-gray-600 mb-4">No invoices yet</p>
               <Button 
                 variant="outline" 
-                size="sm"
-                className="mt-2"
                 onClick={handleCreateInvoice}
               >
                 Create Invoice
@@ -312,7 +282,7 @@ const Invoices = () => {
 
         {/* Floating Action Button */}
         <Button
-          className="fixed bottom-6 right-6 h-12 w-12 rounded-full p-0 shadow-lg"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full p-0 shadow-lg bg-gray-900 hover:bg-gray-800"
           onClick={handleCreateInvoice}
         >
           <Plus size={24} />
