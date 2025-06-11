@@ -432,20 +432,20 @@ export const generateInvoicePDF = async (
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (left-aligned)
+    // SECTION 5: COMBINED FOOTER WITH SIGNATURE (with slight right positioning)
     {
       stack: [
         {
           text: 'Thank you for your business!',
           style: 'footer',
           alignment: 'left',
-          margin: [0, 8, 0, 8]
+          margin: [20, 8, 0, 8]
         },
         {
           text: companyData.name,
           style: 'footerCompany',
           alignment: 'left',
-          margin: [0, 0, 0, 10]
+          margin: [20, 0, 0, 10]
         },
         // Signature section (only if both URL exists AND setting is enabled)
         ...(signatureBase64 && invoiceData.show_my_signature ? [
@@ -456,13 +456,13 @@ export const generateInvoicePDF = async (
                 width: signatureWidth,
                 height: signatureHeight,
                 alignment: 'left',
-                margin: [0, 0, 0, 5]
+                margin: [20, 0, 0, 5]
               },
               {
                 text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
                 style: 'signatureDate',
                 alignment: 'left',
-                margin: [0, 0, 0, 10]
+                margin: [20, 0, 0, 10]
               }
             ]
           }
