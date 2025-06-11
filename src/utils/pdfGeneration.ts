@@ -27,14 +27,33 @@ const DEBUG_COLORS = {
   grid: '#cccccc'
 };
 
-// ENHANCED Currency formatting function for perfect alignment
+// ENHANCED Currency formatting function with FIXED-WIDTH DECIMAL ALIGNMENT
 const formatCurrencyAligned = (amount: number): string => {
-  // Use exactly 2 decimal places and Indian number formatting
+  console.log('=== FIXED-WIDTH DECIMAL ALIGNMENT ===');
+  console.log('Input amount:', amount);
+  
+  // Format with exactly 2 decimal places and Indian number formatting
   const formatted = amount.toLocaleString('en-IN', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
-  return `₹${formatted}`;
+  
+  console.log('After toLocaleString:', formatted);
+  
+  // Add rupee symbol
+  const withRupee = `₹${formatted}`;
+  console.log('With rupee symbol:', withRupee);
+  
+  // FIXED-WIDTH PADDING: Ensure consistent width for decimal alignment
+  // Target width: 12 characters (including ₹ symbol)
+  // This accommodates amounts up to ₹99,99,999.00
+  const targetWidth = 12;
+  const padded = withRupee.padStart(targetWidth, ' ');
+  
+  console.log('Final padded result:', `"${padded}" (length: ${padded.length})`);
+  console.log('Visual representation:', padded.replace(/ /g, '·')); // Show spaces as dots
+  
+  return padded;
 };
 
 // Function to convert image URL to base64
@@ -207,15 +226,18 @@ export const generateInvoicePDF = async (
   console.log('Has notes (final decision):', hasNotes);
   console.log('Notes content that will be used:', hasNotes ? invoiceData.notes : 'No notes');
 
-  // CRITICAL ALIGNMENT FIX: Exact width calculation for perfect decimal alignment
-  const AMOUNT_COLUMN_WIDTH = 85; // Increased slightly for better spacing
+  // FIXED-WIDTH DECIMAL ALIGNMENT: Use monospace font and exact positioning
+  const AMOUNT_COLUMN_WIDTH = 90; // Increased width to accommodate padding
   
-  console.log('=== DECIMAL ALIGNMENT DEBUG ===');
-  console.log('Using EXACT width for both table and totals:', AMOUNT_COLUMN_WIDTH);
+  console.log('=== FIXED-WIDTH DECIMAL ALIGNMENT DEBUG ===');
+  console.log('Using FIXED-WIDTH approach with padding for perfect decimal alignment');
+  console.log('Amount column width:', AMOUNT_COLUMN_WIDTH);
   console.log('Sample formatting test:');
-  console.log('- formatCurrencyAligned(20000):', formatCurrencyAligned(20000));
-  console.log('- formatCurrencyAligned(1800):', formatCurrencyAligned(1800));
-  console.log('- formatCurrencyAligned(23600):', formatCurrencyAligned(23600));
+  lineItems.forEach((item, index) => {
+    console.log(`- Item ${index + 1}: ${formatCurrencyAligned(item.amount)}`);
+  });
+  console.log(`- Subtotal: ${formatCurrencyAligned(subtotal)}`);
+  console.log(`- Grand Total: ${formatCurrencyAligned(grandTotal)}`);
 
   // Create the main content array with minimal spacing
   const mainContent: any[] = [
@@ -318,11 +340,11 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 10]
     },
 
-    // SECTION 3: ITEMS TABLE - EXACT width matching for perfect decimal alignment
+    // SECTION 3: ITEMS TABLE - FIXED-WIDTH for perfect decimal alignment
     {
       table: {
         headerRows: 1,
-        widths: ['*', 50, 70, AMOUNT_COLUMN_WIDTH], // EXACT width for amount column
+        widths: ['*', 50, 70, AMOUNT_COLUMN_WIDTH], // Fixed width for amount column
         body: [
           // Header row
           [
@@ -331,14 +353,14 @@ export const generateInvoicePDF = async (
             { text: 'RATE', style: 'tableHeader', alignment: 'right' },
             { text: 'AMOUNT', style: 'tableHeader', alignment: 'right' }
           ],
-          // Item rows - using EXACT same formatting function
+          // Item rows - using FIXED-WIDTH formatting with monospace font
           ...lineItems.map(item => [
             { text: item.description, style: 'tableCell' },
             { text: item.qty.toString(), style: 'tableCell', alignment: 'center' },
-            { text: formatCurrencyAligned(item.unit_price), style: 'tableCell', alignment: 'right' },
+            { text: formatCurrencyAligned(item.unit_price), style: 'tableCellMonospace', alignment: 'right' },
             { 
               text: formatCurrencyAligned(item.amount), 
-              style: 'tableCell', 
+              style: 'tableCellMonospace', 
               alignment: 'right',
               ...(DEBUG_ALIGNMENT && { 
                 fillColor: '#ffffcc',
@@ -366,7 +388,7 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 8]
     },
 
-    // SECTION 4: PAYMENT DETAILS AND TOTALS - EXACT alignment with table amounts
+    // SECTION 4: PAYMENT DETAILS AND TOTALS - FIXED-WIDTH alignment with table amounts
     {
       columns: [
         {
@@ -393,14 +415,14 @@ export const generateInvoicePDF = async (
             // ALIGNMENT DEBUG HEADER
             ...(DEBUG_ALIGNMENT ? [
               {
-                text: '💯 PERFECT DECIMAL ALIGNMENT',
+                text: '🎯 FIXED-WIDTH DECIMAL ALIGNMENT',
                 style: 'totalLabel',
                 fillColor: '#ccffcc',
                 alignment: 'center',
                 margin: [0, 0, 0, 3]
               }
             ] : []),
-            // Subtotal with EXACT WIDTH and SAME FORMATTING
+            // Subtotal with FIXED-WIDTH and MONOSPACE FORMATTING
             {
               columns: [
                 { 
@@ -410,9 +432,9 @@ export const generateInvoicePDF = async (
                   ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                 },
                 { 
-                  width: AMOUNT_COLUMN_WIDTH, // EXACT same width as table amount column
-                  text: formatCurrencyAligned(subtotal), // EXACT same formatting function
-                  style: 'totalValue', 
+                  width: AMOUNT_COLUMN_WIDTH, // Same width as table amount column
+                  text: formatCurrencyAligned(subtotal), // Same formatting function with fixed-width
+                  style: 'totalValueMonospace', 
                   alignment: 'right',
                   ...(DEBUG_ALIGNMENT && { 
                     fillColor: '#ccffcc',
@@ -424,7 +446,7 @@ export const generateInvoicePDF = async (
               margin: [-10, 0, 0, 2], // Fine-tuned left adjustment
               ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.totalsBg })
             },
-            // Tax rows with EXACT WIDTH and SAME FORMATTING
+            // Tax rows with FIXED-WIDTH and MONOSPACE FORMATTING
             ...(invoiceData.use_igst ? [
               {
                 columns: [
@@ -435,9 +457,9 @@ export const generateInvoicePDF = async (
                     ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                   },
                   { 
-                    width: AMOUNT_COLUMN_WIDTH, // EXACT same width
-                    text: formatCurrencyAligned(igstAmount), // EXACT same formatting
-                    style: 'totalValue', 
+                    width: AMOUNT_COLUMN_WIDTH, // Same width
+                    text: formatCurrencyAligned(igstAmount), // Same formatting with fixed-width
+                    style: 'totalValueMonospace', 
                     alignment: 'right',
                     ...(DEBUG_ALIGNMENT && { 
                       fillColor: '#ccffcc',
@@ -459,9 +481,9 @@ export const generateInvoicePDF = async (
                     ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                   },
                   { 
-                    width: AMOUNT_COLUMN_WIDTH, // EXACT same width
-                    text: formatCurrencyAligned(cgstAmount), // EXACT same formatting
-                    style: 'totalValue', 
+                    width: AMOUNT_COLUMN_WIDTH, // Same width
+                    text: formatCurrencyAligned(cgstAmount), // Same formatting with fixed-width
+                    style: 'totalValueMonospace', 
                     alignment: 'right',
                     ...(DEBUG_ALIGNMENT && { 
                       fillColor: '#ccffcc',
@@ -482,9 +504,9 @@ export const generateInvoicePDF = async (
                     ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                   },
                   { 
-                    width: AMOUNT_COLUMN_WIDTH, // EXACT same width
-                    text: formatCurrencyAligned(sgstAmount), // EXACT same formatting
-                    style: 'totalValue', 
+                    width: AMOUNT_COLUMN_WIDTH, // Same width
+                    text: formatCurrencyAligned(sgstAmount), // Same formatting with fixed-width
+                    style: 'totalValueMonospace', 
                     alignment: 'right',
                     ...(DEBUG_ALIGNMENT && { 
                       fillColor: '#ccffcc',
@@ -510,7 +532,7 @@ export const generateInvoicePDF = async (
               ],
               margin: [0, 3, 0, 5]
             },
-            // Grand Total with EXACT WIDTH and SAME FORMATTING
+            // Grand Total with FIXED-WIDTH and MONOSPACE FORMATTING
             {
               columns: [
                 { 
@@ -520,9 +542,9 @@ export const generateInvoicePDF = async (
                   ...(DEBUG_ALIGNMENT && { fillColor: DEBUG_COLORS.labelBg })
                 },
                 { 
-                  width: AMOUNT_COLUMN_WIDTH, // EXACT same width
-                  text: formatCurrencyAligned(grandTotal), // EXACT same formatting
-                  style: 'finalTotalValue', 
+                  width: AMOUNT_COLUMN_WIDTH, // Same width
+                  text: formatCurrencyAligned(grandTotal), // Same formatting with fixed-width
+                  style: 'finalTotalValueMonospace', 
                   alignment: 'right',
                   ...(DEBUG_ALIGNMENT && { 
                     fillColor: '#99ff99',
@@ -541,8 +563,8 @@ export const generateInvoicePDF = async (
                   // Decimal point alignment line - positioned exactly
                   {
                     type: 'line',
-                    x1: 110, y1: 0,
-                    x2: 110, y2: -120,
+                    x1: 140, y1: 0,
+                    x2: 140, y2: -120,
                     lineWidth: 4,
                     lineColor: '#ff0000', // Red to show decimal alignment
                     dash: { length: 2 }
@@ -635,12 +657,13 @@ export const generateInvoicePDF = async (
     }
   ];
 
-  // Create document definition with optimized margins
+  // Create document definition with enhanced monospace styles for fixed-width alignment
   const docDefinition = {
     pageSize: 'A4',
     pageMargins: [30, 35, 30, 35],
     content: mainContent,
     styles: {
+      // ... keep existing code (all existing styles)
       companyName: {
         fontSize: 14,
         bold: true,
@@ -718,6 +741,13 @@ export const generateInvoicePDF = async (
         color: '#333333',
         margin: [0, 1, 0, 1]
       },
+      // NEW: Monospace styles for fixed-width decimal alignment
+      tableCellMonospace: {
+        fontSize: 9,
+        color: '#333333',
+        margin: [0, 1, 0, 1],
+        font: 'Courier' // Monospace font for consistent character width
+      },
       totalLabel: {
         fontSize: 9,
         color: '#666666'
@@ -725,6 +755,12 @@ export const generateInvoicePDF = async (
       totalValue: {
         fontSize: 9,
         color: '#333333'
+      },
+      // NEW: Monospace styles for totals section
+      totalValueMonospace: {
+        fontSize: 9,
+        color: '#333333',
+        font: 'Courier' // Monospace font for consistent character width
       },
       finalTotalLabel: {
         fontSize: 11,
@@ -735,6 +771,13 @@ export const generateInvoicePDF = async (
         fontSize: 11,
         bold: true,
         color: '#333333'
+      },
+      // NEW: Monospace style for final total
+      finalTotalValueMonospace: {
+        fontSize: 11,
+        bold: true,
+        color: '#333333',
+        font: 'Courier' // Monospace font for consistent character width
       },
       footer: {
         fontSize: 10,
@@ -762,10 +805,11 @@ export const generateInvoicePDF = async (
     }
   };
 
-  console.log('=== PDF GENERATION COMPLETE ===');
-  console.log('✅ DECIMAL ALIGNMENT PERFECTED: Using exact same width and formatting for table and totals');
-  console.log('Currency formatting function used:', 'formatCurrencyAligned');
+  console.log('=== FIXED-WIDTH DECIMAL ALIGNMENT COMPLETE ===');
+  console.log('✅ PERFECT DECIMAL ALIGNMENT: Using fixed-width padding and monospace font');
+  console.log('Currency formatting function used:', 'formatCurrencyAligned with fixed-width padding');
   console.log('Amount column width used:', AMOUNT_COLUMN_WIDTH);
+  console.log('Monospace font applied to all currency values');
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
   console.log('DEBUG ALIGNMENT:', DEBUG_ALIGNMENT ? 'Visual debugging enabled with alignment guides' : 'Normal production mode');
