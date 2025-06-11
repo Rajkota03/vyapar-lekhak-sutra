@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -196,7 +197,6 @@ const Invoices = () => {
     );
   }
 
-  // Error states
   if (companiesError || invoicesError) {
     console.error('Error loading data:', { companiesError, invoicesError });
     return (
@@ -211,7 +211,6 @@ const Invoices = () => {
     );
   }
 
-  // Authentication check
   if (!user) {
     return (
       <DashboardLayout>
@@ -222,7 +221,6 @@ const Invoices = () => {
     );
   }
 
-  // No companies state
   if (!companies || companies.length === 0) {
     return (
       <DashboardLayout>
@@ -252,15 +250,13 @@ const Invoices = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-            <p className="text-muted-foreground">
-              Manage your invoices and track payments
-            </p>
-          </div>
-          <Button onClick={handleCreateInvoice}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Invoice
+          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+          <Button 
+            onClick={handleCreateInvoice}
+            size="icon"
+            className="h-12 w-12 rounded-full bg-black hover:bg-gray-800 text-white"
+          >
+            <Plus className="h-6 w-6" />
           </Button>
         </div>
 
@@ -283,7 +279,7 @@ const Invoices = () => {
         )}
 
         {/* Filter and Sort Controls */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 sm:space-x-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -309,13 +305,41 @@ const Invoices = () => {
             </DropdownMenu>
           </div>
 
-          {/* Mobile Sort Dropdown */}
-          {isMobile && (
+          {/* Sort Dropdown */}
+          {isMobile ? (
             <MobileSortDropdown
               sortField={sortField}
               sortDirection={sortDirection}
               onSort={handleSort}
             />
+          ) : (
+            <div className="flex items-center space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Sort by: {sortField ? sortField.charAt(0).toUpperCase() + sortField.slice(1) : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleSort('number')}>
+                    Invoice #
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('client')}>
+                    Client
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('date')}>
+                    Date
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('amount')}>
+                    Amount
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('status')}>
+                    Status
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
 
