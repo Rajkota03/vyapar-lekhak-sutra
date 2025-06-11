@@ -1,4 +1,3 @@
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -175,7 +174,7 @@ export const generateInvoicePDF = async (
   const paymentInstructions = companySettings?.payment_note || 'Payment Instructions\nBank Name: [Bank Name]\nAccount No: [Account Number]\nIFSC: [IFSC Code]\nBranch: [Branch Name]';
 
   // Create the main content array with optimized spacing
-  const mainContent = [
+  const mainContent: any[] = [
     // Compact Header Section - Logo and Company Info side by side, Invoice title on right
     {
       columns: [
