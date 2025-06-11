@@ -1,10 +1,11 @@
 
 import React from "react";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { LineItem } from "./types/InvoiceTypes";
 import { formatNumber } from "@/utils/formatNumber";
+import { BodyText, CaptionText } from "@/components/ui/primitives/Typography";
 
 interface LineItemRowProps {
   item: LineItem;
@@ -23,32 +24,35 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
 }) => {
   return (
     <TableRow 
-      className="border-b last:border-none cursor-pointer hover:bg-gray-50"
+      className="border-b last:border-none cursor-pointer hover:bg-accent/50 transition-colors"
       onClick={() => onEditItem(index)}
     >
-      <TableCell className="py-1 pr-2 font-medium text-xs">
-        {item.description}
+      <TableCell className="py-3 px-3">
+        <BodyText className="font-medium">
+          {item.description}
+        </BodyText>
       </TableCell>
-      <TableCell className="py-1 pr-2 w-14 text-center text-xs">
-        {item.qty}
+      <TableCell className="py-3 px-2 text-center">
+        <BodyText>{item.qty}</BodyText>
       </TableCell>
-      <TableCell className="py-1 pr-2 w-24 text-right text-xs">
-        ₹{formatNumber(item.unit_price)}
+      <TableCell className="py-3 px-2 text-right">
+        <BodyText>₹{formatNumber(item.unit_price)}</BodyText>
       </TableCell>
-      <TableCell className="py-1 text-right">
-        ₹{item.amount.toFixed(2)}
+      <TableCell className="py-3 px-2 text-right">
+        <BodyText className="font-semibold">₹{item.amount.toFixed(2)}</BodyText>
       </TableCell>
-      <TableCell>
-        <Button
+      <TableCell className="py-3 px-2">
+        <PremiumButton
           variant="ghost"
-          size="icon"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             removeLineItem(index);
           }}
+          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
         >
-          <X className="h-4 w-4 text-muted-foreground" />
-        </Button>
+          <X className="h-4 w-4" />
+        </PremiumButton>
       </TableCell>
     </TableRow>
   );

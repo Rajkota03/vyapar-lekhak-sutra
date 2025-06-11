@@ -20,14 +20,31 @@ export default {
 		},
 		extend: {
 			fontSize: {
-				base: ['14px', '22px'],   // mobile default
-				sm:   ['15px', '24px'],   // ≥640px
-			},
-			maxWidth: {
-				container: '640px',       // hard cap for cards on desktop
+				base: ['15px', '24px'],   // updated base size
+				sm:   ['14px', '20px'],   
+				xs:   ['12px', '16px'],
+				lg:   ['18px', '28px'],
+				xl:   ['20px', '28px'],
+				'2xl': ['24px', '32px'],
 			},
 			spacing: {
-				4.5: '1.125rem',          // for tighter p- utilities
+				4.5: '1.125rem',
+				18: '4.5rem',
+				72: '18rem',
+				84: '21rem',
+				96: '24rem',
+			},
+			maxWidth: {
+				container: '768px',       // increased for better readability
+				'2xl': '42rem',
+				'3xl': '48rem',
+			},
+			borderRadius: {
+				lg: 'var(--radius)',
+				md: 'calc(var(--radius) - 2px)',
+				sm: 'calc(var(--radius) - 4px)',
+				xl: 'calc(var(--radius) + 4px)',
+				'2xl': 'calc(var(--radius) + 8px)',
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -74,10 +91,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+			boxShadow: {
+				'premium': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+				'premium-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
+				'inner-premium': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.03)',
+			},
+			animation: {
+				'accordion-down': 'accordion-down 0.2s ease-out',
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'slide-up': 'slide-up 0.3s ease-out',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -95,11 +118,27 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(4px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'slide-up': {
+					'0%': {
+						transform: 'translateY(8px)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'translateY(0)',
+						opacity: '1'
+					}
 				}
-			},
-			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
 			}
 		}
 	},

@@ -1,9 +1,11 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, Eye, Download, Loader2 } from "lucide-react";
+import { MoreVertical, Eye, Download, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
+import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
 import { handleDownloadPdf } from "@/utils/downloadPdf";
 
 interface InvoiceHeaderProps {
@@ -27,7 +29,6 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   invoiceCode,
   isGeneratingPreview = false,
 }) => {
-  const navigate = useNavigate();
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const handlePdfDownload = async () => {
@@ -39,9 +40,9 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   const TaxSettingsSheet = () => (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <PremiumButton variant="ghost" size="sm" className="h-8 w-8 p-0">
           <MoreVertical className="h-4 w-4" />
-        </Button>
+        </PremiumButton>
       </SheetTrigger>
       <SheetContent className="rounded-t-lg">
         <SheetHeader>
@@ -57,78 +58,46 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   // Show floating buttons if we have an invoiceId (which indicates an existing invoice)
   const showFloatingButtons = !!invoiceId;
 
-  console.log('=== INVOICE HEADER DEBUG ===');
-  console.log('Invoice ID:', invoiceId);
-  console.log('Show floating buttons:', showFloatingButtons);
-  console.log('onPreview function exists:', !!onPreview);
-  console.log('isEditing:', isEditing);
+  const floatingActions = [];
+  
+  if (onPreview) {
+    floatingActions.push({
+      label: isGeneratingPreview ? "Generating..." : "Preview",
+      onClick: onPreview,
+      variant: "outline" as const,
+      loading: isGeneratingPreview,
+      icon: isGeneratingPreview ? <Loader2 className="h-5 w-5 animate-spin" /> : <Eye className="h-5 w-5" />
+    });
+  }
+
+  if (invoiceId) {
+    floatingActions.push({
+      label: isDownloadingPdf ? "Preparing..." : "Download PDF",
+      onClick: handlePdfDownload,
+      variant: "primary" as const,
+      loading: isDownloadingPdf,
+      icon: isDownloadingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />
+    });
+  }
 
   return (
     <>
-      {/* Compact Header */}
-      <div className="sticky top-0 z-10 bg-white border-b p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate('/invoices')}
-              className="h-8 w-8"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-lg font-semibold">
-              {isEditing ? "Edit Invoice" : "Invoice"}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <TaxSettingsSheet />
-            <Button
-              onClick={onSave}
-              disabled={!canSave || isSubmitting}
-              variant="ghost"
-              className="font-medium text-blue-500 h-8 px-3 rounded text-xs"
-            >
-              {isSubmitting ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <AppHeader
+        title={isEditing ? "Edit Invoice" : "Invoice"}
+        showBack={true}
+        backPath="/invoices"
+        rightAction={{
+          label: isSubmitting ? "Saving..." : "Save",
+          onClick: onSave,
+          loading: isSubmitting,
+          disabled: !canSave
+        }}
+      />
 
-      {/* Floating Bottom Action Bar - Show when we have an invoiceId */}
-      {showFloatingButtons && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg p-4 safe-area-pb">
-          <div className="max-w-screen-sm mx-auto flex gap-3">
-            {onPreview && (
-              <Button
-                onClick={onPreview}
-                variant="outline"
-                className="flex-1 h-12 text-base font-medium"
-                disabled={isGeneratingPreview}
-              >
-                {isGeneratingPreview ? (
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : (
-                  <Eye className="h-5 w-5 mr-2" />
-                )}
-                {isGeneratingPreview ? "Generating..." : "Preview"}
-              </Button>
-            )}
-            <Button
-              onClick={handlePdfDownload}
-              className="flex-1 h-12 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={isDownloadingPdf}
-            >
-              {isDownloadingPdf ? (
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-5 w-5 mr-2" />
-              )}
-              {isDownloadingPdf ? "Preparing..." : "Download PDF"}
-            </Button>
-          </div>
-        </div>
-      )}
+      <FloatingActionBar
+        actions={floatingActions}
+        show={showFloatingButtons}
+      />
     </>
   );
 };

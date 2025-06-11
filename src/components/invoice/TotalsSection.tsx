@@ -1,12 +1,14 @@
 
 import React, { useState } from "react";
 import { Settings2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
+import { ModernCard } from "@/components/ui/primitives/ModernCard";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Heading3, BodyText, CaptionText } from "@/components/ui/primitives/Typography";
+import { Stack, Group } from "@/components/ui/primitives/Spacing";
 import TaxDiscountSheet from "./TaxDiscountSheet";
 import { TaxConfig } from "@/utils/invoiceMath";
 import { UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { Card } from "../ui/primitives/Card";
 
 interface TotalsSectionProps {
   subtotal: number;
@@ -42,51 +44,59 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
   };
 
   return (
-    <div className="space-y-3">
+    <Stack>
       <div className="flex justify-between items-center">
-        <h2 className="text-base font-semibold">Total</h2>
-        <Button variant="ghost" size="icon" onClick={() => setShowTaxSettings(true)}>
-          <Settings2 size={18} className="text-gray-400 hover:text-gray-600" />
-        </Button>
+        <Heading3>Totals</Heading3>
+        <PremiumButton 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setShowTaxSettings(true)}
+          className="h-8 w-8 p-0"
+        >
+          <Settings2 className="h-4 w-4 text-muted-foreground" />
+        </PremiumButton>
       </div>
       
-      <Card className="p-3 space-y-3 mb-3">
-        <div className="flex justify-between">
-          <span className="text-gray-500 text-xs">Subtotal</span>
-          <span className="text-right text-sm font-medium">{formatCurrency(subtotal)}</span>
-        </div>
-        
-        {taxConfig.useIgst ? (
-          <div className="flex justify-between">
-            <span className="text-gray-500 text-xs">IGST ({taxConfig.igstPct}%)</span>
-            <span className="text-right text-sm font-medium">{formatCurrency(igstAmount || 0)}</span>
+      <ModernCard variant="outlined" padding="md">
+        <Group>
+          <div className="flex justify-between items-center">
+            <CaptionText>Subtotal</CaptionText>
+            <BodyText className="font-medium">{formatCurrency(subtotal)}</BodyText>
           </div>
-        ) : (
-          <>
-            <div className="flex justify-between">
-              <span className="text-gray-500 text-xs">CGST ({taxConfig.cgstPct}%)</span>
-              <span className="text-right text-sm font-medium">{formatCurrency(cgstAmount || 0)}</span>
+          
+          {taxConfig.useIgst ? (
+            <div className="flex justify-between items-center">
+              <CaptionText>IGST ({taxConfig.igstPct}%)</CaptionText>
+              <BodyText className="font-medium">{formatCurrency(igstAmount || 0)}</BodyText>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 text-xs">SGST ({taxConfig.sgstPct}%)</span>
-              <span className="text-right text-sm font-medium">{formatCurrency(sgstAmount || 0)}</span>
-            </div>
-          </>
-        )}
-        
-        <div className="h-px bg-gray-200 my-2"></div>
-        <div className="flex justify-between">
-          <span className="text-gray-500 text-xs">Grand Total</span>
-          <span className="text-right text-base font-semibold">{formatCurrency(grandTotal)}</span>
-        </div>
-      </Card>
+          ) : (
+            <>
+              <div className="flex justify-between items-center">
+                <CaptionText>CGST ({taxConfig.cgstPct}%)</CaptionText>
+                <BodyText className="font-medium">{formatCurrency(cgstAmount || 0)}</BodyText>
+              </div>
+              <div className="flex justify-between items-center">
+                <CaptionText>SGST ({taxConfig.sgstPct}%)</CaptionText>
+                <BodyText className="font-medium">{formatCurrency(sgstAmount || 0)}</BodyText>
+              </div>
+            </>
+          )}
+          
+          <div className="h-px bg-border my-3"></div>
+          
+          <div className="flex justify-between items-center">
+            <BodyText className="font-semibold">Grand Total</BodyText>
+            <BodyText className="font-bold text-lg">{formatCurrency(grandTotal)}</BodyText>
+          </div>
+        </Group>
+      </ModernCard>
       
-      <Card className="p-3 mb-3">
+      <ModernCard variant="elevated" padding="md" className="bg-primary/5 border-primary/20">
         <div className="flex justify-between items-center">
-          <span className="text-xs font-medium">Amount Due</span>
-          <span className="text-right text-base font-semibold">{formatCurrency(grandTotal)}</span>
+          <BodyText className="font-semibold text-primary">Amount Due</BodyText>
+          <BodyText className="font-bold text-xl text-primary">{formatCurrency(grandTotal)}</BodyText>
         </div>
-      </Card>
+      </ModernCard>
       
       <Sheet open={showTaxSettings} onOpenChange={setShowTaxSettings}>
         <SheetContent className="rounded-t-lg">
@@ -101,7 +111,7 @@ const TotalsSection: React.FC<TotalsSectionProps> = ({
           />
         </SheetContent>
       </Sheet>
-    </div>
+    </Stack>
   );
 };
 

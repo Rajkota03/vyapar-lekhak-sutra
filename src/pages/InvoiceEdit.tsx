@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -9,7 +8,6 @@ import { Plus, X } from "lucide-react";
 
 // UI Components
 import DashboardLayout from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 // Custom Components
@@ -20,6 +18,12 @@ import ItemsSection from "@/components/invoice/ItemsSection";
 import TotalsSection from "@/components/invoice/TotalsSection";
 import SignatureSection from "@/components/invoice/SignatureSection";
 import PreviewModal from "@/components/invoice/PreviewModal";
+
+// Premium UI Components
+import { Container, Section, Stack } from "@/components/ui/primitives/Spacing";
+import { ModernCard } from "@/components/ui/primitives/ModernCard";
+import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
+import { Heading3, CaptionText } from "@/components/ui/primitives/Typography";
 
 // Custom Hook
 import { useInvoiceData } from "@/hooks/useInvoiceData";
@@ -95,12 +99,6 @@ const InvoiceEdit = () => {
   // Update form when existing invoice data changes
   useEffect(() => {
     if (existingInvoice) {
-      console.log('=== UPDATING FORM WITH EXISTING INVOICE DATA ===');
-      console.log('Existing invoice signature settings:');
-      console.log('- show_my_signature:', existingInvoice.show_my_signature);
-      console.log('- require_client_signature:', existingInvoice.require_client_signature);
-      console.log('- notes:', existingInvoice.notes);
-      
       form.reset({
         taxConfig: {
           useIgst: existingInvoice.use_igst || false,
@@ -161,28 +159,11 @@ const InvoiceEdit = () => {
 
   // Handle form submission including tax config and signatures
   const handleSaveInvoice = () => {
-    console.log('=== SAVE BUTTON CLICKED ===');
-    console.log('Can save?', !!selectedClient && lineItems.length > 0);
-    console.log('Selected client:', selectedClient);
-    console.log('Line items:', lineItems);
-    console.log('Selected company ID:', selectedCompanyId);
-    
     if (!selectedClient || lineItems.length === 0) {
-      console.log('Cannot save: missing client or line items');
       return;
     }
     
     const formValues = form.getValues();
-    console.log('=== CURRENT FORM VALUES ===');
-    console.log('Tax config:', formValues.taxConfig);
-    console.log('Show my signature:', formValues.showMySignature);
-    console.log('Require client signature:', formValues.requireClientSignature);
-    console.log('Notes:', formValues.notes);
-    
-    // Add additional logging for signature settings
-    console.log('=== SIGNATURE TOGGLE DEBUG ===');
-    console.log('Form showMySignature value being saved:', formValues.showMySignature);
-    console.log('Form requireClientSignature value being saved:', formValues.requireClientSignature);
     
     saveInvoiceMutation.mutate({
       navigate,
@@ -193,16 +174,11 @@ const InvoiceEdit = () => {
     });
   };
 
-  // Log signature toggle changes for debugging
   const handleShowMySignatureChange = (value: boolean) => {
-    console.log('=== SIGNATURE TOGGLE CHANGED ===');
-    console.log('New show_my_signature value:', value);
     form.setValue('showMySignature', value);
   };
 
   const handleRequireClientSignatureChange = (value: boolean) => {
-    console.log('=== CLIENT SIGNATURE TOGGLE CHANGED ===');
-    console.log('New require_client_signature value:', value);
     form.setValue('requireClientSignature', value);
   };
 
@@ -220,17 +196,19 @@ const InvoiceEdit = () => {
 
   // Loading state
   if (isLoading) {
-    return <DashboardLayout>
+    return (
+      <DashboardLayout>
         <div className="flex justify-center items-center h-[50vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>;
+      </DashboardLayout>
+    );
   }
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gray-50" style={{ paddingBottom: existingInvoice?.id ? '80px' : '20px' }}>
-        <div className="mx-auto w-full max-w-screen-sm sm:max-w-screen-md px-3 sm:px-6">
+      <div className="min-h-screen bg-background" style={{ paddingBottom: existingInvoice?.id ? '80px' : '20px' }}>
+        <Container>
           <InvoiceHeader 
             isEditing={isEditing} 
             isSubmitting={isSubmitting} 
@@ -242,16 +220,16 @@ const InvoiceEdit = () => {
             isGeneratingPreview={isGeneratingPreview}
           />
 
-          <div className="p-4 space-y-4 px-0 mx-0">
+          <Section className="pt-6">
             <InvoiceMeta selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
 
             {/* Smaller header with date and invoice code */}
-            <div className="flex justify-between items-center text-xs sm:text-sm font-medium text-gray-700 mt-2 mb-3">
+            <div className="flex justify-between items-center text-sm font-medium text-muted-foreground mt-4 mb-6">
               <span>{format(selectedDate, 'dd MMM yyyy')}</span>
               <div className="text-right">
                 <div>#{existingInvoice?.number || invoiceCode}</div>
                 {existingInvoice?.invoice_code && (
-                  <span className="text-xs text-gray-500">#{existingInvoice.invoice_code}</span>
+                  <CaptionText>#{existingInvoice.invoice_code}</CaptionText>
                 )}
               </div>
             </div>
@@ -260,41 +238,52 @@ const InvoiceEdit = () => {
 
             <ItemsSection lineItems={lineItems} setLineItems={setLineItems} items={items} selectedCompanyId={selectedCompanyId} />
 
-            {lineItems.length > 0 && <TotalsSection subtotal={subtotal} cgstAmount={cgstAmount} sgstAmount={sgstAmount} igstAmount={igstAmount} grandTotal={grandTotal} taxConfig={taxConfig} setValue={form.setValue} watch={form.watch} />}
+            {lineItems.length > 0 && (
+              <TotalsSection 
+                subtotal={subtotal} 
+                cgstAmount={cgstAmount} 
+                sgstAmount={sgstAmount} 
+                igstAmount={igstAmount} 
+                grandTotal={grandTotal} 
+                taxConfig={taxConfig} 
+                setValue={form.setValue} 
+                watch={form.watch} 
+              />
+            )}
 
             {/* Notes Section */}
-            <div className="space-y-3">
+            <Stack>
               {!showNotesSection ? (
-                <Button
-                  variant="ghost"
+                <PremiumButton
+                  variant="outline"
                   onClick={toggleNotesSection}
-                  className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 hover:border-gray-400 h-10"
+                  className="w-full border-dashed h-12"
                 >
-                  <Plus size={16} />
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Notes
-                </Button>
+                </PremiumButton>
               ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-700">Notes</h3>
-                    <Button
+                <ModernCard variant="outlined" padding="md">
+                  <div className="flex items-center justify-between mb-3">
+                    <Heading3 className="text-base">Notes</Heading3>
+                    <PremiumButton
                       variant="ghost"
                       size="sm"
                       onClick={toggleNotesSection}
-                      className="text-gray-400 hover:text-gray-600 p-1 h-6 w-6"
+                      className="h-6 w-6 p-0 text-muted-foreground"
                     >
-                      <X size={14} />
-                    </Button>
+                      <X className="h-4 w-4" />
+                    </PremiumButton>
                   </div>
                   <Textarea
                     placeholder="Add any additional notes or payment instructions..."
                     value={notes || ""}
                     onChange={(e) => handleNotesChange(e.target.value)}
-                    className="min-h-[80px] text-sm"
+                    className="min-h-[80px] text-sm resize-none border-0 p-0 focus-visible:ring-0"
                   />
-                </div>
+                </ModernCard>
               )}
-            </div>
+            </Stack>
 
             <SignatureSection 
               showMySignature={form.watch('showMySignature')}
@@ -302,8 +291,8 @@ const InvoiceEdit = () => {
               onShowMySignatureChange={handleShowMySignatureChange}
               onRequireClientSignatureChange={handleRequireClientSignatureChange}
             />
-          </div>
-        </div>
+          </Section>
+        </Container>
       </div>
 
       <PreviewModal
