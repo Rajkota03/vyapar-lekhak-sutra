@@ -24,6 +24,7 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   isEditing = false
 }) => {
   const [isEditingNumber, setIsEditingNumber] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const handleNumberSave = (value: string) => {
     if (onInvoiceNumberChange && value.trim()) {
@@ -54,32 +55,48 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
     }
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setIsCalendarOpen(false);
+    }
+  };
+
+  const handleDateClick = () => {
+    setIsCalendarOpen(true);
+  };
+
   const formattedDate = format(selectedDate, "dd MMM yyyy");
 
   return (
     <div className="flex justify-between items-center py-2">
       <div className="flex items-center gap-2">
-        <Popover>
+        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>
             <PremiumButton 
               variant="ghost" 
               size="sm"
               className="p-1 h-auto text-muted-foreground hover:bg-transparent"
+              onClick={() => setIsCalendarOpen(true)}
             >
               <CalendarIcon className="h-4 w-4" />
             </PremiumButton>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 z-50" align="start">
+          <PopoverContent className="w-auto p-0" align="start">
             <CalendarComponent 
               mode="single" 
               selected={selectedDate} 
-              onSelect={date => date && setSelectedDate(date)} 
-              className="p-3 pointer-events-auto" 
+              onSelect={handleDateSelect}
+              initialFocus
+              className="p-3"
             />
           </PopoverContent>
         </Popover>
         
-        <div className="px-1 py-0.5">
+        <div 
+          className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors"
+          onClick={handleDateClick}
+        >
           <BodyText className="font-medium text-foreground">{formattedDate}</BodyText>
         </div>
       </div>
