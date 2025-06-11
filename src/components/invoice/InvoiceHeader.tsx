@@ -83,15 +83,15 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   return (
     <>
       <AppHeader
-        title={isEditing ? "Edit Invoice" : "Invoice"}
+        title="Invoice"
         showBack={true}
         backPath="/invoices"
-        rightAction={{
+        rightAction={canSave && !existingInvoice ? {
           label: isSubmitting ? "Saving..." : "Save",
           onClick: onSave,
           loading: isSubmitting,
           disabled: !canSave
-        }}
+        } : undefined}
       />
 
       <FloatingActionBar

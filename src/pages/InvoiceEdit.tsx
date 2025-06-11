@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -220,10 +221,19 @@ const InvoiceEdit = () => {
             isGeneratingPreview={isGeneratingPreview}
           />
 
-          <Section className="pt-6">
-            <InvoiceMeta selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+          <Section className="pt-6 space-y-8">
+            <InvoiceMeta 
+              selectedDate={selectedDate} 
+              setSelectedDate={setSelectedDate} 
+              invoiceNumber={invoiceNumber}
+            />
 
-            <ClientSection selectedClient={selectedClient} setSelectedClient={setSelectedClient} clients={clients} companyId={selectedCompanyId || ""} />
+            <ClientSection 
+              selectedClient={selectedClient} 
+              setSelectedClient={setSelectedClient} 
+              clients={clients} 
+              companyId={selectedCompanyId || ""} 
+            />
 
             <ItemsSection lineItems={lineItems} setLineItems={setLineItems} items={items} selectedCompanyId={selectedCompanyId} />
 

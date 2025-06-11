@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCompany } from "@/context/CompanyContext";
+import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
+import { BodyText, CaptionText } from "@/components/ui/primitives/Typography";
 import ClientModal from "./ClientModal";
 
 export type Client = {
@@ -167,55 +169,49 @@ const ClientSection: React.FC<ClientSectionProps> = ({
 
   return (
     <div className="space-y-3">
-      <h2 className="font-medium text-lg">BILL TO</h2>
-      <div className="bg-white rounded-lg border p-4 py-[6px]">
-        {selectedClient ? (
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-medium">{selectedClient.name}</h3>
-              {selectedClient.email && <p className="text-sm text-muted-foreground">{selectedClient.email}</p>}
-              {selectedClient.phone && <p className="text-sm text-muted-foreground">{selectedClient.phone}</p>}
-              {selectedClient.gstin && (
-                <p className="text-sm text-muted-foreground">
-                  GSTIN: {selectedClient.gstin}
-                </p>
-              )}
-              {selectedClient.billing_address && (
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
-                  {selectedClient.billing_address}
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleEditClient} 
-                title="Edit Client"
-                disabled={!effectiveCompanyId}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSelectedClient(null)} 
-                title="Remove Client"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button 
-            variant="outline" 
-            className="w-full justify-center text-blue-500" 
+      <CaptionText className="text-muted-foreground font-medium tracking-wide uppercase text-xs">
+        Bill To
+      </CaptionText>
+      
+      {selectedClient ? (
+        <div className="group">
+          <PremiumButton
+            variant="ghost"
+            className="p-0 h-auto text-left justify-start hover:bg-transparent group-hover:text-primary transition-colors"
             onClick={() => setClientModalOpen(true)}
           >
-            <Plus className="h-4 w-4 mr-2" /> Add Customer
-          </Button>
-        )}
-      </div>
+            <BodyText className="text-lg font-medium">
+              {selectedClient.name}
+            </BodyText>
+          </PremiumButton>
+          
+          {/* Additional client details - shown only if available */}
+          {(selectedClient.email || selectedClient.phone || selectedClient.billing_address) && (
+            <div className="mt-1 space-y-1 opacity-60 group-hover:opacity-80 transition-opacity">
+              {selectedClient.email && (
+                <CaptionText className="text-muted-foreground">{selectedClient.email}</CaptionText>
+              )}
+              {selectedClient.phone && (
+                <CaptionText className="text-muted-foreground">{selectedClient.phone}</CaptionText>
+              )}
+              {selectedClient.billing_address && (
+                <CaptionText className="text-muted-foreground whitespace-pre-line">
+                  {selectedClient.billing_address}
+                </CaptionText>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <PremiumButton 
+          variant="ghost" 
+          className="p-0 h-auto text-left justify-start text-muted-foreground hover:text-primary transition-colors" 
+          onClick={() => setClientModalOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          <BodyText>Add Customer</BodyText>
+        </PremiumButton>
+      )}
       
       {/* Client search modal */}
       <ClientSearchModal />

@@ -1,11 +1,10 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Calendar, CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
-import { ModernCard } from "@/components/ui/primitives/ModernCard";
-import { BodyText, CaptionText } from "@/components/ui/primitives/Typography";
+import { BodyText } from "@/components/ui/primitives/Typography";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 interface InvoiceMetaProps {
@@ -20,15 +19,15 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   invoiceNumber = "#25-26/60"
 }) => {
   return (
-    <ModernCard variant="outlined" padding="md" className="flex justify-between items-center">
+    <div className="flex justify-between items-center py-2">
       <Popover>
         <PopoverTrigger asChild>
           <PremiumButton 
             variant="ghost" 
             size="md"
-            className="p-0 h-auto font-semibold text-lg hover:bg-transparent"
+            className="p-0 h-auto font-medium text-foreground hover:bg-transparent"
           >
-            <CalendarIcon className="h-5 w-5 mr-2 text-muted-foreground" />
+            <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
             {format(selectedDate, "dd MMM yyyy")}
           </PremiumButton>
         </PopoverTrigger>
@@ -42,10 +41,8 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
         </PopoverContent>
       </Popover>
       
-      <div className="text-right">
-        <BodyText className="font-semibold text-lg">{invoiceNumber}</BodyText>
-      </div>
-    </ModernCard>
+      <BodyText className="font-medium text-foreground">{invoiceNumber}</BodyText>
+    </div>
   );
 };
 
