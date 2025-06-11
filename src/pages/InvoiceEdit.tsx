@@ -294,5 +294,3 @@ const InvoiceEdit = () => {
 };
 
 export default InvoiceEdit;
-
-}
