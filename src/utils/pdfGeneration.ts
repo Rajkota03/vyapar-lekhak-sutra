@@ -177,22 +177,22 @@ export const generateInvoicePDF = async (
   const mainContent: any[] = [
     // SECTION MARKER 1 - HEADER
     {
-      text: '🔴 SECTION 1: HEADER (Should be at top with logo + company details)',
+      text: '🔴 SECTION 1: HEADER (Logo on left, company details on right)',
       style: 'sectionMarker',
       margin: [0, 0, 0, 5]
     },
 
-    // SECTION 1: HEADER
+    // SECTION 1: HEADER - Logo on left, company details on right
     {
       columns: [
         {
-          width: logoBase64 ? 70 : 1,
+          width: logoBase64 ? 'auto' : 1,
           stack: logoBase64 ? [
             {
               image: logoBase64,
               width: logoWidth,
               height: logoHeight,
-              margin: [0, 0, 0, 0]
+              margin: [0, 0, 10, 0]
             }
           ] : []
         },
@@ -202,57 +202,38 @@ export const generateInvoicePDF = async (
             {
               text: companyData.name,
               style: 'companyName',
+              alignment: 'right',
               margin: [0, 0, 0, 2]
             },
             {
               text: companyData.address || '',
               style: 'companyAddress',
+              alignment: 'right',
               margin: [0, 0, 0, 1]
             },
             {
               text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
-              style: 'companyGstin'
-            }
-          ]
-        },
-        {
-          width: 120,
-          stack: [
-            {
-              text: 'Invoice',
-              style: 'invoiceTitle',
-              alignment: 'right',
-              margin: [0, 0, 0, 5]
-            },
-            {
-              text: `#${invoiceData.number}`,
-              style: 'invoiceNumber',
-              alignment: 'right',
-              margin: [0, 0, 0, 2]
-            },
-            {
-              text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
-              style: 'invoiceDate',
+              style: 'companyGstin',
               alignment: 'right'
             }
           ]
         }
       ],
-      margin: [0, 5, 0, 12]
+      margin: [0, 5, 0, 20]
     },
 
-    // SECTION MARKER 2 - BILL TO + PAYMENT
+    // SECTION MARKER 2 - BILL TO + INVOICE DETAILS
     {
-      text: '🟡 SECTION 2: BILL TO + PAYMENT (Should show client details and payment instructions)',
+      text: '🟡 SECTION 2: BILL TO + INVOICE DETAILS (Bill to on left, invoice details on right)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 2: BILL TO + PAYMENT
+    // SECTION 2: BILL TO + INVOICE DETAILS
     {
       columns: [
         {
-          width: '65%',
+          width: '50%',
           stack: [
             {
               text: 'BILL TO',
@@ -276,22 +257,35 @@ export const generateInvoicePDF = async (
           ]
         },
         {
-          width: '35%',
+          width: '50%',
           stack: [
             {
-              text: 'Payment Instructions',
+              text: 'INVOICE DETAILS',
               style: 'sectionHeader',
+              alignment: 'right',
               margin: [0, 0, 0, 3]
             },
             {
-              text: paymentInstructions,
-              style: 'paymentInstructions',
-              margin: [0, 0, 0, 0]
+              text: `Invoice #: ${invoiceData.number}`,
+              style: 'invoiceDetails',
+              alignment: 'right',
+              margin: [0, 0, 0, 2]
+            },
+            {
+              text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
+              style: 'invoiceDetails',
+              alignment: 'right',
+              margin: [0, 0, 0, 2]
+            },
+            {
+              text: `HSN Code: ${invoiceData.invoice_code || invoiceData.number}`,
+              style: 'invoiceDetails',
+              alignment: 'right'
             }
           ]
         }
       ],
-      margin: [0, 5, 0, 15]
+      margin: [0, 5, 0, 20]
     },
 
     // SECTION MARKER 3 - ITEMS TABLE
@@ -559,6 +553,10 @@ export const generateInvoicePDF = async (
       invoiceDate: {
         fontSize: 10,
         color: '#666666'
+      },
+      invoiceDetails: {
+        fontSize: 10,
+        color: '#333333'
       },
       sectionHeader: {
         fontSize: 10,
