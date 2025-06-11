@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -50,6 +49,7 @@ const InvoiceEdit = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [showNotesSection, setShowNotesSection] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   
   // Extract invoice ID from URL - handle both patterns
   const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
@@ -112,12 +112,29 @@ const InvoiceEdit = () => {
         notes: existingInvoice.notes || ""
       });
 
+      // Set invoice number from existing data
+      setInvoiceNumber(existingInvoice.number || "");
+
       // Show notes section if there are existing notes
       if (existingInvoice.notes && existingInvoice.notes.trim() !== "") {
         setShowNotesSection(true);
       }
     }
   }, [existingInvoice, form]);
+
+  // Generate invoice number for new invoices
+  useEffect(() => {
+    if (!isEditing || !existingInvoice) {
+      const generateInvoiceNumber = () => {
+        const now = new Date();
+        const year = now.getFullYear().toString().slice(2);
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `INV-${year}${month}-${random}`;
+      };
+      setInvoiceNumber(generateInvoiceNumber());
+    }
+  }, [isEditing, existingInvoice]);
 
   const taxConfig = form.watch('taxConfig') as TaxConfig;
   const notes = form.watch('notes');
@@ -134,21 +151,13 @@ const InvoiceEdit = () => {
   const sgstAmount = totals.sgst;
   const igstAmount = totals.igst;
 
-  // Generate invoice number for display
-  const generateInvoiceNumber = () => {
-    const now = new Date();
-    const year = now.getFullYear().toString().slice(2);
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `INV-${year}${month}-${random}`;
-  };
-
-  const invoiceNumber = isEditing && existingInvoice ? 
-    existingInvoice.number : 
-    generateInvoiceNumber();
-
   // Generate invoice code for display
   const invoiceCode = existingInvoice?.invoice_code || "Will be generated on save";
+
+  // Handle invoice number change
+  const handleInvoiceNumberChange = (newNumber: string) => {
+    setInvoiceNumber(newNumber);
+  };
 
   // Handle preview
   const handlePreview = () => {
@@ -171,7 +180,8 @@ const InvoiceEdit = () => {
       taxConfig: formValues.taxConfig as TaxConfig,
       showMySignature: formValues.showMySignature,
       requireClientSignature: formValues.requireClientSignature,
-      notes: formValues.notes || ""
+      notes: formValues.notes || "",
+      invoiceNumber: invoiceNumber
     });
   };
 
@@ -226,6 +236,8 @@ const InvoiceEdit = () => {
               selectedDate={selectedDate} 
               setSelectedDate={setSelectedDate} 
               invoiceNumber={invoiceNumber}
+              onInvoiceNumberChange={handleInvoiceNumberChange}
+              isEditing={true}
             />
 
             <ClientSection 
