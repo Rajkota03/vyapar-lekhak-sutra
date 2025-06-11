@@ -427,77 +427,79 @@ export const generateInvoicePDF = async (
 
     // SECTION MARKER 5 - FOOTER WITH SIGNATURE
     {
-      text: '🟣 SECTION 5: FOOTER WITH SIGNATURE (Thank you message, company name, and signature combined)',
+      text: '🟣 SECTION 5: FOOTER WITH SIGNATURE (Thank you message, signature, then company name)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
     // SECTION 5: COMBINED FOOTER WITH SIGNATURE
     {
-      columns: [
+      stack: [
         {
-          width: '50%',
-          stack: [
-            {
-              text: 'Thank you for your business!',
-              style: 'footer',
-              margin: [0, 8, 0, 2]
-            },
-            {
-              text: companyData.name,
-              style: 'footerCompany',
-              margin: [0, 0, 0, 5]
-            }
-          ]
+          text: 'Thank you for your business!',
+          style: 'footer',
+          alignment: 'center',
+          margin: [0, 8, 0, 10]
         },
+        // Signature section (only if both URL exists AND setting is enabled)
+        ...(signatureBase64 && invoiceData.show_my_signature ? [
+          {
+            columns: [
+              {
+                width: '*',
+                text: ''
+              },
+              {
+                width: 'auto',
+                stack: [
+                  {
+                    text: 'Authorized Signature',
+                    style: 'signatureTitle',
+                    alignment: 'center',
+                    margin: [0, 0, 0, 5]
+                  },
+                  {
+                    image: signatureBase64,
+                    width: signatureWidth,
+                    height: signatureHeight,
+                    alignment: 'center',
+                    margin: [0, 0, 0, 2]
+                  },
+                  {
+                    canvas: [
+                      {
+                        type: 'line',
+                        x1: 0,
+                        y1: 0,
+                        x2: signatureWidth,
+                        y2: 0,
+                        lineWidth: 1,
+                        lineColor: '#000000'
+                      }
+                    ],
+                    alignment: 'center',
+                    margin: [0, 0, 0, 2]
+                  },
+                  {
+                    text: companyData.name,
+                    style: 'signatureLabel',
+                    alignment: 'center',
+                    margin: [0, 0, 0, 10]
+                  }
+                ]
+              },
+              {
+                width: '*',
+                text: ''
+              }
+            ]
+          }
+        ] : []),
         {
-          width: '50%',
-          stack: signatureBase64 && invoiceData.show_my_signature ? [
-            {
-              text: 'Authorized Signature',
-              style: 'signatureTitle',
-              alignment: 'right',
-              margin: [0, 8, 0, 5]
-            },
-            {
-              image: signatureBase64,
-              width: signatureWidth,
-              height: signatureHeight,
-              alignment: 'right',
-              margin: [0, 0, 0, 2]
-            },
-            {
-              canvas: [
-                {
-                  type: 'line',
-                  x1: 0,
-                  y1: 0,
-                  x2: signatureWidth,
-                  y2: 0,
-                  lineWidth: 1,
-                  lineColor: '#000000'
-                }
-              ],
-              alignment: 'right',
-              margin: [0, 0, 0, 2]
-            },
-            {
-              text: companyData.name,
-              style: 'signatureLabel',
-              alignment: 'right',
-              margin: [0, 0, 0, 0]
-            }
-          ] : [
-            {
-              text: signatureBase64 ? 
-                (invoiceData.show_my_signature ? '' : 'Signature toggle disabled') : 
-                'No signature uploaded',
-              style: 'signatureTitle',
-              alignment: 'right',
-              margin: [0, 8, 0, 5],
-              color: '#999999'
-            }
-          ]
+          text: companyData.name,
+          style: 'footerCompany',
+          alignment: 'center',
+          margin: [0, 0, 0, 5]
         }
       ],
       margin: [0, 5, 0, 0]
