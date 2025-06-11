@@ -425,94 +425,84 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 10]
     },
 
-    // SECTION MARKER 5 - FOOTER
+    // SECTION MARKER 5 - FOOTER WITH SIGNATURE
     {
-      text: '🟣 SECTION 5: FOOTER (Should show thank you message)',
+      text: '🟣 SECTION 5: FOOTER WITH SIGNATURE (Thank you message, company name, and signature combined)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 5: FOOTER
+    // SECTION 5: COMBINED FOOTER WITH SIGNATURE
     {
-      text: 'Thank you for your business!',
-      style: 'footer',
-      alignment: 'center',
-      margin: [0, 8, 0, 2]
-    },
-    {
-      text: companyData.name,
-      style: 'footerCompany',
-      alignment: 'center',
-      margin: [0, 0, 0, 5]
+      columns: [
+        {
+          width: '50%',
+          stack: [
+            {
+              text: 'Thank you for your business!',
+              style: 'footer',
+              margin: [0, 8, 0, 2]
+            },
+            {
+              text: companyData.name,
+              style: 'footerCompany',
+              margin: [0, 0, 0, 5]
+            }
+          ]
+        },
+        {
+          width: '50%',
+          stack: signatureBase64 && invoiceData.show_my_signature ? [
+            {
+              text: 'Authorized Signature',
+              style: 'signatureTitle',
+              alignment: 'right',
+              margin: [0, 8, 0, 5]
+            },
+            {
+              image: signatureBase64,
+              width: signatureWidth,
+              height: signatureHeight,
+              alignment: 'right',
+              margin: [0, 0, 0, 2]
+            },
+            {
+              canvas: [
+                {
+                  type: 'line',
+                  x1: 0,
+                  y1: 0,
+                  x2: signatureWidth,
+                  y2: 0,
+                  lineWidth: 1,
+                  lineColor: '#000000'
+                }
+              ],
+              alignment: 'right',
+              margin: [0, 0, 0, 2]
+            },
+            {
+              text: companyData.name,
+              style: 'signatureLabel',
+              alignment: 'right',
+              margin: [0, 0, 0, 0]
+            }
+          ] : [
+            {
+              text: signatureBase64 ? 
+                (invoiceData.show_my_signature ? '' : 'Signature toggle disabled') : 
+                'No signature uploaded',
+              style: 'signatureTitle',
+              alignment: 'right',
+              margin: [0, 8, 0, 5],
+              color: '#999999'
+            }
+          ]
+        }
+      ],
+      margin: [0, 5, 0, 0]
     }
   ];
-
-  // Add signature section if we have a signature AND the setting is enabled
-  if (signatureBase64 && invoiceData.show_my_signature) {
-    console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
-    
-    // Add section marker first
-    mainContent.push({
-      text: '🟤 SECTION 6: SIGNATURE (Should show authorized signature)',
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
-    });
-    
-    mainContent.push(
-      // SECTION 6: SIGNATURE
-      {
-        columns: [
-          {
-            width: '50%',
-            stack: [
-              {
-                text: 'Authorized Signature',
-                style: 'signatureTitle',
-                margin: [0, 8, 0, 5]
-              },
-              {
-                image: signatureBase64,
-                width: signatureWidth,
-                height: signatureHeight,
-                margin: [0, 0, 0, 2]
-              },
-              {
-                canvas: [
-                  {
-                    type: 'line',
-                    x1: 0,
-                    y1: 0,
-                    x2: signatureWidth,
-                    y2: 0,
-                    lineWidth: 1,
-                    lineColor: '#000000'
-                  }
-                ],
-                margin: [0, 0, 0, 2]
-              },
-              {
-                text: companyData.name,
-                style: 'signatureLabel',
-                margin: [0, 0, 0, 0]
-              }
-            ]
-          },
-          {
-            width: '50%',
-            text: ''
-          }
-        ],
-        margin: [0, 5, 0, 0]
-      }
-    );
-  } else {
-    // Add debug marker even when signature is not shown
-    mainContent.push({
-      text: `❌ SECTION 6: SIGNATURE NOT SHOWN - Signature URL: ${companySettings?.signature_url ? 'EXISTS' : 'MISSING'}, Toggle: ${invoiceData.show_my_signature ? 'ON' : 'OFF'}`,
-      style: 'sectionMarker',
-      margin: [0, 10, 0, 5]
-    });
-  }
 
   // Create document definition with optimized margins
   const docDefinition = {
