@@ -86,7 +86,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         title="Invoice"
         showBack={true}
         backPath="/invoices"
-        rightAction={canSave && !existingInvoice ? {
+        rightAction={canSave && !invoiceId ? {
           label: isSubmitting ? "Saving..." : "Save",
           onClick: onSave,
           loading: isSubmitting,
