@@ -22,7 +22,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   return <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="flex items-center justify-between h-16 px-[6px] mx-0">
+      <div className="flex items-center justify-between h-16 px-[6px] mx-[-9px]">
         <div className="flex items-center gap-3">
           {showBack && <PremiumButton variant="ghost" size="sm" onClick={() => navigate(backPath)} className="h-8 w-8 p-0">
               <ChevronLeft className="h-4 w-4" />
