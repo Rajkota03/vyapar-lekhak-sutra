@@ -333,19 +333,35 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 10]
     },
 
-    // SECTION MARKER 4 - TOTALS
+    // SECTION MARKER 4 - TOTALS WITH SECTION 6
     {
-      text: '🔵 SECTION 4: TOTALS (Should show subtotal, taxes, and grand total)',
+      text: '🔵 SECTION 4: TOTALS WITH SECTION 6 (Section 6 on left, totals on right)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 4: TOTALS
+    // SECTION 4: SECTION 6 + TOTALS (side by side)
     {
       columns: [
         {
           width: '60%',
-          text: ''
+          stack: [
+            {
+              text: '🆕 SECTION 6: ADDITIONAL CONTENT',
+              style: 'sectionMarker',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: 'Additional Information',
+              style: 'sectionHeader',
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: 'This is section 6 content that appears beside the totals. You can add any content here like terms & conditions, notes, or other important information.',
+              style: 'additionalContent',
+              margin: [0, 0, 10, 0]
+            }
+          ]
         },
         {
           width: '40%',
@@ -601,6 +617,11 @@ export const generateInvoicePDF = async (
       signatureDate: {
         fontSize: 9,
         color: '#333333'
+      },
+      additionalContent: {
+        fontSize: 9,
+        color: '#666666',
+        lineHeight: 1.3
       }
     }
   };
