@@ -1,3 +1,4 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -151,7 +152,7 @@ export const generateInvoicePDF = async (
   };
 
   // Calculate logo dimensions based on scale
-  const baseLogo = { width: 80, height: 80 };
+  const baseLogo = { width: 60, height: 60 }; // Reduced from 80x80
   const logoWidth = baseLogo.width * logoScale;
   const logoHeight = baseLogo.height * logoScale;
   
@@ -161,7 +162,7 @@ export const generateInvoicePDF = async (
   console.log('Final dimensions:', { width: logoWidth, height: logoHeight });
 
   // Calculate signature dimensions based on scale
-  const baseSignature = { width: 150, height: 60 };
+  const baseSignature = { width: 120, height: 50 }; // Reduced from 150x60
   const signatureWidth = baseSignature.width * signatureScale;
   const signatureHeight = baseSignature.height * signatureScale;
   
@@ -170,74 +171,37 @@ export const generateInvoicePDF = async (
   console.log('Scale factor:', signatureScale);
   console.log('Final dimensions:', { width: signatureWidth, height: signatureHeight });
 
-  // Create header content with improved layout
-  const headerContent = [];
-  
-  if (logoBase64) {
-    console.log('=== CREATING HEADER WITH LOGO ===');
-    // Header with logo and company details
-    headerContent.push({
+  // Get payment instructions or use fallback
+  const paymentInstructions = companySettings?.payment_note || 'Payment Instructions\nBank Name: [Bank Name]\nAccount No: [Account Number]\nIFSC: [IFSC Code]\nBranch: [Branch Name]';
+
+  // Create the main content array with optimized spacing
+  const mainContent = [
+    // Compact Header Section - Logo and Company Info side by side, Invoice title on right
+    {
       columns: [
         {
-          width: 120,
-          stack: [
+          width: logoBase64 ? 70 : 1, // Small width for logo or minimal if no logo
+          stack: logoBase64 ? [
             {
               image: logoBase64,
               width: logoWidth,
               height: logoHeight,
               margin: [0, 0, 0, 0]
             }
-          ]
+          ] : []
         },
         {
           width: '*',
           stack: [
             {
-              text: 'Invoice',
-              style: 'invoiceTitle',
-              alignment: 'right',
-              margin: [0, 0, 0, 10]
-            },
-            {
               text: companyData.name,
               style: 'companyName',
-              alignment: 'right',
-              margin: [0, 0, 0, 5]
+              margin: [0, 0, 0, 2]
             },
             {
               text: companyData.address || '',
               style: 'companyAddress',
-              alignment: 'right',
-              margin: [0, 0, 0, 3]
-            },
-            {
-              text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
-              style: 'companyGstin',
-              alignment: 'right',
-              margin: [0, 0, 0, 0]
-            }
-          ]
-        }
-      ],
-      margin: [0, 0, 0, 20]
-    });
-  } else {
-    console.log('=== CREATING HEADER WITHOUT LOGO ===');
-    // Header without logo
-    headerContent.push({
-      columns: [
-        {
-          width: '60%',
-          stack: [
-            {
-              text: companyData.name,
-              style: 'companyName',
-              margin: [0, 0, 0, 3]
-            },
-            {
-              text: companyData.address || '',
-              style: 'companyAddress',
-              margin: [0, 0, 0, 3]
+              margin: [0, 0, 0, 1]
             },
             {
               text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
@@ -246,46 +210,51 @@ export const generateInvoicePDF = async (
           ]
         },
         {
-          width: '40%',
+          width: 120,
           stack: [
             {
               text: 'Invoice',
               style: 'invoiceTitle',
               alignment: 'right',
-              margin: [0, 0, 0, 8]
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: `#${invoiceData.number}`,
+              style: 'invoiceNumber',
+              alignment: 'right',
+              margin: [0, 0, 0, 2]
+            },
+            {
+              text: new Date(invoiceData.issue_date).toLocaleDateString('en-GB'),
+              style: 'invoiceDate',
+              alignment: 'right'
             }
           ]
         }
       ],
-      margin: [0, 0, 0, 20]
-    });
-  }
+      margin: [0, 0, 0, 12]
+    },
 
-  // Create the main content array
-  const mainContent = [
-    // Header Section
-    ...headerContent,
-
-    // Bill To Section with Invoice Details on the right
+    // Compact Bill To and Payment Instructions in two columns
     {
       columns: [
         {
-          width: '50%',
+          width: '65%',
           stack: [
             {
               text: 'BILL TO',
               style: 'sectionHeader',
-              margin: [0, 0, 0, 5]
+              margin: [0, 0, 0, 3]
             },
             {
               text: clientData.name,
               style: 'clientName',
-              margin: [0, 0, 0, 3]
+              margin: [0, 0, 0, 2]
             },
             {
               text: clientData.billing_address || '',
               style: 'clientAddress',
-              margin: [0, 0, 0, 3]
+              margin: [0, 0, 0, 2]
             },
             {
               text: clientData.gstin ? `GSTIN: ${clientData.gstin}` : '',
@@ -294,43 +263,29 @@ export const generateInvoicePDF = async (
           ]
         },
         {
-          width: '50%',
+          width: '35%',
           stack: [
             {
-              text: `Invoice #: ${invoiceData.number}`,
-              style: 'invoiceNumber',
-              alignment: 'right',
+              text: 'Payment Instructions',
+              style: 'sectionHeader',
               margin: [0, 0, 0, 3]
             },
             {
-              text: `Date: ${new Date(invoiceData.issue_date).toLocaleDateString('en-GB')}`,
-              style: 'invoiceDate',
-              alignment: 'right',
-              margin: [0, 0, 0, 10]
-            },
-            {
-              text: 'BANK DETAILS',
-              style: 'sectionHeader',
-              alignment: 'right',
-              margin: [0, 10, 0, 5]
-            },
-            {
-              text: companySettings?.bank_details || 'Bank Name: [Bank Name]\nAccount No: [Account Number]\nIFSC: [IFSC Code]\nBranch: [Branch Name]',
-              style: 'bankDetails',
-              alignment: 'right',
+              text: paymentInstructions,
+              style: 'paymentInstructions',
               margin: [0, 0, 0, 0]
             }
           ]
         }
       ],
-      margin: [0, 0, 0, 20]
+      margin: [0, 0, 0, 15]
     },
 
-    // Items Table
+    // Compact Items Table with reduced padding
     {
       table: {
         headerRows: 1,
-        widths: ['*', 60, 80, 80],
+        widths: ['*', 50, 70, 70],
         body: [
           // Header row
           [
@@ -356,15 +311,15 @@ export const generateInvoicePDF = async (
         hLineColor: (i: number, node: any) => {
           return i === 0 || i === 1 || i === node.table.body.length ? '#000000' : '#cccccc';
         },
-        paddingLeft: () => 8,
-        paddingRight: () => 8,
-        paddingTop: () => 6,
-        paddingBottom: () => 6
+        paddingLeft: () => 6,
+        paddingRight: () => 6,
+        paddingTop: () => 4,
+        paddingBottom: () => 4
       },
-      margin: [0, 0, 0, 15]
+      margin: [0, 0, 0, 10]
     },
 
-    // Totals Section
+    // Compact Totals Section - aligned to the right like in sample
     {
       columns: [
         {
@@ -374,7 +329,7 @@ export const generateInvoicePDF = async (
         {
           width: '40%',
           table: {
-            widths: ['*', 80],
+            widths: ['*', 70],
             body: [
               [
                 { text: 'Subtotal', style: 'totalLabel' },
@@ -407,17 +362,17 @@ export const generateInvoicePDF = async (
             },
             vLineWidth: () => 0,
             hLineColor: () => '#000000',
-            paddingLeft: () => 8,
-            paddingRight: () => 8,
-            paddingTop: () => 4,
-            paddingBottom: () => 4
+            paddingLeft: () => 6,
+            paddingRight: () => 6,
+            paddingTop: () => 3,
+            paddingBottom: () => 3
           }
         }
       ],
-      margin: [0, 0, 0, 20]
+      margin: [0, 0, 0, 8]
     },
 
-    // Grand Total Section
+    // Final Grand Total Section with background like sample
     {
       columns: [
         {
@@ -427,7 +382,7 @@ export const generateInvoicePDF = async (
         {
           width: '40%',
           table: {
-            widths: ['*', 80],
+            widths: ['*', 70],
             body: [
               [
                 { text: 'GRAND TOTAL', style: 'finalTotalLabel' },
@@ -439,28 +394,28 @@ export const generateInvoicePDF = async (
             hLineWidth: () => 0,
             vLineWidth: () => 0,
             fillColor: '#f5f5f5',
-            paddingLeft: () => 8,
-            paddingRight: () => 8,
-            paddingTop: () => 8,
-            paddingBottom: () => 8
+            paddingLeft: () => 6,
+            paddingRight: () => 6,
+            paddingTop: () => 6,
+            paddingBottom: () => 6
           }
         }
       ],
-      margin: [0, 0, 0, 15]
+      margin: [0, 0, 0, 10]
     },
 
-    // Footer
+    // Compact Footer
     {
       text: 'Thank you for your business!',
       style: 'footer',
       alignment: 'center',
-      margin: [0, 15, 0, 0]
+      margin: [0, 8, 0, 2]
     },
     {
       text: companyData.name,
       style: 'footerCompany',
       alignment: 'center',
-      margin: [0, 3, 0, 0]
+      margin: [0, 0, 0, 0]
     }
   ];
 
@@ -468,12 +423,7 @@ export const generateInvoicePDF = async (
   if (signatureBase64 && invoiceData.show_my_signature) {
     console.log('=== ADDING SIGNATURE SECTION TO PDF ===');
     mainContent.push(
-      // Add space before signature
-      {
-        text: '',
-        margin: [0, 20, 0, 0]
-      },
-      // Signature section - positioned in bottom left
+      // Compact signature section
       {
         columns: [
           {
@@ -482,13 +432,13 @@ export const generateInvoicePDF = async (
               {
                 text: 'Authorized Signature',
                 style: 'signatureTitle',
-                margin: [0, 0, 0, 8]
+                margin: [0, 8, 0, 5]
               },
               {
                 image: signatureBase64,
                 width: signatureWidth,
                 height: signatureHeight,
-                margin: [0, 0, 0, 3]
+                margin: [0, 0, 0, 2]
               },
               {
                 canvas: [
@@ -502,7 +452,7 @@ export const generateInvoicePDF = async (
                     lineColor: '#000000'
                   }
                 ],
-                margin: [0, 0, 0, 3]
+                margin: [0, 0, 0, 2]
               },
               {
                 text: companyData.name,
@@ -529,118 +479,119 @@ export const generateInvoicePDF = async (
     }
   }
 
-  // Create document definition
+  // Create document definition with optimized margins
   const docDefinition = {
     pageSize: 'A4',
-    pageMargins: [40, 50, 40, 50],
+    pageMargins: [30, 35, 30, 35], // Reduced margins from [40, 50, 40, 50]
     content: mainContent,
     styles: {
       companyName: {
-        fontSize: 16,
+        fontSize: 14, // Reduced from 16
         bold: true,
         color: '#333333'
       },
       companyAddress: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         color: '#666666',
-        lineHeight: 1.2
+        lineHeight: 1.1
       },
       companyGstin: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         color: '#666666'
       },
       invoiceTitle: {
-        fontSize: 28,
+        fontSize: 24, // Reduced from 28
         bold: true,
         color: '#333333'
       },
       invoiceNumber: {
-        fontSize: 11,
-        color: '#666666'
+        fontSize: 10,
+        bold: true,
+        color: '#333333'
       },
       invoiceDate: {
-        fontSize: 11,
+        fontSize: 10,
         color: '#666666'
       },
       sectionHeader: {
-        fontSize: 12,
+        fontSize: 10, // Reduced from 12
         bold: true,
         color: '#333333'
       },
       clientName: {
-        fontSize: 14,
+        fontSize: 12, // Reduced from 14
         bold: true,
         color: '#333333'
       },
       clientAddress: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
+        color: '#666666',
+        lineHeight: 1.1
+      },
+      clientGstin: {
+        fontSize: 9, // Reduced from 10
+        color: '#666666'
+      },
+      paymentInstructions: {
+        fontSize: 8,
         color: '#666666',
         lineHeight: 1.2
       },
-      clientGstin: {
-        fontSize: 10,
-        color: '#666666'
-      },
-      bankDetails: {
-        fontSize: 9,
-        color: '#666666',
-        lineHeight: 1.3
-      },
       tableHeader: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         bold: true,
         color: '#333333',
         fillColor: '#f5f5f5'
       },
       tableCell: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         color: '#333333',
         margin: [0, 1, 0, 1]
       },
       totalLabel: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         color: '#666666'
       },
       totalValue: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         color: '#333333'
       },
       grandTotalLabel: {
-        fontSize: 12,
+        fontSize: 10, // Reduced from 12
         bold: true,
         color: '#333333'
       },
       grandTotalValue: {
-        fontSize: 12,
+        fontSize: 10, // Reduced from 12
         bold: true,
         color: '#333333'
       },
       finalTotalLabel: {
-        fontSize: 14,
+        fontSize: 12, // Reduced from 14
         bold: true,
         color: '#333333'
       },
       finalTotalValue: {
-        fontSize: 16,
+        fontSize: 14, // Reduced from 16
         bold: true,
         color: '#333333'
       },
       footer: {
-        fontSize: 12,
+        fontSize: 10, // Reduced from 12
         color: '#666666'
       },
       footerCompany: {
-        fontSize: 12,
+        fontSize: 10, // Reduced from 12
         bold: true,
         color: '#333333'
       },
       signatureTitle: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         color: '#666666',
         bold: true
       },
       signatureLabel: {
-        fontSize: 10,
+        fontSize: 9, // Reduced from 10
         color: '#333333',
         bold: true
       }
