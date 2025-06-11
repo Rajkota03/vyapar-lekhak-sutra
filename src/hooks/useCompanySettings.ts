@@ -88,5 +88,7 @@ export const useCompanySettings = () => {
     isUpdating: updateSettingsMutation.isPending,
     companyId,
     currentCompany,
+    // Add getter for quantity label with default fallback
+    quantityLabel: settings?.quantity_label || 'QTY',
   };
 };

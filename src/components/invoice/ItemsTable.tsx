@@ -7,6 +7,7 @@ import LineItemRow from "./LineItemRow";
 import { LineItem } from "./types/InvoiceTypes";
 import { CaptionText } from "@/components/ui/primitives/Typography";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 interface ItemsTableProps {
   lineItems: LineItem[];
@@ -22,6 +23,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
   onEditItem
 }) => {
   const isMobile = useIsMobile();
+  const { quantityLabel } = useCompanySettings();
 
   return (
     <div className="w-full overflow-hidden">
@@ -33,7 +35,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
                 <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
               </TableHead>
               <TableHead className="w-[12%] py-3 px-2 text-center">
-                <CaptionText className="font-medium uppercase tracking-wide">Qty</CaptionText>
+                <CaptionText className="font-medium uppercase tracking-wide">{quantityLabel}</CaptionText>
               </TableHead>
               <TableHead className="w-[18%] py-3 px-2 text-right">
                 <CaptionText className="font-medium uppercase tracking-wide">Price</CaptionText>

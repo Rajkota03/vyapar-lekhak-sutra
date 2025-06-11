@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SheetBody } from "@/components/ui/SheetBody";
 import { SettingsRow } from "@/components/ui/SettingsRow";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const CustomizationSettings: React.FC = () => {
   const navigate = useNavigate();
+  const { quantityLabel } = useCompanySettings();
 
   return (
     <Sheet open onOpenChange={() => navigate('/settings')}>
@@ -36,6 +38,11 @@ const CustomizationSettings: React.FC = () => {
             <SettingsRow 
               label="Rename other fields" 
               onClick={() => navigate('/settings/customization/fields')}
+            />
+            <SettingsRow 
+              label="Quantity column label" 
+              right={<span className="text-sm text-muted-foreground">{quantityLabel}</span>}
+              onClick={() => navigate('/settings/customization/quantity-label')}
             />
           </div>
         </SheetBody>
