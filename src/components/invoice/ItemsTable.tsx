@@ -32,24 +32,29 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
   return (
     <div className="w-full overflow-hidden">
       <Table className="w-full table-fixed">
-        {!isMobile && (
-          <TableHeader>
-            <TableRow className="border-none">
-              <TableHead className="w-[45%] py-3 px-3 text-left">
-                <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
-              </TableHead>
-              <TableHead className="w-[12%] py-3 px-2 text-center">
-                <EditableQuantityLabel companyId={effectiveCompanyId} />
-              </TableHead>
-              <TableHead className="w-[18%] py-3 px-2 text-right">
-                <CaptionText className="font-medium uppercase tracking-wide">Price</CaptionText>
-              </TableHead>
-              <TableHead className="w-[18%] py-3 text-right px-[3px] mx-0">
-                <CaptionText className="font-medium uppercase tracking-wide">Amount</CaptionText>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-        )}
+        <TableHeader>
+          <TableRow className="border-none">
+            <TableHead className={`${isMobile ? 'w-full' : 'w-[45%]'} py-3 px-3 text-left`}>
+              <CaptionText className="font-medium uppercase tracking-wide">Description</CaptionText>
+            </TableHead>
+            {!isMobile && (
+              <>
+                <TableHead className="w-[12%] py-3 px-2 text-center">
+                  <EditableQuantityLabel companyId={effectiveCompanyId} />
+                </TableHead>
+                <TableHead className="w-[18%] py-3 px-2 text-right">
+                  <CaptionText className="font-medium uppercase tracking-wide">Price</CaptionText>
+                </TableHead>
+                <TableHead className="w-[18%] py-3 text-right px-[3px] mx-0">
+                  <CaptionText className="font-medium uppercase tracking-wide">Amount</CaptionText>
+                </TableHead>
+                <TableHead className="w-[7%] py-3 px-2">
+                  {/* Actions column */}
+                </TableHead>
+              </>
+            )}
+          </TableRow>
+        </TableHeader>
         <TableBody>
           {lineItems.map((item, index) => (
             <LineItemRow 

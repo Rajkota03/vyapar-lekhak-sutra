@@ -27,7 +27,7 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
   if (isMobile) {
     return (
       <TableRow className="border-b last:border-none cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => onEditItem(index)}>
-        <TableCell className="w-full py-4 px-3" colSpan={4}>
+        <TableCell className="w-full py-4 px-3" colSpan={1}>
           <div className="flex justify-between items-center">
             <div className="flex-1">
               <BodyText className="font-medium text-base">
@@ -67,7 +67,7 @@ const LineItemRow: React.FC<LineItemRowProps> = ({
         <BodyText className="font-semibold">₹{formatNumber(item.amount)}</BodyText>
       </TableCell>
       <TableCell className="w-[7%] py-3 px-2">
-        
+        {/* Actions column - kept empty for now */}
       </TableCell>
     </TableRow>
   );
