@@ -5,9 +5,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
+import { Plus, X } from "lucide-react";
 
 // UI Components
 import DashboardLayout from "@/components/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 // Custom Components
 import InvoiceHeader from "@/components/invoice/InvoiceHeader";
@@ -31,7 +34,8 @@ const invoiceFormSchema = z.object({
     igstPct: z.number().default(18)
   }),
   showMySignature: z.boolean().default(false),
-  requireClientSignature: z.boolean().default(false)
+  requireClientSignature: z.boolean().default(false),
+  notes: z.string().optional()
 });
 type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
@@ -40,6 +44,7 @@ const InvoiceEdit = () => {
   const params = useParams();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [showNotesSection, setShowNotesSection] = useState(false);
   
   // Extract invoice ID from URL - handle both patterns
   const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
@@ -82,7 +87,8 @@ const InvoiceEdit = () => {
         igstPct: existingInvoice?.igst_pct || 18
       },
       showMySignature: existingInvoice?.show_my_signature || false,
-      requireClientSignature: existingInvoice?.require_client_signature || false
+      requireClientSignature: existingInvoice?.require_client_signature || false,
+      notes: existingInvoice?.notes || ""
     }
   });
 
@@ -93,6 +99,7 @@ const InvoiceEdit = () => {
       console.log('Existing invoice signature settings:');
       console.log('- show_my_signature:', existingInvoice.show_my_signature);
       console.log('- require_client_signature:', existingInvoice.require_client_signature);
+      console.log('- notes:', existingInvoice.notes);
       
       form.reset({
         taxConfig: {
@@ -102,12 +109,19 @@ const InvoiceEdit = () => {
           igstPct: existingInvoice.igst_pct || 18
         },
         showMySignature: existingInvoice.show_my_signature || false,
-        requireClientSignature: existingInvoice.require_client_signature || false
+        requireClientSignature: existingInvoice.require_client_signature || false,
+        notes: existingInvoice.notes || ""
       });
+
+      // Show notes section if there are existing notes
+      if (existingInvoice.notes && existingInvoice.notes.trim() !== "") {
+        setShowNotesSection(true);
+      }
     }
   }, [existingInvoice, form]);
 
   const taxConfig = form.watch('taxConfig') as TaxConfig;
+  const notes = form.watch('notes');
 
   // Calculate totals using the utility function with tax configuration
   const totals = calcTotals(lineItems, taxConfig);
@@ -163,6 +177,7 @@ const InvoiceEdit = () => {
     console.log('Tax config:', formValues.taxConfig);
     console.log('Show my signature:', formValues.showMySignature);
     console.log('Require client signature:', formValues.requireClientSignature);
+    console.log('Notes:', formValues.notes);
     
     // Add additional logging for signature settings
     console.log('=== SIGNATURE TOGGLE DEBUG ===');
@@ -173,7 +188,8 @@ const InvoiceEdit = () => {
       navigate,
       taxConfig: formValues.taxConfig as TaxConfig,
       showMySignature: formValues.showMySignature,
-      requireClientSignature: formValues.requireClientSignature
+      requireClientSignature: formValues.requireClientSignature,
+      notes: formValues.notes || ""
     });
   };
 
@@ -188,6 +204,18 @@ const InvoiceEdit = () => {
     console.log('=== CLIENT SIGNATURE TOGGLE CHANGED ===');
     console.log('New require_client_signature value:', value);
     form.setValue('requireClientSignature', value);
+  };
+
+  const handleNotesChange = (value: string) => {
+    form.setValue('notes', value);
+  };
+
+  const toggleNotesSection = () => {
+    if (showNotesSection) {
+      // Clear notes when hiding section
+      form.setValue('notes', '');
+    }
+    setShowNotesSection(!showNotesSection);
   };
 
   // Loading state
@@ -233,6 +261,40 @@ const InvoiceEdit = () => {
             <ItemsSection lineItems={lineItems} setLineItems={setLineItems} items={items} selectedCompanyId={selectedCompanyId} />
 
             {lineItems.length > 0 && <TotalsSection subtotal={subtotal} cgstAmount={cgstAmount} sgstAmount={sgstAmount} igstAmount={igstAmount} grandTotal={grandTotal} taxConfig={taxConfig} setValue={form.setValue} watch={form.watch} />}
+
+            {/* Notes Section */}
+            <div className="space-y-3">
+              {!showNotesSection ? (
+                <Button
+                  variant="ghost"
+                  onClick={toggleNotesSection}
+                  className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 hover:border-gray-400 h-10"
+                >
+                  <Plus size={16} />
+                  Add Notes
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-gray-700">Notes</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleNotesSection}
+                      className="text-gray-400 hover:text-gray-600 p-1 h-6 w-6"
+                    >
+                      <X size={14} />
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder="Add any additional notes or payment instructions..."
+                    value={notes || ""}
+                    onChange={(e) => handleNotesChange(e.target.value)}
+                    className="min-h-[80px] text-sm"
+                  />
+                </div>
+              )}
+            </div>
 
             <SignatureSection 
               showMySignature={form.watch('showMySignature')}

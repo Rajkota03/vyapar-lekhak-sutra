@@ -190,12 +190,14 @@ export const useInvoiceData = () => {
       navigate,
       taxConfig,
       showMySignature,
-      requireClientSignature
+      requireClientSignature,
+      notes
     }: {
       navigate: any;
       taxConfig: TaxConfig;
       showMySignature: boolean;
       requireClientSignature: boolean;
+      notes?: string;
     }) => {
       console.log('=== SAVE INVOICE MUTATION START ===');
       console.log('Selected Company ID:', selectedCompanyId);
@@ -204,6 +206,7 @@ export const useInvoiceData = () => {
       console.log('Tax config:', taxConfig);
       console.log('Show my signature:', showMySignature);
       console.log('Require client signature:', requireClientSignature);
+      console.log('Notes:', notes);
       
       if (!selectedClient || !selectedCompanyId) {
         const errorMsg = `Missing required data - Client: ${!!selectedClient}, Company: ${!!selectedCompanyId}`;
@@ -234,7 +237,8 @@ export const useInvoiceData = () => {
         sgst_pct: taxConfig.sgstPct,
         igst_pct: taxConfig.igstPct,
         show_my_signature: showMySignature,
-        require_client_signature: requireClientSignature
+        require_client_signature: requireClientSignature,
+        notes: notes || null
       };
 
       console.log('Final invoice data to save:', invoiceData);
@@ -350,6 +354,7 @@ export const useInvoiceData = () => {
       console.log('Signature settings in saved invoice:');
       console.log('- show_my_signature:', savedInvoice.show_my_signature);
       console.log('- require_client_signature:', savedInvoice.require_client_signature);
+      console.log('- notes:', savedInvoice.notes);
       
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoice', savedInvoice.id] });
