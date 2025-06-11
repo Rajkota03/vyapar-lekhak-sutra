@@ -636,5 +636,3 @@ export const getInvoicePDFBlob = async (
     });
   });
 };
-
-}
