@@ -303,14 +303,14 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 20]
     },
 
-    // SECTION MARKER 3 - ITEMS TABLE WITH TOTALS (SEAMLESS)
+    // SECTION MARKER 3 - ITEMS TABLE WITH SEAMLESS TOTALS AND PAYMENT DETAILS
     {
-      text: '🟢 SECTION 3: ITEMS TABLE WITH SEAMLESS TOTALS (Combined as one table)',
+      text: '🟢 SECTION 3: ITEMS TABLE WITH SEAMLESS TOTALS (Combined as one table with payment details)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 3: COMBINED ITEMS AND TOTALS TABLE (NO GAP)
+    // SECTION 3: COMBINED ITEMS, TOTALS, AND PAYMENT DETAILS TABLE (NO GAP)
     {
       table: {
         headerRows: 1,
@@ -337,30 +337,38 @@ export const generateInvoicePDF = async (
             { text: '', border: [false, false, false, false] },
             { text: '', border: [false, false, false, false] }
           ],
-          // Totals rows (seamlessly connected)
+          // Payment details and totals row (side by side)
           [
-            { text: '', border: [false, false, false, false] },
+            { 
+              text: [
+                { text: 'Payment Details\n', style: 'paymentSectionHeader' },
+                { text: paymentInstructions, style: 'paymentDetailsInTable' }
+              ], 
+              colSpan: 2, 
+              border: [false, false, false, false],
+              margin: [0, 5, 0, 0]
+            },
             { text: '', border: [false, false, false, false] },
             { text: 'Subtotal', style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
             { text: formatCurrency(subtotal), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
           ],
-          // Tax rows
+          // Tax rows (empty left, totals on right)
           ...(invoiceData.use_igst ? [
             [
-              { text: '', border: [false, false, false, false] },
+              { text: '', colSpan: 2, border: [false, false, false, false] },
               { text: '', border: [false, false, false, false] },
               { text: `IGST (${invoiceData.igst_pct}%)`, style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
               { text: formatCurrency(igstAmount), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
             ]
           ] : [
             [
-              { text: '', border: [false, false, false, false] },
+              { text: '', colSpan: 2, border: [false, false, false, false] },
               { text: '', border: [false, false, false, false] },
               { text: `CGST (${invoiceData.cgst_pct}%)`, style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
               { text: formatCurrency(cgstAmount), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
             ],
             [
-              { text: '', border: [false, false, false, false] },
+              { text: '', colSpan: 2, border: [false, false, false, false] },
               { text: '', border: [false, false, false, false] },
               { text: `SGST (${invoiceData.sgst_pct}%)`, style: 'totalLabel', alignment: 'right', border: [false, false, false, false] },
               { text: formatCurrency(sgstAmount), style: 'totalValue', alignment: 'right', border: [false, false, false, false] }
@@ -368,14 +376,14 @@ export const generateInvoicePDF = async (
           ]),
           // Total row with line
           [
-            { text: '', border: [false, false, false, false] },
+            { text: '', colSpan: 2, border: [false, false, false, false] },
             { text: '', border: [false, false, false, false] },
             { text: 'Total', style: 'grandTotalLabel', alignment: 'right', border: [false, true, false, false] },
             { text: formatCurrency(grandTotal), style: 'grandTotalValue', alignment: 'right', border: [false, true, false, false] }
           ],
           // GRAND TOTAL row (highlighted)
           [
-            { text: '', border: [false, false, false, false] },
+            { text: '', colSpan: 2, border: [false, false, false, false] },
             { text: '', border: [false, false, false, false] },
             { text: 'GRAND TOTAL', style: 'finalTotalLabel', alignment: 'right', fillColor: '#f5f5f5', border: [false, false, false, false] },
             { text: formatCurrency(grandTotal), style: 'finalTotalValueCompact', alignment: 'right', fillColor: '#f5f5f5', border: [false, false, false, false] }
@@ -401,33 +409,17 @@ export const generateInvoicePDF = async (
       margin: [0, 5, 0, 15]
     },
 
-    // SECTION MARKER 6 - PAYMENT DETAILS & NOTES (AFTER TOTALS)
+    // SECTION MARKER 6 - NOTES (SEPARATE SECTION BELOW)
     {
-      text: '🔵 SECTION 6: PAYMENT DETAILS & NOTES (After seamless totals)',
+      text: '🔵 SECTION 6: NOTES (Separate section below payment and totals)',
       style: 'sectionMarker',
       margin: [0, 10, 0, 5]
     },
 
-    // SECTION 6: PAYMENT DETAILS & NOTES (Full width, after totals)
-    {
-      stack: [
-        {
-          text: 'Payment Details',
-          style: 'sectionHeader',
-          margin: [0, 0, 0, 5]
-        },
-        {
-          text: paymentInstructions,
-          style: 'paymentDetails',
-          margin: [0, 0, 0, 15]
-        },
-        // ENHANCED NOTES SECTION WITH DEBUG MARKERS
-        ...(hasNotes ? [
-          {
-            text: '🟣 NOTES SECTION BEING ADDED',
-            style: 'sectionMarker',
-            margin: [0, 0, 0, 2]
-          },
+    // SECTION 6: NOTES (Separate section below payment and totals)
+    ...(hasNotes ? [
+      {
+        stack: [
           {
             text: 'Notes',
             style: 'sectionHeader',
@@ -438,16 +430,10 @@ export const generateInvoicePDF = async (
             style: 'notesContent',
             margin: [0, 0, 0, 15]
           }
-        ] : [
-          {
-            text: '🟣 NO NOTES - SECTION SKIPPED',
-            style: 'sectionMarker',
-            margin: [0, 0, 0, 2]
-          }
-        ])
-      ],
-      margin: [0, 5, 0, 15]
-    },
+        ],
+        margin: [0, 5, 0, 15]
+      }
+    ] : []),
 
     // SECTION MARKER 5 - FOOTER WITH SIGNATURE
     {
@@ -562,7 +548,12 @@ export const generateInvoicePDF = async (
         fontSize: 9,
         color: '#666666'
       },
-      paymentDetails: {
+      paymentSectionHeader: {
+        fontSize: 9,
+        bold: true,
+        color: '#333333'
+      },
+      paymentDetailsInTable: {
         fontSize: 8,
         color: '#666666',
         lineHeight: 1.3
