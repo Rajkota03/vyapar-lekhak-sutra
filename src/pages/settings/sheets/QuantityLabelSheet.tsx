@@ -29,7 +29,8 @@ const QuantityLabelSheet: React.FC = () => {
 
   const handleSave = () => {
     if (customLabel.trim() && customLabel !== quantityLabel) {
-      updateSettings({ quantity_label: customLabel.trim() });
+      // Note: Will need to add quantity_column_label to database schema later
+      updateSettings({ quantity_column_label: customLabel.trim() });
     }
     navigate('/settings/customization');
   };

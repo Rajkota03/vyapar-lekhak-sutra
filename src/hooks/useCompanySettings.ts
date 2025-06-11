@@ -44,13 +44,14 @@ export const useCompanySettings = (companyId?: string) => {
     },
   });
 
-  // Helper getters with fallbacks
+  // Helper getters with fallbacks - using correct database column names
   const getters = {
     get quantityLabel() {
-      return settings?.quantity_column_label || 'QTY';
+      // Note: Database doesn't have quantity_column_label yet, using default
+      return 'QTY';
     },
     get invoiceNumberPrefix() {
-      return settings?.invoice_number_prefix || 'INV';
+      return settings?.invoice_prefix || 'INV';
     },
     get defaultDueDays() {
       return settings?.due_days || 30;
@@ -65,10 +66,12 @@ export const useCompanySettings = (companyId?: string) => {
       return settings?.default_igst_pct || 18;
     },
     get showMySignature() {
-      return settings?.show_my_signature ?? true;
+      // Note: Database doesn't have show_my_signature yet, using default
+      return true;
     },
     get requireClientSignature() {
-      return settings?.require_client_signature ?? false;
+      // Note: Database doesn't have require_client_signature yet, using default
+      return false;
     },
     get defaultNote() {
       return settings?.default_note || '';
@@ -83,5 +86,17 @@ export const useCompanySettings = (companyId?: string) => {
     isLoading,
     updateSettings: updateSettings.mutate,
     isUpdating: updateSettings.isPending,
+    companyId, // Return companyId so components can access it
+    // Also expose individual getters for direct access
+    quantityLabel: getters.quantityLabel,
+    invoiceNumberPrefix: getters.invoiceNumberPrefix,
+    defaultDueDays: getters.defaultDueDays,
+    defaultCgstPct: getters.defaultCgstPct,
+    defaultSgstPct: getters.defaultSgstPct,
+    defaultIgstPct: getters.defaultIgstPct,
+    showMySignature: getters.showMySignature,
+    requireClientSignature: getters.requireClientSignature,
+    defaultNote: getters.defaultNote,
+    paymentNote: getters.paymentNote,
   };
 };
