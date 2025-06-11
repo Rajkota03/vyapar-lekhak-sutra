@@ -41,7 +41,7 @@ const InvoiceEdit = () => {
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   
   // Extract invoice ID from URL - handle both patterns
-  const invoiceId = params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
+  const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
   
   const {
     isEditing,
@@ -64,6 +64,8 @@ const InvoiceEdit = () => {
   useEffect(() => {
     console.log('=== INVOICE EDIT DEBUG ===');
     console.log('URL params:', params);
+    console.log('params.id:', params.id);
+    console.log('params.invoiceId:', params.invoiceId);
     console.log('Extracted invoice ID:', invoiceId);
     console.log('Existing invoice from hook:', existingInvoice);
   }, [params, invoiceId, existingInvoice]);
@@ -233,3 +235,5 @@ const InvoiceEdit = () => {
 };
 
 export default InvoiceEdit;
+
+}

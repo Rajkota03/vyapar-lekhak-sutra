@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -42,8 +43,8 @@ export const useInvoiceData = () => {
   const queryClient = useQueryClient();
   const { currentCompany } = useCompany();
 
-  // Extract invoice ID from params - handle both /invoices/:invoiceId and /invoices/:companyId/:invoiceId patterns
-  const invoiceId = params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
+  // Extract invoice ID from params - handle both /invoices/:id and /invoices/:companyId/:invoiceId patterns
+  const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
   const selectedCompanyId = params.companyId || currentCompany?.id || null;
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -56,6 +57,7 @@ export const useInvoiceData = () => {
   useEffect(() => {
     console.log('=== URL PARAMS EXTRACTION ===');
     console.log('Raw params object:', params);
+    console.log('params.id:', params.id);
     console.log('params.invoiceId:', params.invoiceId);
     console.log('params["*"]:', params["*"]);
     console.log('Extracted Invoice ID:', invoiceId);
