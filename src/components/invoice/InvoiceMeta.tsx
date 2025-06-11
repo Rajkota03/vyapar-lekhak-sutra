@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Edit3 } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
 import { BodyText } from "@/components/ui/primitives/Typography";
@@ -81,11 +81,10 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
           />
         ) : (
           <div 
-            className="flex items-center gap-1 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors"
+            className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors"
             onClick={() => isEditing && setIsEditingNumber(true)}
           >
             <BodyText className="font-medium text-foreground">{invoiceNumber}</BodyText>
-            {isEditing && <Edit3 className="h-3 w-3 text-muted-foreground" />}
           </div>
         )}
       </div>
