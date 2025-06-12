@@ -68,7 +68,8 @@ const InvoiceEdit = () => {
     saveInvoiceMutation,
     isSubmitting,
     selectedCompanyId,
-    existingInvoice
+    existingInvoice,
+    documentType
   } = useInvoiceData();
 
   // Log invoice ID extraction
@@ -79,7 +80,8 @@ const InvoiceEdit = () => {
     console.log('params.invoiceId:', params.invoiceId);
     console.log('Extracted invoice ID:', invoiceId);
     console.log('Existing invoice from hook:', existingInvoice);
-  }, [params, invoiceId, existingInvoice]);
+    console.log('Document type from hook:', documentType);
+  }, [params, invoiceId, existingInvoice, documentType]);
 
   // Initialize form with defaults or existing invoice data
   const form = useForm<InvoiceFormValues>({
@@ -229,6 +231,7 @@ const InvoiceEdit = () => {
             invoiceId={existingInvoice?.id || invoiceId}
             invoiceCode={existingInvoice?.invoice_code}
             isGeneratingPreview={isGeneratingPreview}
+            documentType={documentType}
           />
 
           <Section className="pt-6 space-y-8">

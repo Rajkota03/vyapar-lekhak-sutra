@@ -17,6 +17,7 @@ interface InvoiceHeaderProps {
   invoiceId?: string;
   invoiceCode?: string;
   isGeneratingPreview?: boolean;
+  documentType?: 'invoice' | 'proforma' | 'quote';
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -28,6 +29,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   invoiceId,
   invoiceCode,
   isGeneratingPreview = false,
+  documentType = 'invoice',
 }) => {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
@@ -36,6 +38,35 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
       await handleDownloadPdf(invoiceId, invoiceCode, setIsDownloadingPdf);
     }
   };
+
+  // Get the document title based on type
+  const getDocumentTitle = (type: 'invoice' | 'proforma' | 'quote') => {
+    switch (type) {
+      case 'proforma':
+        return 'Pro Forma';
+      case 'quote':
+        return 'Quotation';
+      case 'invoice':
+      default:
+        return 'Invoice';
+    }
+  };
+
+  // Get the back path based on document type
+  const getBackPath = (type: 'invoice' | 'proforma' | 'quote') => {
+    switch (type) {
+      case 'proforma':
+        return '/proforma';
+      case 'quote':
+        return '/quotations';
+      case 'invoice':
+      default:
+        return '/invoices';
+    }
+  };
+
+  const documentTitle = getDocumentTitle(documentType);
+  const backPath = getBackPath(documentType);
 
   const TaxSettingsSheet = () => (
     <Sheet>
@@ -83,9 +114,9 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   return (
     <>
       <AppHeader
-        title="Invoice"
+        title={documentTitle}
         showBack={true}
-        backPath="/invoices"
+        backPath={backPath}
         rightAction={canSave && !invoiceId ? {
           label: isSubmitting ? "Saving..." : "Save",
           onClick: onSave,
