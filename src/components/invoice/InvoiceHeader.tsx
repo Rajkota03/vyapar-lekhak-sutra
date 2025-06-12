@@ -131,6 +131,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         title={documentTitle}
         showBack={true}
         backPath={backPath}
+        titleClassName="text-2xl font-bold text-foreground"
         rightAction={canSave && !invoiceId ? {
           label: isSubmitting ? "Saving..." : "Save",
           onClick: onSave,
