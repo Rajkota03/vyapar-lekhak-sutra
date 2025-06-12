@@ -1,3 +1,4 @@
+
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -89,6 +90,56 @@ const getCompanySettings = async (companyId: string) => {
   }
 };
 
+// Function to format complete company address from settings
+const formatCompanyAddress = (companyData: CompanyData, companySettings: any): string[] => {
+  const addressLines: string[] = [];
+  
+  // Add basic address if available
+  if (companyData.address) {
+    addressLines.push(companyData.address);
+  }
+  
+  // Build address from company_settings fields
+  const addressComponents: string[] = [];
+  
+  if (companySettings?.city) {
+    addressComponents.push(companySettings.city);
+  }
+  
+  if (companySettings?.state) {
+    addressComponents.push(companySettings.state);
+  }
+  
+  if (companySettings?.zip_code) {
+    addressComponents.push(companySettings.zip_code);
+  }
+  
+  if (addressComponents.length > 0) {
+    addressLines.push(addressComponents.join(', '));
+  }
+  
+  if (companySettings?.country && companySettings.country !== 'India') {
+    addressLines.push(companySettings.country);
+  }
+  
+  return addressLines.filter(line => line && line.trim() !== '');
+};
+
+// Function to format company contact info
+const formatCompanyContact = (companySettings: any): string[] => {
+  const contactLines: string[] = [];
+  
+  if (companySettings?.email) {
+    contactLines.push(`Email: ${companySettings.email}`);
+  }
+  
+  if (companySettings?.phone) {
+    contactLines.push(`Phone: ${companySettings.phone}`);
+  }
+  
+  return contactLines;
+};
+
 export const generateInvoicePDF = async (
   invoiceData: Invoice,
   clientData: Client,
@@ -160,6 +211,14 @@ export const generateInvoicePDF = async (
     console.log('❌ Signature will NOT be added to PDF');
   }
 
+  // Format company address and contact info from settings
+  const companyAddressLines = formatCompanyAddress(companyData, companySettings);
+  const companyContactLines = formatCompanyContact(companySettings);
+  
+  console.log('=== COMPANY INFO FORMATTING ===');
+  console.log('Company address lines:', companyAddressLines);
+  console.log('Company contact lines:', companyContactLines);
+
   // Calculate totals
   const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
   const cgstAmount = invoiceData.cgst || 0;
@@ -224,12 +283,21 @@ export const generateInvoicePDF = async (
               alignment: 'right',
               margin: [0, 0, 0, 2]
             },
-            {
-              text: companyData.address || '',
+            // Company address from settings
+            ...companyAddressLines.map(line => ({
+              text: line,
               style: 'companyAddress',
               alignment: 'right',
               margin: [0, 0, 0, 1]
-            },
+            })),
+            // Company contact info from settings
+            ...companyContactLines.map(line => ({
+              text: line,
+              style: 'companyContact',
+              alignment: 'right',
+              margin: [0, 0, 0, 1]
+            })),
+            // GSTIN
             {
               text: companyData.gstin ? `GSTIN: ${companyData.gstin}` : '',
               style: 'companyGstin',
@@ -499,6 +567,11 @@ export const generateInvoicePDF = async (
         color: '#666666',
         lineHeight: 1.1
       },
+      companyContact: {
+        fontSize: 9,
+        color: '#666666',
+        lineHeight: 1.1
+      },
       companyGstin: {
         fontSize: 9,
         color: '#666666'
@@ -614,6 +687,8 @@ export const generateInvoicePDF = async (
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
   console.log('Custom quantity label used:', quantityLabel);
+  console.log('Company address lines included:', companyAddressLines.length);
+  console.log('Company contact lines included:', companyContactLines.length);
   return docDefinition;
 };
 
