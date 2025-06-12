@@ -57,7 +57,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           href: `/custom/${docType.id}`,
           isCustom: true
         } as SubmenuItem)),
-        { name: "Manage Document Types", href: "/settings/document-types", isManagement: true } as SubmenuItem
+        { name: "Custom Document", href: "/settings/document-types", isManagement: true } as SubmenuItem
       ] as SubmenuItem[]
     }, 
     {
