@@ -17,13 +17,11 @@ import UserSettings from "./pages/settings/UserSettings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
-// Import new settings components
+// Import settings components
 import LogoSettings from "./pages/settings/LogoSettings";
 import CompanyInfoSheet from "./pages/settings/sheets/CompanyInfoSheet";
-import NumberingSheet from "./pages/settings/sheets/NumberingSheet";
 import SignatureSettings from "./pages/settings/SignatureSettings";
 import PaymentNoteSettings from "./pages/settings/PaymentNoteSettings";
-import InvoiceDefaultsSettings from "./pages/settings/InvoiceDefaultsSettings";
 import TaxSettings from "./pages/settings/TaxSettings";
 import NumberingSettings from "./pages/settings/NumberingSettings";
 
@@ -140,7 +138,6 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-  // Add all missing settings routes
   {
     path: "/settings/logo",
     element: (
@@ -158,14 +155,6 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: "/settings/customization/numbering",
-    element: (
-      <ProtectedRoute>
-        <NumberingSheet />
-      </ProtectedRoute>
-    ),
-  },
-  {
     path: "/settings/signature",
     element: (
       <ProtectedRoute>
@@ -178,14 +167,6 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <PaymentNoteSettings />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/settings/invoice-defaults",
-    element: (
-      <ProtectedRoute>
-        <InvoiceDefaultsSettings />
       </ProtectedRoute>
     ),
   },
