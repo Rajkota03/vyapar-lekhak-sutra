@@ -229,14 +229,6 @@ const LogoSettings: React.FC = () => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-
-                {/* Technical Details */}
-                <div className="bg-gray-50 p-3 rounded text-xs space-y-1">
-                  <p><strong>Technical Details:</strong></p>
-                  <p>Original URL: {logoUrl.substring(0, 50)}...</p>
-                  <p>Scale Factor: {logoScale}x</p>
-                  <p>PDF Dimensions: {Math.round(80 * logoScale)}px × {Math.round(80 * logoScale)}px</p>
-                </div>
               </div>
             ) : (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
