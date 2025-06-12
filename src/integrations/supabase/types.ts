@@ -100,11 +100,13 @@ export type Database = {
           logo_url: string | null
           next_credit_seq: number | null
           next_invoice_seq: number | null
+          next_proforma_seq: number | null
           next_quote_seq: number | null
           overdue_reminder: boolean | null
           payment_note: string | null
           payment_qr_url: string | null
           phone: string | null
+          proforma_title: string | null
           quantity_column_label: string | null
           quote_title: string | null
           sac_code: string | null
@@ -133,11 +135,13 @@ export type Database = {
           logo_url?: string | null
           next_credit_seq?: number | null
           next_invoice_seq?: number | null
+          next_proforma_seq?: number | null
           next_quote_seq?: number | null
           overdue_reminder?: boolean | null
           payment_note?: string | null
           payment_qr_url?: string | null
           phone?: string | null
+          proforma_title?: string | null
           quantity_column_label?: string | null
           quote_title?: string | null
           sac_code?: string | null
@@ -166,11 +170,13 @@ export type Database = {
           logo_url?: string | null
           next_credit_seq?: number | null
           next_invoice_seq?: number | null
+          next_proforma_seq?: number | null
           next_quote_seq?: number | null
           overdue_reminder?: boolean | null
           payment_note?: string | null
           payment_qr_url?: string | null
           phone?: string | null
+          proforma_title?: string | null
           quantity_column_label?: string | null
           quote_title?: string | null
           sac_code?: string | null

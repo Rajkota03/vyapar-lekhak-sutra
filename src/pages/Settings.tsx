@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { ChevronLeft, User, Building2, FileText, Palette, Settings as SettingsIcon } from "lucide-react";
@@ -114,6 +113,36 @@ const Settings: React.FC = () => {
           <Card className="p-0">
             <div className="p-3 border-b bg-gray-50">
               <h3 className="font-medium text-sm text-gray-600">INVOICE</h3>
+            </div>
+            <SettingsRow 
+              label="Tax Settings"
+              onClick={() => navigate('/settings/tax')}
+            />
+            <SettingsRow 
+              label="Document Numbering"
+              onClick={() => navigate('/settings/numbering')}
+            />
+          </Card>
+
+          {/* Pro Forma Section */}
+          <Card className="p-0">
+            <div className="p-3 border-b bg-gray-50">
+              <h3 className="font-medium text-sm text-gray-600">PRO FORMA</h3>
+            </div>
+            <SettingsRow 
+              label="Tax Settings"
+              onClick={() => navigate('/settings/tax')}
+            />
+            <SettingsRow 
+              label="Document Numbering"
+              onClick={() => navigate('/settings/numbering')}
+            />
+          </Card>
+
+          {/* Quotation Section */}
+          <Card className="p-0">
+            <div className="p-3 border-b bg-gray-50">
+              <h3 className="font-medium text-sm text-gray-600">QUOTATION</h3>
             </div>
             <SettingsRow 
               label="Tax Settings"

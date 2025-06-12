@@ -19,6 +19,8 @@ const NumberingSettings: React.FC = () => {
     next_invoice_seq: 1,
     quote_title: "Quotation", 
     next_quote_seq: 1,
+    proforma_title: "Pro Forma Invoice",
+    next_proforma_seq: 1,
     credit_note_title: "Credit Note",
     next_credit_seq: 1,
     hsn_code: "998387",
@@ -33,6 +35,8 @@ const NumberingSettings: React.FC = () => {
         next_invoice_seq: settings.next_invoice_seq || 1,
         quote_title: settings.quote_title || "Quotation",
         next_quote_seq: settings.next_quote_seq || 1,
+        proforma_title: settings.proforma_title || "Pro Forma Invoice",
+        next_proforma_seq: settings.next_proforma_seq || 1,
         credit_note_title: settings.credit_note_title || "Credit Note", 
         next_credit_seq: settings.next_credit_seq || 1,
         hsn_code: settings.hsn_code || "998387",
@@ -166,6 +170,34 @@ const NumberingSettings: React.FC = () => {
                 
                 <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded">
                   Next invoice: <strong>{numberingData.invoice_prefix}{numberingData.next_invoice_seq}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium mb-4">Pro Forma Invoice Settings</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="proformaTitle">Pro Forma Title</Label>
+                  <Input
+                    id="proformaTitle"
+                    value={numberingData.proforma_title}
+                    onChange={(e) => handleChange('proforma_title', e.target.value)}
+                    placeholder="Pro Forma Invoice"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="proformaNext">Next Number</Label>
+                  <Input
+                    id="proformaNext"
+                    type="number"
+                    min="1"
+                    value={numberingData.next_proforma_seq}
+                    onChange={(e) => handleChange('next_proforma_seq', parseInt(e.target.value) || 1)}
+                  />
+                </div>
+                <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded">
+                  Next pro forma: <strong>{numberingData.invoice_prefix}{numberingData.next_proforma_seq}</strong>
                 </div>
               </div>
             </div>
