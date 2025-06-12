@@ -12,7 +12,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
 import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
-
 type Invoice = {
   id: string;
   invoice_code: string | null;
@@ -233,18 +232,14 @@ const Invoices = () => {
     });
     navigate('/invoices/new');
   };
-
-  const floatingActions = [
-    {
-      label: "New Invoice",
-      onClick: handleCreateInvoice,
-      variant: "primary" as const,
-      icon: <Plus className="h-6 w-6" />
-    }
-  ];
-
+  const floatingActions = [{
+    label: "New Invoice",
+    onClick: handleCreateInvoice,
+    variant: "primary" as const,
+    icon: <Plus className="h-6 w-6" />
+  }];
   return <DashboardLayout>
-      <div className="space-y-6 bg-white">
+      <div className="space-y-6 bg-white px-0 py-[6px]">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
@@ -329,10 +324,7 @@ const Invoices = () => {
           </div>}
 
         {/* Floating Action Button */}
-        <FloatingActionBar
-          actions={floatingActions}
-          show={true}
-        />
+        <FloatingActionBar actions={floatingActions} show={true} />
       </div>
     </DashboardLayout>;
 };
