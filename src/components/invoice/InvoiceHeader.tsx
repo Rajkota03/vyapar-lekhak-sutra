@@ -18,6 +18,7 @@ interface InvoiceHeaderProps {
   invoiceCode?: string;
   isGeneratingPreview?: boolean;
   documentType?: 'invoice' | 'proforma' | 'quote';
+  customDocumentTypeName?: string;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -30,6 +31,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   invoiceCode,
   isGeneratingPreview = false,
   documentType = 'invoice',
+  customDocumentTypeName,
 }) => {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
@@ -39,9 +41,13 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     }
   };
 
-  // Get the document title based on type
-  const getDocumentTitle = (type: 'invoice' | 'proforma' | 'quote') => {
-    switch (type) {
+  // Get the document title - prioritize custom type name
+  const getDocumentTitle = () => {
+    if (customDocumentTypeName) {
+      return customDocumentTypeName;
+    }
+    
+    switch (documentType) {
       case 'proforma':
         return 'Pro Forma';
       case 'quote':
@@ -53,8 +59,16 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   };
 
   // Get the back path based on document type
-  const getBackPath = (type: 'invoice' | 'proforma' | 'quote') => {
-    switch (type) {
+  const getBackPath = () => {
+    // For custom document types, extract from current URL
+    if (customDocumentTypeName) {
+      const pathParts = window.location.pathname.split('/');
+      if (pathParts[1] === 'custom' && pathParts[2]) {
+        return `/custom/${pathParts[2]}`;
+      }
+    }
+    
+    switch (documentType) {
       case 'proforma':
         return '/proforma';
       case 'quote':
@@ -65,8 +79,8 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     }
   };
 
-  const documentTitle = getDocumentTitle(documentType);
-  const backPath = getBackPath(documentType);
+  const documentTitle = getDocumentTitle();
+  const backPath = getBackPath();
 
   const TaxSettingsSheet = () => (
     <Sheet>

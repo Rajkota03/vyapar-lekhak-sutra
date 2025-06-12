@@ -3,7 +3,8 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Users, FileText, Settings, Menu, X, Package, ChevronDown, ChevronRight } from "lucide-react";
+import { Home, Users, FileText, Settings, Menu, X, Package, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { useCustomDocumentTypes } from "@/hooks/useCustomDocumentTypes";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [invoicesExpanded, setInvoicesExpanded] = React.useState(false);
+  const { customDocumentTypes } = useCustomDocumentTypes();
 
   const navigation = [
     {
@@ -41,7 +43,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       submenu: [
         { name: "Invoices", href: "/invoices" },
         { name: "Pro Forma", href: "/proforma" },
-        { name: "Quotations", href: "/quotations" }
+        { name: "Quotations", href: "/quotations" },
+        // Add custom document types
+        ...(customDocumentTypes || []).map(docType => ({
+          name: docType.name,
+          href: `/custom/${docType.id}`,
+          isCustom: true
+        })),
+        { name: "Manage Document Types", href: "/settings/document-types", isManagement: true }
       ]
     }, 
     {
@@ -61,7 +70,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const isInvoicesActive = location.pathname.startsWith('/invoices') || 
                           location.pathname.startsWith('/proforma') || 
-                          location.pathname.startsWith('/quotations');
+                          location.pathname.startsWith('/quotations') ||
+                          location.pathname.startsWith('/custom/');
 
   React.useEffect(() => {
     if (isInvoicesActive) {
@@ -106,6 +116,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         <div className="ml-6 mt-1 space-y-1">
                           {item.submenu.map(subItem => {
                             const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/');
+                            
+                            if (subItem.isManagement) {
+                              return (
+                                <Link
+                                  key={subItem.name}
+                                  to={subItem.href}
+                                  className="group flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-50"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  {subItem.name}
+                                </Link>
+                              );
+                            }
+                            
                             return (
                               <Link
                                 key={subItem.name}
@@ -169,6 +193,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         <div className="ml-6 mt-1 space-y-1">
                           {item.submenu.map(subItem => {
                             const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/');
+                            
+                            if (subItem.isManagement) {
+                              return (
+                                <Link
+                                  key={subItem.name}
+                                  to={subItem.href}
+                                  className="group flex items-center px-4 py-2 text-base font-medium rounded-md text-gray-500 hover:bg-gray-50"
+                                  onClick={toggleMobileMenu}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  {subItem.name}
+                                </Link>
+                              );
+                            }
+                            
                             return (
                               <Link
                                 key={subItem.name}

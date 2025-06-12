@@ -1,3 +1,4 @@
+
 import { createBrowserRouter } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -15,6 +16,8 @@ import CompanySettings from "./pages/settings/CompanySettings";
 import InvoiceSettings from "./pages/settings/InvoiceSettings";
 import CustomizationSettings from "./pages/settings/CustomizationSettings";
 import UserSettings from "./pages/settings/UserSettings";
+import DocumentTypesSettings from "./pages/settings/DocumentTypesSettings";
+import CustomDocumentList from "./pages/CustomDocumentList";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -116,6 +119,30 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: "/custom/:documentTypeId",
+    element: (
+      <ProtectedRoute>
+        <CustomDocumentList />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/custom/:documentTypeId/new",
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/custom/:documentTypeId/:id",
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "/invoice-list",
     element: (
       <ProtectedRoute>
@@ -184,6 +211,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <UserSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/document-types",
+    element: (
+      <ProtectedRoute>
+        <DocumentTypesSettings />
       </ProtectedRoute>
     ),
   },

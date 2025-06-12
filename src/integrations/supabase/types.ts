@@ -196,6 +196,36 @@ export type Database = {
           },
         ]
       }
+      custom_document_types: {
+        Row: {
+          code_prefix: string
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          next_sequence: number
+          updated_at: string
+        }
+        Insert: {
+          code_prefix: string
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          next_sequence?: number
+          updated_at?: string
+        }
+        Update: {
+          code_prefix?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          next_sequence?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_lines: {
         Row: {
           amount: number
@@ -263,6 +293,7 @@ export type Database = {
           client_id: string
           company_id: string
           created_at: string | null
+          document_type_id: string | null
           due_date: string | null
           id: string
           igst: number | null
@@ -287,6 +318,7 @@ export type Database = {
           client_id: string
           company_id: string
           created_at?: string | null
+          document_type_id?: string | null
           due_date?: string | null
           id?: string
           igst?: number | null
@@ -311,6 +343,7 @@ export type Database = {
           client_id?: string
           company_id?: string
           created_at?: string | null
+          document_type_id?: string | null
           due_date?: string | null
           id?: string
           igst?: number | null
@@ -342,6 +375,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "custom_document_types"
             referencedColumns: ["id"]
           },
         ]
@@ -537,7 +577,13 @@ export type Database = {
         }[]
       }
       next_doc_number: {
-        Args: { p_company_id: string; p_doc_type: string }
+        Args:
+          | { p_company_id: string; p_doc_type: string }
+          | {
+              p_company_id: string
+              p_doc_type: string
+              p_custom_type_id?: string
+            }
         Returns: string
       }
       next_invoice_number: {

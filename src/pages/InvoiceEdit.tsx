@@ -29,6 +29,7 @@ import { Heading3, CaptionText } from "@/components/ui/primitives/Typography";
 
 // Custom Hook
 import { useInvoiceData } from "@/hooks/useInvoiceData";
+import { useCustomDocumentTypes } from "@/hooks/useCustomDocumentTypes";
 import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
 
 // Custom section type
@@ -60,9 +61,11 @@ const InvoiceEdit = () => {
   const [showNotesSection, setShowNotesSection] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
+  const { customDocumentTypes } = useCustomDocumentTypes();
   
-  // Extract invoice ID from URL - handle both patterns
+  // Extract invoice ID from URL - handle both patterns and custom document types
   const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
+  const documentTypeId = params.documentTypeId; // For custom document types
   
   const {
     isEditing,
@@ -82,16 +85,22 @@ const InvoiceEdit = () => {
     documentType
   } = useInvoiceData();
 
+  // Get custom document type info
+  const customDocumentType = documentTypeId ? customDocumentTypes.find(dt => dt.id === documentTypeId) : null;
+
   // Log invoice ID extraction
   useEffect(() => {
     console.log('=== INVOICE EDIT DEBUG ===');
     console.log('URL params:', params);
     console.log('params.id:', params.id);
     console.log('params.invoiceId:', params.invoiceId);
+    console.log('params.documentTypeId:', params.documentTypeId);
     console.log('Extracted invoice ID:', invoiceId);
+    console.log('Document type ID:', documentTypeId);
+    console.log('Custom document type:', customDocumentType);
     console.log('Existing invoice from hook:', existingInvoice);
     console.log('Document type from hook:', documentType);
-  }, [params, invoiceId, existingInvoice, documentType]);
+  }, [params, invoiceId, documentTypeId, customDocumentType, existingInvoice, documentType]);
 
   // Initialize form with defaults or existing invoice data
   const form = useForm<InvoiceFormValues>({
@@ -138,15 +147,22 @@ const InvoiceEdit = () => {
   useEffect(() => {
     if (!isEditing || !existingInvoice) {
       const generateInvoiceNumber = () => {
-        const now = new Date();
-        const year = now.getFullYear().toString().slice(2);
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `INV-${year}${month}-${random}`;
+        if (customDocumentType) {
+          // Use custom document type prefix
+          const sequence = customDocumentType.next_sequence.toString().padStart(3, '0');
+          return `${customDocumentType.code_prefix}-${sequence}`;
+        } else {
+          // Default invoice number generation
+          const now = new Date();
+          const year = now.getFullYear().toString().slice(2);
+          const month = (now.getMonth() + 1).toString().padStart(2, '0');
+          const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+          return `INV-${year}${month}-${random}`;
+        }
       };
       setInvoiceNumber(generateInvoiceNumber());
     }
-  }, [isEditing, existingInvoice]);
+  }, [isEditing, existingInvoice, customDocumentType]);
 
   const taxConfig = form.watch('taxConfig') as TaxConfig;
   const notes = form.watch('notes');
@@ -193,7 +209,8 @@ const InvoiceEdit = () => {
       showMySignature: formValues.showMySignature,
       requireClientSignature: formValues.requireClientSignature,
       notes: formValues.notes || "",
-      invoiceNumber: invoiceNumber
+      invoiceNumber: invoiceNumber,
+      customDocumentTypeId: documentTypeId // Pass custom document type ID
     });
   };
 
@@ -216,6 +233,9 @@ const InvoiceEdit = () => {
     }
     setShowNotesSection(!showNotesSection);
   };
+
+  // Get the effective document type - either custom or built-in
+  const effectiveDocumentType = customDocumentType ? customDocumentType.name : documentType;
 
   // Loading state
   if (isLoading) {
@@ -241,7 +261,8 @@ const InvoiceEdit = () => {
             invoiceId={existingInvoice?.id || invoiceId}
             invoiceCode={existingInvoice?.invoice_code}
             isGeneratingPreview={isGeneratingPreview}
-            documentType={documentType}
+            documentType={customDocumentType ? 'invoice' : documentType} // Use 'invoice' for custom types
+            customDocumentTypeName={customDocumentType?.name}
           />
 
           <Section className="pt-6 space-y-8">

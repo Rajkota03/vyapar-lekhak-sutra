@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -52,6 +53,7 @@ export const useInvoiceData = () => {
   // Extract invoice ID from params - handle both /invoices/:id and /invoices/:companyId/:invoiceId patterns
   const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
   const selectedCompanyId = params.companyId || currentCompany?.id || null;
+  const documentTypeId = params.documentTypeId; // For custom document types
   
   // Determine document type from current path
   const documentType = getDocumentType(window.location.pathname);
@@ -68,12 +70,14 @@ export const useInvoiceData = () => {
     console.log('Raw params object:', params);
     console.log('params.id:', params.id);
     console.log('params.invoiceId:', params.invoiceId);
+    console.log('params.documentTypeId:', params.documentTypeId);
     console.log('params["*"]:', params["*"]);
     console.log('Extracted Invoice ID:', invoiceId);
+    console.log('Document Type ID:', documentTypeId);
     console.log('URL pathname:', window.location.pathname);
     console.log('Selected Company ID:', selectedCompanyId);
     console.log('Document Type:', documentType);
-  }, [params, invoiceId, selectedCompanyId, documentType]);
+  }, [params, invoiceId, documentTypeId, selectedCompanyId, documentType]);
 
   const { data: clients, isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients', selectedCompanyId],
@@ -204,7 +208,8 @@ export const useInvoiceData = () => {
       showMySignature,
       requireClientSignature,
       notes,
-      invoiceNumber
+      invoiceNumber,
+      customDocumentTypeId
     }: {
       navigate: any;
       taxConfig: TaxConfig;
@@ -212,6 +217,7 @@ export const useInvoiceData = () => {
       requireClientSignature: boolean;
       notes?: string;
       invoiceNumber?: string;
+      customDocumentTypeId?: string;
     }) => {
       console.log('=== SAVE INVOICE MUTATION START ===');
       console.log('Selected Company ID:', selectedCompanyId);
@@ -223,6 +229,7 @@ export const useInvoiceData = () => {
       console.log('Notes being saved:', notes);
       console.log('Invoice number:', invoiceNumber);
       console.log('Document type:', documentType);
+      console.log('Custom document type ID:', customDocumentTypeId);
       
       if (!selectedClient || !selectedCompanyId) {
         const errorMsg = `Missing required data - Client: ${!!selectedClient}, Company: ${!!selectedCompanyId}`;
@@ -254,7 +261,8 @@ export const useInvoiceData = () => {
         igst_pct: taxConfig.igstPct,
         show_my_signature: showMySignature,
         require_client_signature: requireClientSignature,
-        notes: notes || null
+        notes: notes || null,
+        document_type_id: customDocumentTypeId || null
       };
 
       console.log('Final invoice data to save:', invoiceData);
@@ -299,21 +307,39 @@ export const useInvoiceData = () => {
       } else {
         console.log('=== CREATING NEW INVOICE ===');
         
-        // Use provided invoice number or generate one based on document type
+        // Use provided invoice number or generate one
         let finalInvoiceNumber = invoiceNumber;
         if (!finalInvoiceNumber) {
           console.log('Generating document number for type:', documentType);
-          const { data: generatedNumber, error: numberError } = await supabase
-            .rpc('next_doc_number', { 
-              p_company_id: selectedCompanyId,
-              p_doc_type: documentType
-            });
+          
+          if (customDocumentTypeId) {
+            // Generate number for custom document type
+            const { data: generatedNumber, error: numberError } = await supabase
+              .rpc('next_doc_number', { 
+                p_company_id: selectedCompanyId,
+                p_doc_type: 'custom',
+                p_custom_type_id: customDocumentTypeId
+              });
 
-          if (numberError) {
-            console.error('Error generating document number:', numberError);
-            throw numberError;
+            if (numberError) {
+              console.error('Error generating custom document number:', numberError);
+              throw numberError;
+            }
+            finalInvoiceNumber = generatedNumber;
+          } else {
+            // Generate number for built-in document type
+            const { data: generatedNumber, error: numberError } = await supabase
+              .rpc('next_doc_number', { 
+                p_company_id: selectedCompanyId,
+                p_doc_type: documentType
+              });
+
+            if (numberError) {
+              console.error('Error generating document number:', numberError);
+              throw numberError;
+            }
+            finalInvoiceNumber = generatedNumber;
           }
-          finalInvoiceNumber = generatedNumber;
         }
 
         console.log('Final document number:', finalInvoiceNumber);
@@ -388,6 +414,7 @@ export const useInvoiceData = () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['proformas'] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-document-types'] });
       queryClient.invalidateQueries({ queryKey: ['invoice', savedInvoice.id] });
       queryClient.invalidateQueries({ queryKey: ['invoice', invoiceId] });
       
@@ -396,8 +423,15 @@ export const useInvoiceData = () => {
       
       console.log('=== QUERIES INVALIDATED FOR FRESH DATA ===');
       
-      const docTypeLabel = documentType === 'proforma' ? 'Pro Forma' : 
-                          documentType === 'quote' ? 'Quotation' : 'Invoice';
+      // Determine document type label
+      let docTypeLabel = 'Document';
+      if (savedInvoice.document_type_id) {
+        // This is a custom document type - we'd need to fetch the name
+        docTypeLabel = 'Document';
+      } else {
+        docTypeLabel = documentType === 'proforma' ? 'Pro Forma' : 
+                     documentType === 'quote' ? 'Quotation' : 'Invoice';
+      }
       
       toast({
         title: "Success",
@@ -405,15 +439,21 @@ export const useInvoiceData = () => {
       });
 
       // Navigate to appropriate route based on document type
-      const basePath = documentType === 'proforma' ? '/proforma' : 
-                      documentType === 'quote' ? '/quotations' : '/invoices';
+      let basePath = '/invoices';
+      if (savedInvoice.document_type_id) {
+        // Custom document type
+        basePath = `/custom/${savedInvoice.document_type_id}`;
+      } else {
+        basePath = documentType === 'proforma' ? '/proforma' : 
+                  documentType === 'quote' ? '/quotations' : '/invoices';
+      }
       navigate(`${basePath}/${savedInvoice.id}`);
     },
     onError: (error) => {
       console.error('=== INVOICE SAVE ERROR ===');
       console.error('Error details:', error);
       const docTypeLabel = documentType === 'proforma' ? 'pro forma' : 
-                          documentType === 'quote' ? 'quotation' : 'invoice';
+                          documentType === 'quote' ? 'quotation' : 'document';
       toast({
         variant: "destructive",
         title: "Error",
