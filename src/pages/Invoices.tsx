@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
 import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
+
 type Invoice = {
   id: string;
   invoice_code: string | null;
@@ -23,17 +24,15 @@ type Invoice = {
     name: string;
   } | null;
 };
+
 type FilterStatus = "all" | "sent" | "paid" | "draft";
 type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
 type SortDirection = 'asc' | 'desc' | null;
+
 const Invoices = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
@@ -42,11 +41,7 @@ const Invoices = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Fetch user's companies
-  const {
-    data: companies,
-    isLoading: isLoadingCompanies,
-    error: companiesError
-  } = useQuery({
+  const { data: companies, isLoading: isLoadingCompanies, error: companiesError } = useQuery({
     queryKey: ['companies', user?.id],
     queryFn: async () => {
       if (!user) {
@@ -54,10 +49,10 @@ const Invoices = () => {
         return [];
       }
       console.log('Fetching companies for user:', user.id);
-      const {
-        data,
-        error
-      } = await supabase.from('companies').select('*').eq('owner_id', user.id);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('owner_id', user.id);
       if (error) {
         console.error('Error fetching companies:', error);
         throw error;
@@ -76,21 +71,19 @@ const Invoices = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch invoices with improved error handling
-  const {
-    data: invoices,
-    isLoading: isLoadingInvoices,
-    error: invoicesError,
-    refetch: refetchInvoices
-  } = useQuery({
+  // Fetch invoices with improved error handling - ONLY built-in invoices (no custom document types)
+  const { data: invoices, isLoading: isLoadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ['invoices', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) {
         console.log('No company selected or user not available for fetching invoices');
         return [];
       }
-      console.log('Fetching invoices for company:', selectedCompanyId, 'with status filter:', filterStatus);
-      let query = supabase.from('invoices').select(`
+      console.log('Fetching built-in invoices for company:', selectedCompanyId, 'with status filter:', filterStatus);
+      
+      let query = supabase
+        .from('invoices')
+        .select(`
           id,
           invoice_code,
           number,
@@ -98,22 +91,21 @@ const Invoices = () => {
           total,
           status,
           clients ( name )
-        `).eq('company_id', selectedCompanyId);
+        `)
+        .eq('company_id', selectedCompanyId)
+        .is('document_type_id', null); // Only get built-in invoices (not custom document types)
+
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
       }
-      query = query.order('created_at', {
-        ascending: false
-      });
-      const {
-        data: invoicesData,
-        error
-      } = await query;
+      query = query.order('created_at', { ascending: false });
+
+      const { data: invoicesData, error } = await query;
       if (error) {
         console.error('Error fetching invoices:', error);
         throw error;
       }
-      console.log('Invoices fetched successfully:', invoicesData?.length || 0, 'invoices');
+      console.log('Built-in invoices fetched successfully:', invoicesData?.length || 0, 'invoices');
       return invoicesData as Invoice[] || [];
     },
     enabled: !!selectedCompanyId && !!user
@@ -170,7 +162,6 @@ const Invoices = () => {
   // Handle sorting
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      // Toggle direction or reset
       if (sortDirection === 'asc') {
         setSortDirection('desc');
       } else if (sortDirection === 'desc') {
@@ -184,61 +175,71 @@ const Invoices = () => {
 
   // Loading state
   if (isLoadingCompanies) {
-    return <DashboardLayout>
+    return (
+      <DashboardLayout>
         <div className="flex justify-center items-center h-[50vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>;
+      </DashboardLayout>
+    );
   }
+
   if (companiesError || invoicesError) {
-    console.error('Error loading data:', {
-      companiesError,
-      invoicesError
-    });
-    return <DashboardLayout>
+    console.error('Error loading data:', { companiesError, invoicesError });
+    return (
+      <DashboardLayout>
         <div className="text-center py-8">
           <p className="text-red-500 mb-4">Error loading data. Please try refreshing the page.</p>
           <Button onClick={() => window.location.reload()}>
             Refresh Page
           </Button>
         </div>
-      </DashboardLayout>;
+      </DashboardLayout>
+    );
   }
+
   if (!user) {
-    return <DashboardLayout>
+    return (
+      <DashboardLayout>
         <div className="text-center py-8">
           <p className="text-muted-foreground">Please log in to view invoices</p>
         </div>
-      </DashboardLayout>;
+      </DashboardLayout>
+    );
   }
+
   if (!companies || companies.length === 0) {
-    return <DashboardLayout>
+    return (
+      <DashboardLayout>
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">You need to create a company before creating invoices.</p>
           <Button onClick={() => navigate('/company/new')}>
             Create Company
           </Button>
         </div>
-      </DashboardLayout>;
+      </DashboardLayout>
+    );
   }
+
   const handleInvoiceClick = (invoiceId: string) => {
     console.log('Clicking on invoice:', invoiceId);
     navigate(`/invoices/${invoiceId}`);
   };
+
   const handleCreateInvoice = () => {
-    // Clear any cached invoice data
-    queryClient.removeQueries({
-      queryKey: ['invoice']
-    });
+    queryClient.removeQueries({ queryKey: ['invoice'] });
     navigate('/invoices/new');
   };
+
   const floatingActions = [{
     label: "New Invoice",
     onClick: handleCreateInvoice,
     variant: "primary" as const,
     icon: <Plus className="h-6 w-6" />
   }];
-  return <DashboardLayout>
+
+  return (
+    <DashboardLayout>
       <div className="space-y-6 bg-white px-0 py-[8px]">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -246,14 +247,22 @@ const Invoices = () => {
         </div>
 
         {/* Company Selector */}
-        {companies && companies.length > 1 && <div className="flex items-center space-x-2">
+        {companies && companies.length > 1 && (
+          <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Company:</label>
-            <select value={selectedCompanyId || ''} onChange={e => setSelectedCompanyId(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              {companies.map(company => <option key={company.id} value={company.id}>
+            <select
+              value={selectedCompanyId || ''}
+              onChange={(e) => setSelectedCompanyId(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
                   {company.name}
-                </option>)}
+                </option>
+              ))}
             </select>
-          </div>}
+          </div>
+        )}
 
         {/* Filter and Sort Controls */}
         <div className="flex items-center justify-between">
@@ -283,7 +292,14 @@ const Invoices = () => {
           </div>
 
           {/* Sort Dropdown */}
-          {isMobile ? <MobileSortDropdown sortField={sortField} sortDirection={sortDirection} onSort={handleSort} /> : <div className="flex items-center space-x-2">
+          {isMobile ? (
+            <MobileSortDropdown 
+              sortField={sortField} 
+              sortDirection={sortDirection} 
+              onSort={handleSort} 
+            />
+          ) : (
+            <div className="flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -309,23 +325,38 @@ const Invoices = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* Invoices Table */}
-        {isLoadingInvoices ? <div className="flex justify-center p-8">
+        {isLoadingInvoices ? (
+          <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div> : sortedInvoices && sortedInvoices.length > 0 ? <InvoiceTable invoices={sortedInvoices} onInvoiceClick={handleInvoiceClick} sortField={sortField} sortDirection={sortDirection} onSort={!isMobile ? handleSort : undefined} /> : <div className="text-center py-12 border rounded-md">
+          </div>
+        ) : sortedInvoices && sortedInvoices.length > 0 ? (
+          <InvoiceTable 
+            invoices={sortedInvoices} 
+            onInvoiceClick={handleInvoiceClick} 
+            sortField={sortField} 
+            sortDirection={sortDirection} 
+            onSort={!isMobile ? handleSort : undefined} 
+          />
+        ) : (
+          <div className="text-center py-12 border rounded-md">
             <p className="text-muted-foreground mb-4">No invoices found</p>
             <Button variant="outline" onClick={handleCreateInvoice}>
               <Plus className="mr-2 h-4 w-4" />
               Create your first invoice
             </Button>
-          </div>}
+          </div>
+        )}
 
         {/* Floating Action Button */}
         <FloatingActionBar actions={floatingActions} show={true} />
       </div>
-    </DashboardLayout>;
+    </DashboardLayout>
+  );
 };
+
 export default Invoices;

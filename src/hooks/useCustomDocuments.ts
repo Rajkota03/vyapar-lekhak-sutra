@@ -40,10 +40,11 @@ export const useCustomDocuments = (documentTypeId: string) => {
           issue_date,
           total,
           status,
-          clients ( name )
+          clients ( name ),
+          document_type_id
         `)
         .eq('company_id', currentCompany.id)
-        .eq('document_type_id', documentTypeId)
+        .eq('document_type_id', documentTypeId) // Only get documents for this specific custom type
         .order('created_at', { ascending: false });
 
       if (error) {
