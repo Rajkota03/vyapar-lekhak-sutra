@@ -239,10 +239,10 @@ const Invoices = () => {
     icon: <Plus className="h-6 w-6" />
   }];
   return <DashboardLayout>
-      <div className="space-y-6 bg-white px-0 py-[6px]">
+      <div className="space-y-6 bg-white px-0 py-[7px]">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+          <h1 className="text-3xl font-bold tracking-tight px-[8px]">Invoices</h1>
         </div>
 
         {/* Company Selector */}
