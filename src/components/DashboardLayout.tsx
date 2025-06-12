@@ -10,6 +10,13 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+interface SubmenuItem {
+  name: string;
+  href: string;
+  isCustom?: boolean;
+  isManagement?: boolean;
+}
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children
 }) => {
@@ -49,9 +56,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           name: docType.name,
           href: `/custom/${docType.id}`,
           isCustom: true
-        })),
-        { name: "Manage Document Types", href: "/settings/document-types", isManagement: true }
-      ]
+        } as SubmenuItem)),
+        { name: "Manage Document Types", href: "/settings/document-types", isManagement: true } as SubmenuItem
+      ] as SubmenuItem[]
     }, 
     {
       name: "Settings",
