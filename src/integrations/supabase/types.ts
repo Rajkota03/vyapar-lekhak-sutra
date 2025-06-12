@@ -82,7 +82,9 @@ export type Database = {
       }
       company_settings: {
         Row: {
+          city: string | null
           company_id: string
+          country: string | null
           created_at: string | null
           credit_note_title: string | null
           default_cgst_pct: number | null
@@ -90,6 +92,7 @@ export type Database = {
           default_note: string | null
           default_sgst_pct: number | null
           due_days: number | null
+          email: string | null
           invoice_prefix: string | null
           invoice_title: string | null
           logo_scale: number | null
@@ -100,15 +103,20 @@ export type Database = {
           overdue_reminder: boolean | null
           payment_note: string | null
           payment_qr_url: string | null
+          phone: string | null
           quantity_column_label: string | null
           quote_title: string | null
           sac_code: string | null
           signature_scale: number | null
           signature_url: string | null
+          state: string | null
           updated_at: string | null
+          zip_code: string | null
         }
         Insert: {
+          city?: string | null
           company_id: string
+          country?: string | null
           created_at?: string | null
           credit_note_title?: string | null
           default_cgst_pct?: number | null
@@ -116,6 +124,7 @@ export type Database = {
           default_note?: string | null
           default_sgst_pct?: number | null
           due_days?: number | null
+          email?: string | null
           invoice_prefix?: string | null
           invoice_title?: string | null
           logo_scale?: number | null
@@ -126,15 +135,20 @@ export type Database = {
           overdue_reminder?: boolean | null
           payment_note?: string | null
           payment_qr_url?: string | null
+          phone?: string | null
           quantity_column_label?: string | null
           quote_title?: string | null
           sac_code?: string | null
           signature_scale?: number | null
           signature_url?: string | null
+          state?: string | null
           updated_at?: string | null
+          zip_code?: string | null
         }
         Update: {
+          city?: string | null
           company_id?: string
+          country?: string | null
           created_at?: string | null
           credit_note_title?: string | null
           default_cgst_pct?: number | null
@@ -142,6 +156,7 @@ export type Database = {
           default_note?: string | null
           default_sgst_pct?: number | null
           due_days?: number | null
+          email?: string | null
           invoice_prefix?: string | null
           invoice_title?: string | null
           logo_scale?: number | null
@@ -152,12 +167,15 @@ export type Database = {
           overdue_reminder?: boolean | null
           payment_note?: string | null
           payment_qr_url?: string | null
+          phone?: string | null
           quantity_column_label?: string | null
           quote_title?: string | null
           sac_code?: string | null
           signature_scale?: number | null
           signature_url?: string | null
+          state?: string | null
           updated_at?: string | null
+          zip_code?: string | null
         }
         Relationships: [
           {

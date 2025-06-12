@@ -74,15 +74,15 @@ const CompanyInfoSheet: React.FC = () => {
           
           setFormData({
             name: company.name || "",
-            email: settings?.email || "",
-            phone: settings?.phone || "",
+            email: (settings as any)?.email || "",
+            phone: (settings as any)?.phone || "",
             gstin: company.gstin || "",
             addressLine1: addressLines[0] || "",
             addressLine2: addressLines[1] || "",
-            city: settings?.city || "",
-            state: settings?.state || "",
-            zipCode: settings?.zip_code || "",
-            country: settings?.country || "India"
+            city: (settings as any)?.city || "",
+            state: (settings as any)?.state || "",
+            zipCode: (settings as any)?.zip_code || "",
+            country: (settings as any)?.country || "India"
           });
         }
       } catch (error) {
