@@ -50,7 +50,7 @@ const Support: React.FC = () => {
     setIsSubmitting(false);
   };
 
-  const supportEmail = "support@vyaparlekhak.com";
+  const supportEmail = "support@duly.app";
 
   return (
     <div className="min-h-screen bg-gray-50">
