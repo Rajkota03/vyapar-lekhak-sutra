@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -13,25 +12,29 @@ import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 type FilterStatus = "all" | "sent" | "paid" | "draft";
 type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
 type SortDirection = 'asc' | 'desc' | null;
-
 const CustomDocumentList = () => {
-  const { documentTypeId } = useParams();
+  const {
+    documentTypeId
+  } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-
-  const { customDocumentTypes, isLoading: isLoadingTypes } = useCustomDocumentTypes();
-  const { documents, isLoading: isLoadingDocuments, refetch } = useCustomDocuments(documentTypeId || '');
-
+  const {
+    customDocumentTypes,
+    isLoading: isLoadingTypes
+  } = useCustomDocumentTypes();
+  const {
+    documents,
+    isLoading: isLoadingDocuments,
+    refetch
+  } = useCustomDocuments(documentTypeId || '');
   if (isLoadingTypes) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <Container>
           <Section className="pt-6">
             <div className="flex justify-center items-center h-[50vh]">
@@ -39,15 +42,11 @@ const CustomDocumentList = () => {
             </div>
           </Section>
         </Container>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
   const documentType = customDocumentTypes.find(dt => dt.id === documentTypeId);
-
   if (!documentType) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <Container>
           <Section className="pt-6">
             <div className="text-center py-8">
@@ -58,8 +57,7 @@ const CustomDocumentList = () => {
             </div>
           </Section>
         </Container>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
 
   // Filter documents by status
@@ -71,11 +69,9 @@ const CustomDocumentList = () => {
   // Sort documents
   const sortedDocuments = React.useMemo(() => {
     if (!filteredDocuments || !sortField || !sortDirection) return filteredDocuments || [];
-    
     return [...filteredDocuments].sort((a, b) => {
       let aValue: any;
       let bValue: any;
-      
       switch (sortField) {
         case 'number':
           aValue = a.invoice_code || a.number || '';
@@ -100,7 +96,6 @@ const CustomDocumentList = () => {
         default:
           return 0;
       }
-      
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -120,28 +115,23 @@ const CustomDocumentList = () => {
       setSortDirection('asc');
     }
   };
-
   const handleDocumentClick = (documentId: string) => {
     navigate(`/custom/${documentTypeId}/${documentId}`);
   };
-
   const handleCreateDocument = () => {
     navigate(`/custom/${documentTypeId}/new`);
   };
-
   const floatingActions = [{
     label: `New ${documentType.name}`,
     onClick: handleCreateDocument,
     variant: "primary" as const,
     icon: <Plus className="h-6 w-6" />
   }];
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="space-y-6 bg-white px-0 py-[8px]">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
+          <div className="px-[8px]">
             <Heading2>{documentType.name}</Heading2>
             <CaptionText className="mt-1">
               Manage your {documentType.name.toLowerCase()} documents
@@ -177,14 +167,7 @@ const CustomDocumentList = () => {
           </div>
 
           {/* Sort Dropdown */}
-          {isMobile ? (
-            <MobileSortDropdown 
-              sortField={sortField} 
-              sortDirection={sortDirection} 
-              onSort={handleSort} 
-            />
-          ) : (
-            <div className="flex items-center space-x-2">
+          {isMobile ? <MobileSortDropdown sortField={sortField} sortDirection={sortDirection} onSort={handleSort} /> : <div className="flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -210,25 +193,13 @@ const CustomDocumentList = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Documents Table */}
-        {isLoadingDocuments ? (
-          <div className="flex justify-center p-8">
+        {isLoadingDocuments ? <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : sortedDocuments && sortedDocuments.length > 0 ? (
-          <InvoiceTable 
-            invoices={sortedDocuments} 
-            onInvoiceClick={handleDocumentClick} 
-            sortField={sortField} 
-            sortDirection={sortDirection} 
-            onSort={!isMobile ? handleSort : undefined} 
-          />
-        ) : (
-          <div className="text-center py-12 border rounded-md mx-[8px]">
+          </div> : sortedDocuments && sortedDocuments.length > 0 ? <InvoiceTable invoices={sortedDocuments} onInvoiceClick={handleDocumentClick} sortField={sortField} sortDirection={sortDirection} onSort={!isMobile ? handleSort : undefined} /> : <div className="text-center py-12 border rounded-md mx-[8px]">
             <p className="text-muted-foreground mb-4">
               No {documentType.name.toLowerCase()} documents found
             </p>
@@ -236,14 +207,11 @@ const CustomDocumentList = () => {
               <Plus className="mr-2 h-4 w-4" />
               Create your first {documentType.name.toLowerCase()}
             </Button>
-          </div>
-        )}
+          </div>}
 
         {/* Floating Action Button */}
         <FloatingActionBar actions={floatingActions} show={true} />
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default CustomDocumentList;
