@@ -302,6 +302,7 @@ export const useInvoiceData = () => {
         // Use provided invoice number or generate one based on document type
         let finalInvoiceNumber = invoiceNumber;
         if (!finalInvoiceNumber) {
+          console.log('Generating document number for type:', documentType);
           const { data: generatedNumber, error: numberError } = await supabase
             .rpc('next_doc_number', { 
               p_company_id: selectedCompanyId,
