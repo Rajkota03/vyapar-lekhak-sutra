@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -18,6 +19,7 @@ import ItemsSection from "@/components/invoice/ItemsSection";
 import TotalsSection from "@/components/invoice/TotalsSection";
 import SignatureSection from "@/components/invoice/SignatureSection";
 import PreviewModal from "@/components/invoice/PreviewModal";
+import CustomSectionsManager from "@/components/invoice/CustomSectionsManager";
 
 // Premium UI Components
 import { Container, Section, Stack } from "@/components/ui/primitives/Spacing";
@@ -28,6 +30,13 @@ import { Heading3, CaptionText } from "@/components/ui/primitives/Typography";
 // Custom Hook
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { calcTotals, TaxConfig } from "@/utils/invoiceMath";
+
+// Custom section type
+interface CustomSectionData {
+  id: string;
+  name: string;
+  content: string;
+}
 
 // Define form schema
 const invoiceFormSchema = z.object({
@@ -50,6 +59,7 @@ const InvoiceEdit = () => {
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [showNotesSection, setShowNotesSection] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
   
   // Extract invoice ID from URL - handle both patterns
   const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
@@ -264,6 +274,12 @@ const InvoiceEdit = () => {
                 watch={form.watch} 
               />
             )}
+
+            {/* Custom Sections */}
+            <CustomSectionsManager
+              sections={customSections}
+              onSectionsChange={setCustomSections}
+            />
 
             {/* Notes Section */}
             <Stack>
