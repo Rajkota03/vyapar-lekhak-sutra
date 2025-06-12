@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Container, Section } from "@/components/ui/primitives/Spacing";
-import { Heading2, CaptionText } from "@/components/ui/primitives/Typography";
+import { Heading1, CaptionText } from "@/components/ui/primitives/Typography";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -12,9 +12,11 @@ import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 type FilterStatus = "all" | "sent" | "paid" | "draft";
 type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
 type SortDirection = 'asc' | 'desc' | null;
+
 const CustomDocumentList = () => {
   const {
     documentTypeId
@@ -50,7 +52,7 @@ const CustomDocumentList = () => {
         <Container>
           <Section className="pt-6">
             <div className="text-center py-8">
-              <Heading2>Document Type Not Found</Heading2>
+              <Heading1>Document Type Not Found</Heading1>
               <CaptionText className="mt-2">
                 The requested document type could not be found.
               </CaptionText>
@@ -132,7 +134,7 @@ const CustomDocumentList = () => {
         {/* Header */}
         <div className="flex items-center justify-between py-0 my-[8px]">
           <div className="px-[8px]">
-            <Heading2>{documentType.name}</Heading2>
+            <Heading1>{documentType.name}</Heading1>
             <CaptionText className="mt-1">
               Manage your {documentType.name.toLowerCase()} documents
             </CaptionText>
@@ -214,4 +216,5 @@ const CustomDocumentList = () => {
       </div>
     </DashboardLayout>;
 };
+
 export default CustomDocumentList;
