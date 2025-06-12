@@ -5,9 +5,13 @@ import { ChevronLeft, User, Building2, FileText, Palette, Settings as SettingsIc
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/primitives/Card";
 import { SettingsRow } from "@/components/ui/SettingsRow";
+import { useCompany } from "@/context/CompanyContext";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
+  const { currentCompany } = useCompany();
+  const { settings } = useCompanySettings();
 
   return (
     <>
@@ -34,11 +38,11 @@ const Settings: React.FC = () => {
             <div className="p-4 border-b">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
+                  <Building2 className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium">John Doe</h3>
-                  <p className="text-sm text-gray-500">john@example.com</p>
+                  <h3 className="font-medium">{currentCompany?.name || 'No Company Selected'}</h3>
+                  <p className="text-sm text-gray-500">{settings?.email || 'No email set'}</p>
                 </div>
               </div>
             </div>
