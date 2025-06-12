@@ -25,6 +25,32 @@ const formatCurrency = (amount: number): string => {
   })}`;
 };
 
+// Function to determine document type from invoice number or other indicators
+const getDocumentTypeFromInvoice = (invoiceData: Invoice): 'invoice' | 'proforma' | 'quote' => {
+  const number = invoiceData.number || invoiceData.invoice_code || '';
+  
+  if (number.startsWith('QUO-') || number.startsWith('QUOT-')) {
+    return 'quote';
+  } else if (number.startsWith('PF-') || number.startsWith('PRO-')) {
+    return 'proforma';
+  } else {
+    return 'invoice';
+  }
+};
+
+// Function to get document title based on type and company settings
+const getDocumentTitle = (documentType: 'invoice' | 'proforma' | 'quote', companySettings: any): string => {
+  switch (documentType) {
+    case 'quote':
+      return companySettings?.quote_title || 'Quotation';
+    case 'proforma':
+      return companySettings?.proforma_title || 'Pro Forma Invoice';
+    case 'invoice':
+    default:
+      return companySettings?.invoice_title || 'Invoice';
+  }
+};
+
 // Function to convert image URL to base64
 const getImageAsBase64 = async (url: string): Promise<string | null> => {
   try {
@@ -150,6 +176,12 @@ export const generateInvoicePDF = async (
   console.log('Company data:', companyData);
   console.log('Show my signature setting:', invoiceData.show_my_signature);
   
+  // Determine document type from invoice data
+  const documentType = getDocumentTypeFromInvoice(invoiceData);
+  console.log('=== DOCUMENT TYPE DETECTION ===');
+  console.log('Detected document type:', documentType);
+  console.log('Invoice number/code:', invoiceData.number || invoiceData.invoice_code);
+  
   // NOTES DEBUG LOGGING
   console.log('=== NOTES DEBUG IN PDF GENERATION ===');
   console.log('Invoice notes value:', invoiceData.notes);
@@ -159,12 +191,39 @@ export const generateInvoicePDF = async (
   console.log('Notes is truthy:', !!invoiceData.notes);
   console.log('Notes after trim is truthy:', !!(invoiceData.notes?.trim?.()));
   
-  // Get company settings for logo, signature, and quantity label
+  // Get company settings for logo, signature, and document titles
   const companySettings = await getCompanySettings(invoiceData.company_id);
   let logoBase64: string | null = null;
   let signatureBase64: string | null = null;
   let logoScale = 0.3;
   let signatureScale = 1.0;
+
+  // Get document title based on type and settings
+  const documentTitle = getDocumentTitle(documentType, companySettings);
+  console.log('=== DOCUMENT TITLE ===');
+  console.log('Document title:', documentTitle);
+
+  // LOGO PROCESSING - Always try to load logo if URL exists
+  console.log('=== LOGO PROCESSING ===');
+  const logoUrl = companySettings?.logo_url || companyData.logo_url;
+  console.log('Logo URL from settings:', companySettings?.logo_url);
+  console.log('Logo URL from company:', companyData.logo_url);
+  console.log('Final logo URL used:', logoUrl);
+  
+  if (logoUrl) {
+    console.log('Processing logo from URL:', logoUrl);
+    logoBase64 = await getImageAsBase64(logoUrl);
+    logoScale = Number(companySettings?.logo_scale || 0.3);
+    console.log('Logo scale:', logoScale);
+    console.log('Logo base64 result:', logoBase64 ? 'SUCCESS' : 'FAILED');
+    if (logoBase64) {
+      console.log('✅ Logo will be added to PDF');
+    } else {
+      console.log('❌ Failed to process logo image');
+    }
+  } else {
+    console.log('❌ No logo URL found');
+  }
 
   // Get custom quantity label from company settings
   const quantityLabel = companySettings?.quantity_column_label || 'QTY';
@@ -303,7 +362,15 @@ export const generateInvoicePDF = async (
       margin: [0, 0, 0, 12]
     },
 
-    // SECTION 2: BILL TO + INVOICE DETAILS
+    // SECTION 1.5: DOCUMENT TITLE
+    {
+      text: documentTitle.toUpperCase(),
+      style: 'documentTitle',
+      alignment: 'center',
+      margin: [0, 0, 0, 16]
+    },
+
+    // SECTION 2: BILL TO + DOCUMENT DETAILS
     {
       columns: [
         {
@@ -334,13 +401,13 @@ export const generateInvoicePDF = async (
           width: '50%',
           stack: [
             {
-              text: 'INVOICE DETAILS',
+              text: `${documentTitle.toUpperCase()} DETAILS`,
               style: 'sectionHeader',
               alignment: 'right',
               margin: [0, 0, 0, 3]
             },
             {
-              text: `Invoice #: ${invoiceData.number}`,
+              text: `${documentTitle} #: ${invoiceData.number}`,
               style: 'invoiceDetails',
               alignment: 'right',
               margin: [0, 0, 0, 2]
@@ -673,11 +740,19 @@ export const generateInvoicePDF = async (
       signatureDate: {
         fontSize: 9,
         color: '#333333'
+      },
+      documentTitle: {
+        fontSize: 18,
+        bold: true,
+        color: '#333333'
       }
     }
   };
 
   console.log('=== PDF GENERATION COMPLETE ===');
+  console.log('Document type:', documentType);
+  console.log('Document title:', documentTitle);
+  console.log('Logo included:', !!logoBase64);
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
   console.log('Custom quantity label used:', quantityLabel);

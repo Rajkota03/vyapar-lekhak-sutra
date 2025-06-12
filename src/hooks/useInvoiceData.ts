@@ -132,6 +132,7 @@ export const useInvoiceData = () => {
       
       console.log('=== FETCHING EXISTING INVOICE ===');
       console.log('Invoice ID:', invoiceId);
+      console.log('Document Type:', documentType);
       
       setIsEditing(true);
       const { data, error } = await supabase
