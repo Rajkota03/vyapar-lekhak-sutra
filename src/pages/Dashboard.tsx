@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
   return <DashboardLayout>
       <main className="safe-h-screen bg-gray-50">
         <div className="space-y-3 py-[8px]">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between py-[12px]">
             <h1 className="text-[1.375rem] font-semibold tracking-tight px-[10px]">Dashboard</h1>
             <Button asChild className="h-8 px-3 rounded text-xs font-medium">
               <Link to="/company/new" className="px-[26px]">
