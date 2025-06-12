@@ -41,18 +41,32 @@ const CompanyInfoSheet: React.FC = () => {
       try {
         console.log('Loading company data for ID:', companyId);
         
-        const { data: company, error } = await supabase
+        // Load basic company info
+        const { data: company, error: companyError } = await supabase
           .from('companies')
           .select('*')
           .eq('id', companyId)
           .maybeSingle();
 
-        if (error) {
-          console.error('Error loading company:', error);
-          throw error;
+        if (companyError) {
+          console.error('Error loading company:', companyError);
+          throw companyError;
+        }
+
+        // Load company settings for additional fields
+        const { data: settings, error: settingsError } = await supabase
+          .from('company_settings')
+          .select('*')
+          .eq('company_id', companyId)
+          .maybeSingle();
+
+        if (settingsError) {
+          console.error('Error loading company settings:', settingsError);
+          // Don't throw here as settings might not exist yet
         }
         
         console.log('Loaded company data:', company);
+        console.log('Loaded company settings:', settings);
         
         if (company) {
           // Split existing address into two lines if it exists
@@ -60,15 +74,15 @@ const CompanyInfoSheet: React.FC = () => {
           
           setFormData({
             name: company.name || "",
-            email: "", // Not stored in companies table
-            phone: "", // Not stored in companies table
+            email: settings?.email || "",
+            phone: settings?.phone || "",
             gstin: company.gstin || "",
             addressLine1: addressLines[0] || "",
             addressLine2: addressLines[1] || "",
-            city: "", // Not stored in companies table
-            state: "", // Not stored in companies table
-            zipCode: "", // Not stored in companies table
-            country: "India"
+            city: settings?.city || "",
+            state: settings?.state || "",
+            zipCode: settings?.zip_code || "",
+            country: settings?.country || "India"
           });
         }
       } catch (error) {
@@ -116,12 +130,12 @@ const CompanyInfoSheet: React.FC = () => {
 
     setSaving(true);
     try {
-      // Combine address lines into a single address field for storage
+      // Combine address lines into a single address field for companies table
       const combinedAddress = [formData.addressLine1.trim(), formData.addressLine2.trim()]
         .filter(line => line.length > 0)
         .join('\n');
 
-      // Update companies table with only the fields that exist in the schema
+      // Update companies table with basic fields
       const companyUpdateData = {
         name: formData.name.trim(),
         gstin: formData.gstin.trim() || null,
@@ -142,11 +156,15 @@ const CompanyInfoSheet: React.FC = () => {
 
       console.log('Company updated successfully');
 
-      // Create or update company_settings to store additional fields
+      // Create or update company_settings with additional fields
       const settingsUpdateData = {
         company_id: companyId,
-        // We can store additional company info in company_settings if needed
-        // For now, we'll focus on the main company fields
+        email: formData.email.trim() || null,
+        phone: formData.phone.trim() || null,
+        city: formData.city.trim() || null,
+        state: formData.state.trim() || null,
+        zip_code: formData.zipCode.trim() || null,
+        country: formData.country.trim() || "India",
       };
 
       console.log('Updating company_settings with:', settingsUpdateData);
@@ -157,8 +175,7 @@ const CompanyInfoSheet: React.FC = () => {
 
       if (settingsError) {
         console.error('Settings update error:', settingsError);
-        // Don't throw here as this is not critical
-        console.log('Settings update failed, but continuing...');
+        throw settingsError;
       }
 
       // Invalidate all related queries to refresh the data
