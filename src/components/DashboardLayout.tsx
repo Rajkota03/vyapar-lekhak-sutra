@@ -24,7 +24,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [invoicesExpanded, setInvoicesExpanded] = React.useState(false);
+  const [billingExpanded, setBillingExpanded] = React.useState(false);
   const { customDocumentTypes } = useCustomDocumentTypes();
 
   const navigation = [
@@ -44,7 +44,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       icon: Package
     }, 
     {
-      name: "Invoices",
+      name: "Billing",
       href: "/invoices",
       icon: FileText,
       submenu: [
@@ -71,20 +71,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const toggleInvoicesMenu = () => {
-    setInvoicesExpanded(!invoicesExpanded);
+  const toggleBillingMenu = () => {
+    setBillingExpanded(!billingExpanded);
   };
 
-  const isInvoicesActive = location.pathname.startsWith('/invoices') || 
+  const isBillingActive = location.pathname.startsWith('/invoices') || 
                           location.pathname.startsWith('/proforma') || 
                           location.pathname.startsWith('/quotations') ||
                           location.pathname.startsWith('/custom/');
 
   React.useEffect(() => {
-    if (isInvoicesActive) {
-      setInvoicesExpanded(true);
+    if (isBillingActive) {
+      setBillingExpanded(true);
     }
-  }, [isInvoicesActive]);
+  }, [isBillingActive]);
 
   return (
     <div className="safe-h-screen flex flex-col md:flex-row bg-gray-100 mobile-safe">
@@ -109,17 +109,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   return (
                     <div key={item.name}>
                       <button
-                        onClick={toggleInvoicesMenu}
-                        className={`group flex items-center w-full px-4 py-2 text-sm font-medium rounded-md ${isInvoicesActive ? "bg-gray-100 text-primary" : "text-gray-600 hover:bg-gray-50"}`}
+                        onClick={toggleBillingMenu}
+                        className={`group flex items-center w-full px-4 py-2 text-sm font-medium rounded-md ${isBillingActive ? "bg-gray-100 text-primary" : "text-gray-600 hover:bg-gray-50"}`}
                       >
-                        <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${isInvoicesActive ? "text-primary" : "text-gray-500"}`} aria-hidden="true" />
+                        <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${isBillingActive ? "text-primary" : "text-gray-500"}`} aria-hidden="true" />
                         {item.name}
-                        {invoicesExpanded ? 
+                        {billingExpanded ? 
                           <ChevronDown className="ml-auto h-4 w-4" /> : 
                           <ChevronRight className="ml-auto h-4 w-4" />
                         }
                       </button>
-                      {invoicesExpanded && (
+                      {billingExpanded && (
                         <div className="ml-6 mt-1 space-y-1">
                           {item.submenu.map(subItem => {
                             const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/');
@@ -186,17 +186,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   return (
                     <div key={item.name}>
                       <button
-                        onClick={toggleInvoicesMenu}
-                        className={`group flex items-center w-full px-4 py-3 text-base font-medium rounded-md ${isInvoicesActive ? "bg-gray-100 text-primary" : "text-gray-600 hover:bg-gray-50"}`}
+                        onClick={toggleBillingMenu}
+                        className={`group flex items-center w-full px-4 py-3 text-base font-medium rounded-md ${isBillingActive ? "bg-gray-100 text-primary" : "text-gray-600 hover:bg-gray-50"}`}
                       >
-                        <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${isInvoicesActive ? "text-primary" : "text-gray-500"}`} aria-hidden="true" />
+                        <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${isBillingActive ? "text-primary" : "text-gray-500"}`} aria-hidden="true" />
                         {item.name}
-                        {invoicesExpanded ? 
+                        {billingExpanded ? 
                           <ChevronDown className="ml-auto h-4 w-4" /> : 
                           <ChevronRight className="ml-auto h-4 w-4" />
                         }
                       </button>
-                      {invoicesExpanded && (
+                      {billingExpanded && (
                         <div className="ml-6 mt-1 space-y-1">
                           {item.submenu.map(subItem => {
                             const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/');
