@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +16,14 @@ interface PreviewModalProps {
   invoiceId?: string;
 }
 
+// Function to determine document type from current URL
+const getDocumentTypeFromUrl = (): 'invoice' | 'proforma' | 'quote' => {
+  const pathname = window.location.pathname;
+  if (pathname.includes('/proforma')) return 'proforma';
+  if (pathname.includes('/quotations')) return 'quote';
+  return 'invoice';
+};
+
 const PreviewModal: React.FC<PreviewModalProps> = ({
   isOpen,
   onOpenChange,
@@ -24,6 +31,9 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
 }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Determine document type from current URL
+  const documentType = getDocumentTypeFromUrl();
 
   // Fetch invoice data when modal opens
   const { data: invoiceData, isLoading } = useQuery({
@@ -88,11 +98,14 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
 
       setIsGenerating(true);
       try {
+        console.log('Generating PDF preview with document type:', documentType);
+        
         const docDefinition = await generateInvoicePDF(
           invoiceData.invoice,
           invoiceData.invoice.clients,
           invoiceData.invoice.companies,
-          invoiceData.lineItems
+          invoiceData.lineItems,
+          documentType
         );
 
         // Generate PDF blob and create object URL
@@ -108,7 +121,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
     };
 
     generatePreview();
-  }, [invoiceData, isOpen]);
+  }, [invoiceData, isOpen, documentType]);
 
   // Cleanup object URL when modal closes
   useEffect(() => {

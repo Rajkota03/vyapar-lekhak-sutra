@@ -2,6 +2,14 @@
 import { supabase } from '@/integrations/supabase/client';
 import { downloadInvoicePDF } from './pdfGeneration';
 
+// Function to determine document type from current URL
+const getDocumentTypeFromUrl = (): 'invoice' | 'proforma' | 'quote' => {
+  const pathname = window.location.pathname;
+  if (pathname.includes('/proforma')) return 'proforma';
+  if (pathname.includes('/quotations')) return 'quote';
+  return 'invoice';
+};
+
 export const handleDownloadPdf = async (
   invoiceId: string, 
   invoiceCode?: string | null, 
@@ -13,6 +21,10 @@ export const handleDownloadPdf = async (
   
   try {
     console.log('PDF download requested for invoice:', invoiceId, 'with code:', invoiceCode);
+    
+    // Determine document type from current URL
+    const documentType = getDocumentTypeFromUrl();
+    console.log('Document type determined from URL:', documentType);
     
     // Fetch invoice data with related information
     const { data: invoiceData, error: invoiceError } = await supabase
@@ -56,12 +68,13 @@ export const handleDownloadPdf = async (
       note: item.note || ''
     }));
 
-    // Generate and download PDF
+    // Generate and download PDF with correct document type
     await downloadInvoicePDF(
       invoiceData,
       invoiceData.clients,
       invoiceData.companies,
-      formattedLineItems
+      formattedLineItems,
+      documentType
     );
 
   } catch (error) {

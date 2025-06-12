@@ -169,18 +169,14 @@ export const generateInvoicePDF = async (
   invoiceData: Invoice,
   clientData: Client,
   companyData: CompanyData,
-  lineItems: LineItem[]
+  lineItems: LineItem[],
+  documentType: 'invoice' | 'proforma' | 'quote' = 'invoice'
 ) => {
   console.log('=== PDF GENERATION START ===');
   console.log('Invoice data:', invoiceData);
   console.log('Company data:', companyData);
   console.log('Show my signature setting:', invoiceData.show_my_signature);
-  
-  // Determine document type from invoice data
-  const documentType = getDocumentTypeFromInvoice(invoiceData);
-  console.log('=== DOCUMENT TYPE DETECTION ===');
-  console.log('Detected document type:', documentType);
-  console.log('Invoice number/code:', invoiceData.number || invoiceData.invoice_code);
+  console.log('Document type passed to PDF generation:', documentType);
   
   // NOTES DEBUG LOGGING
   console.log('=== NOTES DEBUG IN PDF GENERATION ===');
@@ -766,10 +762,11 @@ export const downloadInvoicePDF = async (
   invoiceData: Invoice,
   clientData: Client,
   companyData: CompanyData,
-  lineItems: LineItem[]
+  lineItems: LineItem[],
+  documentType: 'invoice' | 'proforma' | 'quote' = 'invoice'
 ) => {
-  const docDefinition = await generateInvoicePDF(invoiceData, clientData, companyData, lineItems);
-  const fileName = `invoice-${invoiceData.number}.pdf`;
+  const docDefinition = await generateInvoicePDF(invoiceData, clientData, companyData, lineItems, documentType);
+  const fileName = `${documentType}-${invoiceData.number}.pdf`;
   
   pdfMake.createPdf(docDefinition).download(fileName);
 };
@@ -778,9 +775,10 @@ export const getInvoicePDFBlob = async (
   invoiceData: Invoice,
   clientData: Client,
   companyData: CompanyData,
-  lineItems: LineItem[]
+  lineItems: LineItem[],
+  documentType: 'invoice' | 'proforma' | 'quote' = 'invoice'
 ): Promise<Blob> => {
-  const docDefinition = await generateInvoicePDF(invoiceData, clientData, companyData, lineItems);
+  const docDefinition = await generateInvoicePDF(invoiceData, clientData, companyData, lineItems, documentType);
   
   return new Promise((resolve, reject) => {
     pdfMake.createPdf(docDefinition).getBlob((blob: Blob) => {
