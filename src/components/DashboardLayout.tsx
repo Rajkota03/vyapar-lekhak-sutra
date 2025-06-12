@@ -2,17 +2,20 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Users, FileText, Settings, Menu, X, Package, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Home, Users, FileText, Settings, Menu, X, Package, ChevronDown, ChevronRight, Plus, HelpCircle } from "lucide-react";
 import { useCustomDocumentTypes } from "@/hooks/useCustomDocumentTypes";
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
+
 interface SubmenuItem {
   name: string;
   href: string;
   isCustom?: boolean;
   isManagement?: boolean;
 }
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children
 }) => {
@@ -26,6 +29,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const {
     customDocumentTypes
   } = useCustomDocumentTypes();
+
   const navigation = [{
     name: "Dashboard",
     href: "/dashboard",
@@ -63,10 +67,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       isManagement: true
     } as SubmenuItem] as SubmenuItem[]
   }, {
+    name: "Support Us",
+    href: "/support",
+    icon: HelpCircle
+  }, {
     name: "Settings",
     href: "/settings",
     icon: Settings
   }];
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
@@ -79,6 +88,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       setBillingExpanded(true);
     }
   }, [isBillingActive]);
+
   return <div className="safe-h-screen flex flex-col md:flex-row bg-gray-100 mobile-safe">
       {/* Mobile menu toggle */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white p-4 shadow-md flex justify-between items-center">
@@ -188,4 +198,5 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </div>
     </div>;
 };
+
 export default DashboardLayout;
