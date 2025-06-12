@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -17,7 +18,8 @@ const NumberingSheet: React.FC = () => {
     quote_title: "Quotation",
     next_quote_seq: 1,
     credit_note_title: "Credit Note",
-    next_credit_seq: 1
+    next_credit_seq: 1,
+    hsn_code: "998387"
   });
 
   useEffect(() => {
@@ -29,7 +31,8 @@ const NumberingSheet: React.FC = () => {
         quote_title: settings.quote_title || "Quotation",
         next_quote_seq: settings.next_quote_seq || 1,
         credit_note_title: settings.credit_note_title || "Credit Note",
-        next_credit_seq: settings.next_credit_seq || 1
+        next_credit_seq: settings.next_credit_seq || 1,
+        hsn_code: settings.hsn_code || "998387"
       });
     }
   }, [settings]);
@@ -161,6 +164,24 @@ const NumberingSheet: React.FC = () => {
             </div>
             <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded">
               Next credit note: <strong>{numberingData.invoice_prefix}{numberingData.next_credit_seq}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium mb-2">HSN Code</h3>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="hsnCode">Default HSN Code</Label>
+              <Input
+                id="hsnCode"
+                value={numberingData.hsn_code}
+                onChange={(e) => handleChange('hsn_code', e.target.value)}
+                placeholder="998387"
+              />
+              <div className="text-sm text-gray-500 mt-1">
+                This HSN code will be used in invoices for tax classification
+              </div>
             </div>
           </div>
         </div>

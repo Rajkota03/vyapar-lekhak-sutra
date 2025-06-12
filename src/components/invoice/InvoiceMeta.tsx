@@ -110,7 +110,7 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
           />
         ) : (
           <div 
-            className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors"
+            className={`${isEditing ? 'cursor-pointer hover:bg-muted/50' : ''} rounded px-1 py-0.5 transition-colors`}
             onClick={handleNumberClick}
           >
             <BodyText className="font-medium text-foreground">{invoiceNumber}</BodyText>

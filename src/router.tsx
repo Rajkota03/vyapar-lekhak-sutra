@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 // Import new settings components
 import LogoSettings from "./pages/settings/LogoSettings";
 import CompanyInfoSheet from "./pages/settings/sheets/CompanyInfoSheet";
+import NumberingSheet from "./pages/settings/sheets/NumberingSheet";
 import SignatureSettings from "./pages/settings/SignatureSettings";
 import PaymentNoteSettings from "./pages/settings/PaymentNoteSettings";
 import InvoiceDefaultsSettings from "./pages/settings/InvoiceDefaultsSettings";
@@ -153,6 +154,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <CompanyInfoSheet />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/customization/numbering",
+    element: (
+      <ProtectedRoute>
+        <NumberingSheet />
       </ProtectedRoute>
     ),
   },

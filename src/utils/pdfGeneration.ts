@@ -1,4 +1,3 @@
-
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Invoice, LineItem } from '@/components/invoice/types/InvoiceTypes';
@@ -172,16 +171,11 @@ export const generateInvoicePDF = async (
   console.log('=== QUANTITY LABEL DEBUG ===');
   console.log('Custom quantity label:', quantityLabel);
 
-  if (companySettings?.logo_url) {
-    console.log('=== LOGO PROCESSING ===');
-    console.log('Company has logo URL:', companySettings.logo_url);
-    logoBase64 = await getImageAsBase64(companySettings.logo_url);
-    logoScale = Number(companySettings.logo_scale || 0.3);
-    console.log('Logo scale:', logoScale);
-    console.log('Logo base64 result:', logoBase64 ? 'SUCCESS' : 'FAILED');
-  } else {
-    console.log('No logo URL found in company settings');
-  }
+  // Get HSN code from company settings
+  const hsnCode = companySettings?.hsn_code || invoiceData.invoice_code || invoiceData.number;
+  console.log('=== HSN CODE DEBUG ===');
+  console.log('HSN code from settings:', companySettings?.hsn_code);
+  console.log('Final HSN code used:', hsnCode);
 
   // SIGNATURE LOGIC - Show signature only if both URL exists AND setting is enabled
   console.log('=== SIGNATURE PROCESSING DEBUG ===');
@@ -358,7 +352,7 @@ export const generateInvoicePDF = async (
               margin: [0, 0, 0, 2]
             },
             {
-              text: `HSN Code: ${invoiceData.invoice_code || invoiceData.number}`,
+              text: `HSN Code: ${hsnCode}`,
               style: 'invoiceDetails',
               alignment: 'right'
             }
@@ -687,6 +681,7 @@ export const generateInvoicePDF = async (
   console.log('Signature included:', !!(signatureBase64 && invoiceData.show_my_signature));
   console.log('Notes included:', hasNotes);
   console.log('Custom quantity label used:', quantityLabel);
+  console.log('HSN code used:', hsnCode);
   console.log('Company address lines included:', companyAddressLines.length);
   console.log('Company contact lines included:', companyContactLines.length);
   return docDefinition;

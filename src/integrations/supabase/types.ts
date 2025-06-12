@@ -93,6 +93,7 @@ export type Database = {
           default_sgst_pct: number | null
           due_days: number | null
           email: string | null
+          hsn_code: string | null
           invoice_prefix: string | null
           invoice_title: string | null
           logo_scale: number | null
@@ -125,6 +126,7 @@ export type Database = {
           default_sgst_pct?: number | null
           due_days?: number | null
           email?: string | null
+          hsn_code?: string | null
           invoice_prefix?: string | null
           invoice_title?: string | null
           logo_scale?: number | null
@@ -157,6 +159,7 @@ export type Database = {
           default_sgst_pct?: number | null
           due_days?: number | null
           email?: string | null
+          hsn_code?: string | null
           invoice_prefix?: string | null
           invoice_title?: string | null
           logo_scale?: number | null
