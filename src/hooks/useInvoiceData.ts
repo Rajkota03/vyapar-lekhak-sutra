@@ -36,6 +36,13 @@ interface Item {
   unit_price: number;
 }
 
+// Helper function to determine document type from URL
+const getDocumentType = (pathname: string): 'invoice' | 'proforma' | 'quote' => {
+  if (pathname.includes('/proforma')) return 'proforma';
+  if (pathname.includes('/quotations')) return 'quote';
+  return 'invoice';
+};
+
 export const useInvoiceData = () => {
   const params = useParams();
   const navigate = useNavigate();
@@ -45,6 +52,9 @@ export const useInvoiceData = () => {
   // Extract invoice ID from params - handle both /invoices/:id and /invoices/:companyId/:invoiceId patterns
   const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
   const selectedCompanyId = params.companyId || currentCompany?.id || null;
+  
+  // Determine document type from current path
+  const documentType = getDocumentType(window.location.pathname);
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -62,7 +72,8 @@ export const useInvoiceData = () => {
     console.log('Extracted Invoice ID:', invoiceId);
     console.log('URL pathname:', window.location.pathname);
     console.log('Selected Company ID:', selectedCompanyId);
-  }, [params, invoiceId, selectedCompanyId]);
+    console.log('Document Type:', documentType);
+  }, [params, invoiceId, selectedCompanyId, documentType]);
 
   const { data: clients, isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients', selectedCompanyId],
@@ -210,6 +221,7 @@ export const useInvoiceData = () => {
       console.log('Require client signature:', requireClientSignature);
       console.log('Notes being saved:', notes);
       console.log('Invoice number:', invoiceNumber);
+      console.log('Document type:', documentType);
       
       if (!selectedClient || !selectedCompanyId) {
         const errorMsg = `Missing required data - Client: ${!!selectedClient}, Company: ${!!selectedCompanyId}`;
@@ -286,20 +298,23 @@ export const useInvoiceData = () => {
       } else {
         console.log('=== CREATING NEW INVOICE ===');
         
-        // Use provided invoice number or generate one
+        // Use provided invoice number or generate one based on document type
         let finalInvoiceNumber = invoiceNumber;
         if (!finalInvoiceNumber) {
           const { data: generatedNumber, error: numberError } = await supabase
-            .rpc('next_invoice_number', { p_company_id: selectedCompanyId });
+            .rpc('next_doc_number', { 
+              p_company_id: selectedCompanyId,
+              p_doc_type: documentType
+            });
 
           if (numberError) {
-            console.error('Error generating invoice number:', numberError);
+            console.error('Error generating document number:', numberError);
             throw numberError;
           }
           finalInvoiceNumber = generatedNumber;
         }
 
-        console.log('Final invoice number:', finalInvoiceNumber);
+        console.log('Final document number:', finalInvoiceNumber);
 
         const newInvoiceData = {
           ...invoiceData,
@@ -369,6 +384,8 @@ export const useInvoiceData = () => {
       
       // ENHANCED INVALIDATION - Invalidate ALL related queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['proformas'] });
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
       queryClient.invalidateQueries({ queryKey: ['invoice', savedInvoice.id] });
       queryClient.invalidateQueries({ queryKey: ['invoice', invoiceId] });
       
@@ -377,20 +394,28 @@ export const useInvoiceData = () => {
       
       console.log('=== QUERIES INVALIDATED FOR FRESH DATA ===');
       
+      const docTypeLabel = documentType === 'proforma' ? 'Pro Forma' : 
+                          documentType === 'quote' ? 'Quotation' : 'Invoice';
+      
       toast({
         title: "Success",
-        description: `Invoice ${savedInvoice.number} saved successfully`,
+        description: `${docTypeLabel} ${savedInvoice.number} saved successfully`,
       });
 
-      navigate(`/invoices/${savedInvoice.id}`);
+      // Navigate to appropriate route based on document type
+      const basePath = documentType === 'proforma' ? '/proforma' : 
+                      documentType === 'quote' ? '/quotations' : '/invoices';
+      navigate(`${basePath}/${savedInvoice.id}`);
     },
     onError: (error) => {
       console.error('=== INVOICE SAVE ERROR ===');
       console.error('Error details:', error);
+      const docTypeLabel = documentType === 'proforma' ? 'pro forma' : 
+                          documentType === 'quote' ? 'quotation' : 'invoice';
       toast({
         variant: "destructive",
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save invoice. Please try again.",
+        description: error instanceof Error ? error.message : `Failed to save ${docTypeLabel}. Please try again.`,
       });
     },
   });
@@ -409,6 +434,7 @@ export const useInvoiceData = () => {
     saveInvoiceMutation,
     isSubmitting: saveInvoiceMutation.isPending,
     selectedCompanyId,
-    existingInvoice
+    existingInvoice,
+    documentType
   };
 };

@@ -1,9 +1,10 @@
-
 import { createBrowserRouter } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/Invoices";
+import ProForma from "./pages/ProForma";
+import Quotations from "./pages/Quotations";
 import InvoiceEdit from "./pages/InvoiceEdit";
 import InvoiceList from "./pages/InvoiceList";
 import ItemList from "./pages/ItemList";
@@ -60,6 +61,54 @@ export const router = createBrowserRouter([
   },
   {
     path: "/invoices/:id",
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/proforma",
+    element: (
+      <ProtectedRoute>
+        <ProForma />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/proforma/new",
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/proforma/:id",
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/quotations",
+    element: (
+      <ProtectedRoute>
+        <Quotations />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/quotations/new",
+    element: (
+      <ProtectedRoute>
+        <InvoiceEdit />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/quotations/:id",
     element: (
       <ProtectedRoute>
         <InvoiceEdit />
