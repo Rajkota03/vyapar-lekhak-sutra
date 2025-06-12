@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -64,6 +63,28 @@ export const useInvoiceData = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [existingInvoice, setExistingInvoice] = useState<any>(null);
 
+  // Fetch custom document type info if documentTypeId exists
+  const { data: customDocumentType } = useQuery({
+    queryKey: ['custom-document-type', documentTypeId],
+    queryFn: async () => {
+      if (!documentTypeId) return null;
+      
+      const { data, error } = await supabase
+        .from('custom_document_types')
+        .select('*')
+        .eq('id', documentTypeId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching custom document type:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!documentTypeId,
+  });
+
   // Log URL params extraction
   useEffect(() => {
     console.log('=== URL PARAMS EXTRACTION ===');
@@ -77,7 +98,8 @@ export const useInvoiceData = () => {
     console.log('URL pathname:', window.location.pathname);
     console.log('Selected Company ID:', selectedCompanyId);
     console.log('Document Type:', documentType);
-  }, [params, invoiceId, documentTypeId, selectedCompanyId, documentType]);
+    console.log('Custom Document Type:', customDocumentType);
+  }, [params, invoiceId, documentTypeId, selectedCompanyId, documentType, customDocumentType]);
 
   const { data: clients, isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients', selectedCompanyId],
@@ -477,6 +499,7 @@ export const useInvoiceData = () => {
     isSubmitting: saveInvoiceMutation.isPending,
     selectedCompanyId,
     existingInvoice,
-    documentType
+    documentType,
+    customDocumentType
   };
 };
