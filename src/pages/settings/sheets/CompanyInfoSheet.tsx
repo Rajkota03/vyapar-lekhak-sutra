@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SheetLayout } from "@/components/ui/SheetLayout";
@@ -211,7 +212,7 @@ const CompanyInfoSheet: React.FC = () => {
     <SheetLayout title="Company Information">
       <div className="space-y-4">
         <div>
-          <Label htmlFor="companyName">Company Name *</Label>
+          <Label htmlFor="companyName">Company Name</Label>
           <Input
             id="companyName"
             value={formData.name}
@@ -221,7 +222,7 @@ const CompanyInfoSheet: React.FC = () => {
         </div>
 
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email address on the invoice</Label>
           <Input
             id="email"
             type="email"
@@ -232,7 +233,7 @@ const CompanyInfoSheet: React.FC = () => {
         </div>
 
         <div>
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">Phone Number</Label>
           <Input
             id="phone"
             value={formData.phone}
@@ -242,7 +243,8 @@ const CompanyInfoSheet: React.FC = () => {
         </div>
 
         <div>
-          <Label htmlFor="gstin">GSTIN</Label>
+          <Label htmlFor="gstin">Business Number</Label>
+          <div className="text-sm text-muted-foreground mb-1">GSTIN</div>
           <Input
             id="gstin"
             value={formData.gstin}
@@ -251,65 +253,69 @@ const CompanyInfoSheet: React.FC = () => {
           />
         </div>
 
-        <div>
-          <Label htmlFor="addressLine1">Address Line 1</Label>
-          <Input
-            id="addressLine1"
-            value={formData.addressLine1}
-            onChange={(e) => handleChange('addressLine1', e.target.value)}
-            placeholder="Street address, building number"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="addressLine2">Address Line 2</Label>
-          <Input
-            id="addressLine2"
-            value={formData.addressLine2}
-            onChange={(e) => handleChange('addressLine2', e.target.value)}
-            placeholder="Area, landmark (optional)"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
+          <div className="text-sm font-medium">Address</div>
+          
           <div>
-            <Label htmlFor="city">City</Label>
+            <Label htmlFor="addressLine1">Address 1</Label>
             <Input
-              id="city"
-              value={formData.city}
-              onChange={(e) => handleChange('city', e.target.value)}
-              placeholder="City"
+              id="addressLine1"
+              value={formData.addressLine1}
+              onChange={(e) => handleChange('addressLine1', e.target.value)}
+              placeholder="Street address, building number"
             />
           </div>
-          <div>
-            <Label htmlFor="state">State</Label>
-            <Input
-              id="state"
-              value={formData.state}
-              onChange={(e) => handleChange('state', e.target.value)}
-              placeholder="State"
-            />
-          </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="zipCode">ZIP Code</Label>
+            <Label htmlFor="addressLine2">Address 2</Label>
             <Input
-              id="zipCode"
-              value={formData.zipCode}
-              onChange={(e) => handleChange('zipCode', e.target.value)}
-              placeholder="400001"
+              id="addressLine2"
+              value={formData.addressLine2}
+              onChange={(e) => handleChange('addressLine2', e.target.value)}
+              placeholder="Area, landmark (optional)"
             />
           </div>
-          <div>
-            <Label htmlFor="country">Country</Label>
-            <Input
-              id="country"
-              value={formData.country}
-              onChange={(e) => handleChange('country', e.target.value)}
-              placeholder="Country"
-            />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => handleChange('city', e.target.value)}
+                placeholder="City"
+              />
+            </div>
+            <div>
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
+                value={formData.state}
+                onChange={(e) => handleChange('state', e.target.value)}
+                placeholder="State"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="zipCode">Zip</Label>
+              <Input
+                id="zipCode"
+                value={formData.zipCode}
+                onChange={(e) => handleChange('zipCode', e.target.value)}
+                placeholder="400001"
+              />
+            </div>
+            <div>
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                value={formData.country}
+                onChange={(e) => handleChange('country', e.target.value)}
+                placeholder="Country"
+              />
+            </div>
           </div>
         </div>
 
