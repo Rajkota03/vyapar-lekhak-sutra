@@ -1,4 +1,3 @@
-
 import React from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -6,18 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
 import { Card } from "@/components/ui/primitives/Card";
-
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
-
-  return (
-    <DashboardLayout>
+  const {
+    user
+  } = useAuth();
+  return <DashboardLayout>
       <main className="safe-h-screen bg-gray-50">
-        <div className="space-y-3">
+        <div className="space-y-3 py-[8px]">
           <div className="flex items-center justify-between">
-            <h1 className="text-[1.375rem] font-semibold tracking-tight">Dashboard</h1>
+            <h1 className="text-[1.375rem] font-semibold tracking-tight px-[10px]">Dashboard</h1>
             <Button asChild className="h-8 px-3 rounded text-xs font-medium">
-              <Link to="/company/new">
+              <Link to="/company/new" className="px-[26px]">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Company
               </Link>
@@ -68,8 +66,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default Dashboard;
