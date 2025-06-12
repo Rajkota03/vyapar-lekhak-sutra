@@ -130,7 +130,7 @@ const CustomDocumentList = () => {
   return <DashboardLayout>
       <div className="space-y-6 bg-white px-0 py-[8px]">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between py-0 my-[8px]">
           <div className="px-[8px]">
             <Heading2>{documentType.name}</Heading2>
             <CaptionText className="mt-1">
