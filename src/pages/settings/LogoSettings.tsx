@@ -1,8 +1,10 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import { ChevronLeft, Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SheetBody } from "@/components/ui/SheetBody";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
@@ -12,31 +14,57 @@ import { toast } from "@/hooks/use-toast";
 const LogoSettings: React.FC = () => {
   const navigate = useNavigate();
   const { settings, updateSettings, companyId } = useCompanySettings();
+  const [logoUrl, setLogoUrl] = useState("");
+  const [logoScale, setLogoScale] = useState(0.3);
   const [isUploading, setIsUploading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(settings?.logo_url || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (settings?.logo_url) {
+      console.log('Setting logo URL from settings:', settings.logo_url);
+      setLogoUrl(settings.logo_url);
+    }
+    if (settings?.logo_scale) {
+      console.log('Setting logo scale from settings:', settings.logo_scale);
+      setLogoScale(Number(settings.logo_scale));
+    }
+  }, [settings]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !companyId) return;
 
+    console.log('=== LOGO UPLOAD DEBUG ===');
+    console.log('File selected:', file.name, file.type, file.size);
+    console.log('Company ID:', companyId);
+
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${companyId}/logo.${fileExt}`;
-
+      const fileName = `company_${companyId}/logo.${fileExt}`;
+      
+      console.log('Uploading to path:', fileName);
+      
       const { error: uploadError } = await supabase.storage
         .from('company-assets')
         .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage
         .from('company-assets')
         .getPublicUrl(fileName);
 
-      setLogoUrl(data.publicUrl);
-      updateSettings({ logo_url: data.publicUrl });
+      const publicUrl = data.publicUrl;
+      console.log('Generated public URL:', publicUrl);
+      
+      setLogoUrl(publicUrl);
+      
+      console.log('Updating company settings with logo URL:', publicUrl);
+      updateSettings({ logo_url: publicUrl });
       
       toast({
         title: "Success",
@@ -54,14 +82,53 @@ const LogoSettings: React.FC = () => {
     }
   };
 
-  const handleRemoveLogo = () => {
-    setLogoUrl("");
-    updateSettings({ logo_url: null });
-    toast({
-      title: "Success",
-      description: "Logo removed successfully",
-    });
+  const handleRemoveLogo = async () => {
+    try {
+      console.log('Removing logo, current URL:', logoUrl);
+      setLogoUrl("");
+      updateSettings({ logo_url: null });
+      
+      toast({
+        title: "Success",
+        description: "Logo removed successfully",
+      });
+    } catch (error) {
+      console.error('Error removing logo:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove logo",
+      });
+    }
   };
+
+  const handleScaleChange = async (value: number[]) => {
+    const newScale = value[0];
+    setLogoScale(newScale);
+    
+    try {
+      updateSettings({ logo_scale: newScale });
+      console.log('Logo scale updated to:', newScale);
+    } catch (error) {
+      console.error('Error updating logo scale:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update logo scale",
+      });
+    }
+  };
+
+  // Calculate preview dimensions - using a base of 80px for better preview
+  const previewBaseSize = 80;
+  const previewWidth = previewBaseSize * logoScale;
+  const previewHeight = previewBaseSize * logoScale;
+
+  console.log('=== LOGO SETTINGS DEBUG ===');
+  console.log('Current logoUrl state:', logoUrl);
+  console.log('Current logoScale state:', logoScale);
+  console.log('Settings from hook:', settings);
+  console.log('Company ID:', companyId);
 
   return (
     <Sheet open onOpenChange={() => navigate('/settings')}>
@@ -82,18 +149,71 @@ const LogoSettings: React.FC = () => {
         
         <SheetBody>
           <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-lg font-medium mb-2">Company Logo</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Upload your company logo to appear on invoices and documents
+              </p>
+            </div>
+
             {logoUrl ? (
-              <div className="space-y-4">
-                <div className="flex justify-center">
-                  <img 
-                    src={logoUrl} 
-                    alt="Company Logo" 
-                    className="max-w-48 max-h-32 object-contain border rounded-lg"
-                  />
+              <div className="space-y-6">
+                {/* Logo Preview Section */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-700">Preview</h4>
+                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                    <img 
+                      src={logoUrl} 
+                      alt="Company Logo" 
+                      className="object-contain border border-gray-200 shadow-sm"
+                      style={{ 
+                        height: `${previewHeight}px`,
+                        width: `${previewWidth}px`,
+                        maxHeight: '160px',
+                        maxWidth: '100%'
+                      }}
+                      onLoad={() => console.log('Logo preview loaded successfully')}
+                      onError={(e) => {
+                        console.error('Logo preview failed to load:', e);
+                        console.error('Failed URL:', logoUrl);
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 text-center">
+                    This is how your logo will appear on invoices
+                  </p>
                 </div>
+
+                {/* Logo Size Control */}
+                <div className="space-y-4">
+                  <label className="text-sm font-medium text-gray-700">
+                    Logo Size
+                  </label>
+                  <div className="px-2">
+                    <Slider
+                      value={[logoScale]}
+                      onValueChange={handleScaleChange}
+                      max={2.0}
+                      min={0.1}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Tiny (0.1x)</span>
+                    <span className="font-medium">Current: {logoScale.toFixed(1)}x</span>
+                    <span>Large (2.0x)</span>
+                  </div>
+                  <div className="text-xs text-gray-400 text-center">
+                    Dimensions: {Math.round(80 * logoScale)}px × {Math.round(80 * logoScale)}px (in PDF)
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                     className="flex-1"
@@ -101,37 +221,45 @@ const LogoSettings: React.FC = () => {
                     <Upload className="h-4 w-4 mr-2" />
                     Replace Logo
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleRemoveLogo}
                     className="text-red-600 hover:text-red-700"
                   >
-                    <X className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
+                </div>
+
+                {/* Technical Details */}
+                <div className="bg-gray-50 p-3 rounded text-xs space-y-1">
+                  <p><strong>Technical Details:</strong></p>
+                  <p>Original URL: {logoUrl.substring(0, 50)}...</p>
+                  <p>Scale Factor: {logoScale}x</p>
+                  <p>PDF Dimensions: {Math.round(80 * logoScale)}px × {Math.round(80 * logoScale)}px</p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Upload your company logo
-                  </p>
-                  <Button 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? "Uploading..." : "Choose File"}
-                  </Button>
-                </div>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h4 className="text-lg font-medium mb-2">Upload your logo</h4>
+                <p className="text-sm text-gray-500 mb-4">
+                  PNG, JPG or SVG files are supported
+                </p>
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? "Uploading..." : "Choose File"}
+                </Button>
               </div>
             )}
 
-            <input
+            <Input
               ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleFileUpload}
+              disabled={isUploading}
               className="hidden"
             />
           </div>

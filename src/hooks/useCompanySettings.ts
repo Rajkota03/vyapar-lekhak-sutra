@@ -101,6 +101,12 @@ export const useCompanySettings = (providedCompanyId?: string) => {
     get logoUrl() {
       return settings?.logo_url || '';
     },
+    get logoScale() {
+      return Number(settings?.logo_scale || 0.3);
+    },
+    get signatureScale() {
+      return Number(settings?.signature_scale || 1.0);
+    },
   };
 
   return {
@@ -121,5 +127,7 @@ export const useCompanySettings = (providedCompanyId?: string) => {
     defaultNote: getters.defaultNote,
     paymentNote: getters.paymentNote,
     logoUrl: getters.logoUrl,
+    logoScale: getters.logoScale,
+    signatureScale: getters.signatureScale,
   };
 };
