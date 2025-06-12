@@ -26,9 +26,6 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   const [isEditingNumber, setIsEditingNumber] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-  console.log('Calendar open state:', isCalendarOpen);
-  console.log('Selected date:', selectedDate);
-
   const handleNumberSave = (value: string) => {
     if (onInvoiceNumberChange && value.trim()) {
       onInvoiceNumberChange(value.trim());
@@ -59,7 +56,6 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   };
 
   const handleDateSelect = (date: Date | undefined) => {
-    console.log('Date selected:', date);
     if (date) {
       setSelectedDate(date);
       setIsCalendarOpen(false);
@@ -67,32 +63,28 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
   };
 
   const handleCalendarToggle = (open: boolean) => {
-    console.log('Calendar toggle:', open);
     setIsCalendarOpen(open);
-  };
-
-  const handleDateClick = () => {
-    console.log('Date clicked, opening calendar');
-    setIsCalendarOpen(true);
   };
 
   const formattedDate = format(selectedDate, "dd MMM yyyy");
 
   return (
     <div className="flex justify-between items-center py-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <Popover open={isCalendarOpen} onOpenChange={handleCalendarToggle}>
           <PopoverTrigger asChild>
-            <PremiumButton 
-              variant="ghost" 
-              size="sm"
-              className="p-1 h-auto text-muted-foreground hover:bg-transparent"
-              onClick={handleDateClick}
-            >
-              <CalendarIcon className="h-4 w-4" />
-            </PremiumButton>
+            <div className="flex items-center gap-2 cursor-pointer group rounded-lg px-3 py-2 hover:bg-muted/50 transition-all duration-200 border border-transparent hover:border-border/50">
+              <CalendarIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <BodyText className="font-medium text-foreground select-none">
+                {formattedDate}
+              </BodyText>
+            </div>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 z-[60]" align="start">
+          <PopoverContent 
+            className="w-auto p-0 z-[100] shadow-lg border bg-popover" 
+            align="start"
+            sideOffset={8}
+          >
             <CalendarComponent 
               mode="single" 
               selected={selectedDate} 
@@ -102,13 +94,6 @@ const InvoiceMeta: React.FC<InvoiceMetaProps> = ({
             />
           </PopoverContent>
         </Popover>
-        
-        <div 
-          className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors"
-          onClick={handleDateClick}
-        >
-          <BodyText className="font-medium text-foreground">{formattedDate}</BodyText>
-        </div>
       </div>
       
       <div className="flex items-center gap-2">
