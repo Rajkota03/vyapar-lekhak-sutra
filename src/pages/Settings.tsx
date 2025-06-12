@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { ChevronLeft, User, Building2, FileText, Palette, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,46 @@ import { Card } from "@/components/ui/primitives/Card";
 import { SettingsRow } from "@/components/ui/SettingsRow";
 import { useCompany } from "@/context/CompanyContext";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { supabase } from "@/integrations/supabase/client";
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { currentCompany } = useCompany();
   const { settings } = useCompanySettings();
+  const [userProfile, setUserProfile] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+  }>({
+    firstName: '',
+    lastName: '',
+    email: ''
+  });
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        
+        if (user) {
+          setUserProfile({
+            firstName: user.user_metadata?.first_name || '',
+            lastName: user.user_metadata?.last_name || '',
+            email: user.email || ''
+          });
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      }
+    };
+
+    loadUserProfile();
+  }, []);
+
+  const displayName = userProfile.firstName && userProfile.lastName 
+    ? `${userProfile.firstName} ${userProfile.lastName}`
+    : userProfile.email || 'User';
 
   return (
     <>
@@ -38,11 +73,11 @@ const Settings: React.FC = () => {
             <div className="p-4 border-b">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+                  <User className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium">{currentCompany?.name || 'No Company Selected'}</h3>
-                  <p className="text-sm text-gray-500">{settings?.email || 'No email set'}</p>
+                  <h3 className="font-medium">{displayName}</h3>
+                  <p className="text-sm text-gray-500">{userProfile.email}</p>
                 </div>
               </div>
             </div>
