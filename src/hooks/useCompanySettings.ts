@@ -87,10 +87,10 @@ export const useCompanySettings = (providedCompanyId?: string) => {
       return settings?.default_igst_pct || 18;
     },
     get showMySignature() {
-      return settings?.show_my_signature || false;
+      return settings?.signature_url ? true : false;
     },
     get requireClientSignature() {
-      return settings?.require_client_signature || false;
+      return false; // This field doesn't exist in company_settings, removing
     },
     get defaultNote() {
       return settings?.default_note || '';

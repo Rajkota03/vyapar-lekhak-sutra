@@ -13,8 +13,9 @@ const SignatureSettings: React.FC = () => {
   const { settings, updateSettings } = useCompanySettings();
   const [signatureUrl, setSignatureUrl] = useState("");
 
-  const handleToggleSignature = (checked: boolean) => {
-    updateSettings({ show_signature: checked });
+  const handleToggleSignature = async (checked: boolean) => {
+    // This toggle doesn't exist in the database schema, removing functionality
+    console.log('Signature toggle:', checked);
   };
 
   return (
@@ -36,12 +37,6 @@ const SignatureSettings: React.FC = () => {
         
         <SheetBody>
           <div className="space-y-6">
-            <ToggleRow
-              label="Show Signature on Invoices"
-              checked={settings?.show_signature || false}
-              onToggle={handleToggleSignature}
-            />
-
             {signatureUrl ? (
               <div className="space-y-4">
                 <div className="flex justify-center">

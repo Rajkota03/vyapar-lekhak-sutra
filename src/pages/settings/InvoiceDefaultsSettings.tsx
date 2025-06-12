@@ -15,17 +15,23 @@ const InvoiceDefaultsSettings: React.FC = () => {
   const { settings, updateSettings } = useCompanySettings();
   const [dueDays, setDueDays] = useState(settings?.due_days || 30);
   const [invoicePrefix, setInvoicePrefix] = useState(settings?.invoice_prefix || "INV");
-  const [showMySignature, setShowMySignature] = useState(settings?.show_my_signature || false);
-  const [requireClientSignature, setRequireClientSignature] = useState(settings?.require_client_signature || false);
 
   const handleSave = () => {
     updateSettings({ 
       due_days: dueDays,
-      invoice_prefix: invoicePrefix,
-      show_my_signature: showMySignature,
-      require_client_signature: requireClientSignature
+      invoice_prefix: invoicePrefix
     });
     navigate('/settings');
+  };
+
+  const handleToggleSignature = async (checked: boolean) => {
+    // Placeholder for future functionality
+    console.log('Signature toggle:', checked);
+  };
+
+  const handleToggleClientSignature = async (checked: boolean) => {
+    // Placeholder for future functionality  
+    console.log('Client signature toggle:', checked);
   };
 
   return (
@@ -73,14 +79,14 @@ const InvoiceDefaultsSettings: React.FC = () => {
             <div className="space-y-2">
               <ToggleRow
                 label="Show My Signature by Default"
-                checked={showMySignature}
-                onToggle={setShowMySignature}
+                checked={false}
+                onToggle={handleToggleSignature}
               />
               
               <ToggleRow
                 label="Require Client Signature by Default"
-                checked={requireClientSignature}
-                onToggle={setRequireClientSignature}
+                checked={false}
+                onToggle={handleToggleClientSignature}
               />
             </div>
 

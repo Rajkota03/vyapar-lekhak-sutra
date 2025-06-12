@@ -20,8 +20,6 @@ const CompanyInfoSettings: React.FC = () => {
     name: "",
     gstin: "",
     address: "",
-    phone: "",
-    email: "",
   });
 
   useEffect(() => {
@@ -45,8 +43,6 @@ const CompanyInfoSettings: React.FC = () => {
           name: company.name || "",
           gstin: company.gstin || "",
           address: company.address || "",
-          phone: company.phone || "",
-          email: company.email || "",
         });
       }
     };
@@ -120,27 +116,6 @@ const CompanyInfoSettings: React.FC = () => {
                   value={companyData.gstin}
                   onChange={(e) => setCompanyData({ ...companyData, gstin: e.target.value })}
                   placeholder="Enter GSTIN"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={companyData.phone}
-                  onChange={(e) => setCompanyData({ ...companyData, phone: e.target.value })}
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={companyData.email}
-                  onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
-                  placeholder="Enter email address"
                 />
               </div>
 
