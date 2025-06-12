@@ -17,6 +17,15 @@ import UserSettings from "./pages/settings/UserSettings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
+// Import new settings components
+import LogoSettings from "./pages/settings/LogoSettings";
+import CompanyInfoSettings from "./pages/settings/CompanyInfoSettings";
+import SignatureSettings from "./pages/settings/SignatureSettings";
+import PaymentNoteSettings from "./pages/settings/PaymentNoteSettings";
+import InvoiceDefaultsSettings from "./pages/settings/InvoiceDefaultsSettings";
+import TaxSettings from "./pages/settings/TaxSettings";
+import NumberingSettings from "./pages/settings/NumberingSettings";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -127,6 +136,63 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <UserSettings />
+      </ProtectedRoute>
+    ),
+  },
+  // Add all missing settings routes
+  {
+    path: "/settings/logo",
+    element: (
+      <ProtectedRoute>
+        <LogoSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/company-info",
+    element: (
+      <ProtectedRoute>
+        <CompanyInfoSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/signature",
+    element: (
+      <ProtectedRoute>
+        <SignatureSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/payment-note",
+    element: (
+      <ProtectedRoute>
+        <PaymentNoteSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/invoice-defaults",
+    element: (
+      <ProtectedRoute>
+        <InvoiceDefaultsSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/tax",
+    element: (
+      <ProtectedRoute>
+        <TaxSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/numbering",
+    element: (
+      <ProtectedRoute>
+        <NumberingSettings />
       </ProtectedRoute>
     ),
   },

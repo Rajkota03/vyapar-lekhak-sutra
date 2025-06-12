@@ -1,9 +1,31 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
-export const useCompanySettings = (companyId?: string) => {
+export const useCompanySettings = (providedCompanyId?: string) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // Fetch current company if no companyId provided
+  const { data: currentCompany } = useQuery({
+    queryKey: ['current-company', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('owner_id', user.id)
+        .limit(1);
+
+      if (error) throw error;
+      return data?.[0] || null;
+    },
+    enabled: !!user && !providedCompanyId,
+  });
+
+  const companyId = providedCompanyId || currentCompany?.id;
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['company-settings', companyId],
@@ -65,18 +87,19 @@ export const useCompanySettings = (companyId?: string) => {
       return settings?.default_igst_pct || 18;
     },
     get showMySignature() {
-      // Note: Database doesn't have show_my_signature yet, using default
-      return true;
+      return settings?.show_my_signature || false;
     },
     get requireClientSignature() {
-      // Note: Database doesn't have require_client_signature yet, using default
-      return false;
+      return settings?.require_client_signature || false;
     },
     get defaultNote() {
       return settings?.default_note || '';
     },
     get paymentNote() {
       return settings?.payment_note || 'Thank you for your business!';
+    },
+    get logoUrl() {
+      return settings?.logo_url || '';
     },
   };
 
@@ -85,7 +108,7 @@ export const useCompanySettings = (companyId?: string) => {
     isLoading,
     updateSettings: updateSettings.mutate,
     isUpdating: updateSettings.isPending,
-    companyId, // Return companyId so components can access it
+    companyId,
     // Also expose individual getters for direct access
     quantityLabel: getters.quantityLabel,
     invoiceNumberPrefix: getters.invoiceNumberPrefix,
@@ -97,5 +120,6 @@ export const useCompanySettings = (companyId?: string) => {
     requireClientSignature: getters.requireClientSignature,
     defaultNote: getters.defaultNote,
     paymentNote: getters.paymentNote,
+    logoUrl: getters.logoUrl,
   };
 };
