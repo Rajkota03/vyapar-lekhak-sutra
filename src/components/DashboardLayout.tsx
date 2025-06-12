@@ -93,9 +93,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return <div className="safe-h-screen flex flex-col md:flex-row bg-gray-100 mobile-safe">
       {/* Mobile menu toggle */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white p-4 shadow-md flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <DulyLogo size={24} />
-          <h2 className="text-[1.125rem] font-bold">Duly</h2>
+        <div className="flex items-center">
+          <DulyLogo size={24} variant="default" />
         </div>
         <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
           {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
@@ -107,10 +106,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <div className="flex-1 flex flex-col min-h-0 bg-white shadow-lg">
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center justify-center flex-shrink-0 px-4">
-              <div className="flex items-center gap-3">
-                <DulyLogo size={32} />
-                <h1 className="text-[1.375rem] font-bold">Duly</h1>
-              </div>
+              <DulyLogo size={32} variant="wordmark" />
             </div>
             <nav className="mt-8 flex-1 px-2 space-y-1">
               {navigation.map(item => {

@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { PremiumButton } from "@/components/ui/primitives/PremiumButton";
 import { Heading2 } from "@/components/ui/primitives/Typography";
+import { DulyLogo } from "@/components/ui/DulyLogo";
 
 interface AppHeaderProps {
   title: string;
   showBack?: boolean;
   backPath?: string;
   titleClassName?: string;
+  showLogo?: boolean;
   rightAction?: {
     label: string;
     onClick: () => void;
@@ -23,6 +25,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   showBack = false,
   backPath = "/",
   titleClassName,
+  showLogo = false,
   rightAction
 }) => {
   const navigate = useNavigate();
@@ -40,6 +43,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             >
               <ChevronLeft className="h-4 w-4" />
             </PremiumButton>
+          )}
+          {showLogo && (
+            <DulyLogo size={20} variant="icon" />
           )}
           <Heading2 className={titleClassName || "text-lg"}>{title}</Heading2>
         </div>
