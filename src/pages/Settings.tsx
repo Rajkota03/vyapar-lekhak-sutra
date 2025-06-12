@@ -77,10 +77,6 @@ const Settings: React.FC = () => {
               <h3 className="font-medium text-sm text-gray-600">INVOICE</h3>
             </div>
             <SettingsRow 
-              label="Invoice Defaults"
-              onClick={() => navigate('/settings/invoice-defaults')}
-            />
-            <SettingsRow 
               label="Tax Settings"
               onClick={() => navigate('/settings/tax')}
             />
