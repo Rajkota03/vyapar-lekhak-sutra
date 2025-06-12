@@ -96,7 +96,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Main content area */}
       <div className="md:pl-64 flex flex-col flex-1">
-        <main className="flex-1 pt-16 md:pt-0">
+        <main className="flex-1 pt-16 md:pt-0 py-[41px]">
           <div className="sm:px-6 md:px-8 bg-zinc-200 px-0 py-0">{children}</div>
         </main>
       </div>
