@@ -93,17 +93,16 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   }, [swipeOffset]);
 
   return (
-    <div className="relative" style={{ overflow: 'hidden' }}>
+    <div className="relative w-full overflow-hidden">
       {/* Swipeable content */}
       <div
         ref={rowRef}
         className={cn(
-          "transition-transform duration-200 ease-out relative z-10 bg-white",
+          "transition-transform duration-200 ease-out relative z-10 bg-white w-full",
           className
         )}
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
-          width: '100%'
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -112,17 +111,16 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
         {children}
       </div>
       
-      {/* Action buttons - only render when swiping */}
+      {/* Action buttons - positioned absolutely behind the content */}
       {swipeOffset > 0 && (
         <div 
-          className="absolute inset-y-0 right-0 flex items-center z-0"
-          style={{ width: `${swipeOffset}px` }}
+          className="absolute inset-y-0 right-0 flex items-stretch z-0"
+          style={{ width: `${maxSwipeDistance}px` }}
         >
           {/* Convert button (if enabled) */}
           {showConvert && onConvert && (
             <div 
-              className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
-              style={{ width: '80px', minWidth: '80px' }}
+              className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors flex-1"
               onClick={(e) => handleActionClick(onConvert, e)}
             >
               <FileText className="h-5 w-5 text-white" />
@@ -132,8 +130,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
           {/* Delete button */}
           {onDelete && (
             <div 
-              className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors"
-              style={{ width: '80px', minWidth: '80px' }}
+              className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors flex-1"
               onClick={(e) => handleActionClick(onDelete, e)}
             >
               <Trash2 className="h-5 w-5 text-white" />

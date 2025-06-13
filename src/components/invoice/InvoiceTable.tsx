@@ -156,55 +156,57 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
   };
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead 
-              className={`w-[150px] ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
-              onClick={() => handleHeaderClick('number')}
-            >
-              Document # {getSortIcon('number')}
-            </TableHead>
-            <TableHead 
-              className={onSort ? 'cursor-pointer hover:bg-muted/50' : ''}
-              onClick={() => handleHeaderClick('client')}
-            >
-              Client {getSortIcon('client')}
-            </TableHead>
-            <TableHead 
-              className={`hidden sm:table-cell ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
-              onClick={() => handleHeaderClick('date')}
-            >
-              Date {getSortIcon('date')}
-            </TableHead>
-            <TableHead 
-              className={`text-right ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
-              onClick={() => handleHeaderClick('amount')}
-            >
-              Amount {getSortIcon('amount')}
-            </TableHead>
-            <TableHead 
-              className={`hidden sm:table-cell text-center ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
-              onClick={() => handleHeaderClick('status')}
-            >
-              Status {getSortIcon('status')}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invoices.map((invoice) => (
-            <InvoiceRow
-              key={invoice.id}
-              invoice={invoice}
-              onInvoiceClick={onInvoiceClick}
-              onDelete={onDelete}
-              onConvert={onConvert}
-              documentType={documentType}
-            />
-          ))}
-        </TableBody>
-      </Table>
+    <div className="w-full overflow-hidden rounded-md border">
+      <div className="w-full overflow-x-auto">
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead 
+                className={`w-[150px] ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                onClick={() => handleHeaderClick('number')}
+              >
+                Document # {getSortIcon('number')}
+              </TableHead>
+              <TableHead 
+                className={onSort ? 'cursor-pointer hover:bg-muted/50' : ''}
+                onClick={() => handleHeaderClick('client')}
+              >
+                Client {getSortIcon('client')}
+              </TableHead>
+              <TableHead 
+                className={`hidden sm:table-cell ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                onClick={() => handleHeaderClick('date')}
+              >
+                Date {getSortIcon('date')}
+              </TableHead>
+              <TableHead 
+                className={`text-right ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                onClick={() => handleHeaderClick('amount')}
+              >
+                Amount {getSortIcon('amount')}
+              </TableHead>
+              <TableHead 
+                className={`hidden sm:table-cell text-center ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                onClick={() => handleHeaderClick('status')}
+              >
+                Status {getSortIcon('status')}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {invoices.map((invoice) => (
+              <InvoiceRow
+                key={invoice.id}
+                invoice={invoice}
+                onInvoiceClick={onInvoiceClick}
+                onDelete={onDelete}
+                onConvert={onConvert}
+                documentType={documentType}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
