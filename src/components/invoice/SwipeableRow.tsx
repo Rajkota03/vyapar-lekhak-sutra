@@ -99,55 +99,48 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
 
   return (
     <div 
-      className="relative w-full overflow-hidden bg-white"
+      className="relative w-full overflow-hidden"
       data-swipeable-row
       {...handlers}
     >
-      {/* Swipeable content */}
+      {/* Action buttons - positioned absolutely behind the content */}
+      <div 
+        className="absolute inset-y-0 right-0 flex items-stretch"
+        style={{ width: `${maxSwipeDistance}px` }}
+      >
+        {/* Convert button (if enabled) */}
+        {showConvert && onConvert && (
+          <div 
+            className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors flex-1"
+            onClick={(e) => handleActionClick(onConvert, e)}
+          >
+            <FileText className="h-5 w-5 text-white" />
+          </div>
+        )}
+        
+        {/* Delete button */}
+        {onDelete && (
+          <div 
+            className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors flex-1"
+            onClick={(e) => handleActionClick(onDelete, e)}
+          >
+            <Trash2 className="h-5 w-5 text-white" />
+          </div>
+        )}
+      </div>
+
+      {/* Swipeable content - covers the action buttons completely */}
       <div
         className={cn(
-          "transition-transform duration-200 ease-out relative z-10 bg-white",
-          // Override table cell styling to eliminate padding issues
-          "[&_td]:!p-0 [&_td]:!pr-0",
-          "[&_td>*]:px-4 [&_td>*]:py-4",
-          "[&_td:last-child>*]:pr-4",
+          "relative z-10 bg-white transition-transform duration-200 ease-out",
           className
         )}
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
-          minWidth: '100%',
         }}
       >
         {children}
       </div>
-      
-      {/* Action buttons - positioned absolutely behind the content */}
-      {swipeOffset > 0 && (
-        <div 
-          className="absolute inset-y-0 right-0 flex items-stretch z-0"
-          style={{ width: `${maxSwipeDistance}px` }}
-        >
-          {/* Convert button (if enabled) */}
-          {showConvert && onConvert && (
-            <div 
-              className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors flex-1"
-              onClick={(e) => handleActionClick(onConvert, e)}
-            >
-              <FileText className="h-5 w-5 text-white" />
-            </div>
-          )}
-          
-          {/* Delete button */}
-          {onDelete && (
-            <div 
-              className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors flex-1"
-              onClick={(e) => handleActionClick(onDelete, e)}
-            >
-              <Trash2 className="h-5 w-5 text-white" />
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
