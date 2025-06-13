@@ -1,9 +1,11 @@
+
 import React, { useState } from "react";
 import { ModernCard } from "@/components/ui/primitives/ModernCard";
 import { Heading3, BodyText, CaptionText } from "@/components/ui/primitives/Typography";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatNumber } from "@/utils/formatNumber";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -187,126 +189,162 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ModernCard className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+        <ModernCard className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-100 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <BodyText className="text-sm text-muted-foreground">Paid</BodyText>
-              <BodyText className="text-lg font-semibold text-green-600">
+              <BodyText className="text-sm text-muted-foreground mb-1">Paid Invoices</BodyText>
+              <BodyText className="text-2xl font-bold text-green-600">
                 ₹{formatNumber(paidInvoices.reduce((sum, p) => sum + p.total, 0))}
               </BodyText>
-              <CaptionText>{paidInvoices.length} invoices</CaptionText>
+              <CaptionText className="text-muted-foreground">{paidInvoices.length} invoices</CaptionText>
             </div>
           </div>
         </ModernCard>
 
-        <ModernCard className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+        <ModernCard className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-red-100 rounded-lg">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <BodyText className="text-sm text-muted-foreground">Overdue</BodyText>
-              <BodyText className="text-lg font-semibold text-red-600">
+              <BodyText className="text-sm text-muted-foreground mb-1">Overdue</BodyText>
+              <BodyText className="text-2xl font-bold text-red-600">
                 ₹{formatNumber(overdueInvoices.reduce((sum, p) => sum + p.total, 0))}
               </BodyText>
-              <CaptionText>{overdueInvoices.length} invoices</CaptionText>
+              <CaptionText className="text-muted-foreground">{overdueInvoices.length} invoices</CaptionText>
             </div>
           </div>
         </ModernCard>
 
-        <ModernCard className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Clock className="h-5 w-5 text-orange-600" />
+        <ModernCard className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <Clock className="h-6 w-6 text-orange-600" />
             </div>
             <div>
-              <BodyText className="text-sm text-muted-foreground">Pending</BodyText>
-              <BodyText className="text-lg font-semibold text-orange-600">
+              <BodyText className="text-sm text-muted-foreground mb-1">Pending</BodyText>
+              <BodyText className="text-2xl font-bold text-orange-600">
                 ₹{formatNumber(pendingInvoices.reduce((sum, p) => sum + p.total, 0))}
               </BodyText>
-              <CaptionText>{pendingInvoices.length} invoices</CaptionText>
+              <CaptionText className="text-muted-foreground">{pendingInvoices.length} invoices</CaptionText>
             </div>
           </div>
         </ModernCard>
       </div>
 
-      {/* Payment Actions */}
+      {/* Payment Table */}
       <ModernCard>
-        <div className="p-4 border-b">
-          <Heading3>Payment Tracking & Management</Heading3>
-          <CaptionText>Track and update payment status for your invoices</CaptionText>
+        <div className="p-6 border-b">
+          <div className="flex items-center gap-3">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <div>
+              <Heading3>Payment Management</Heading3>
+              <CaptionText className="text-muted-foreground">Track and update payment status for your invoices</CaptionText>
+            </div>
+          </div>
         </div>
         
-        <div className="max-h-96 overflow-y-auto">
-          {paymentData.length === 0 ? (
-            <div className="p-8 text-center">
-              <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <BodyText className="text-muted-foreground">No invoices found</BodyText>
-            </div>
-          ) : (
-            <div className="space-y-3 p-4">
-              {paymentData.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3 flex-1">
-                    {getStatusIcon(payment.status, payment.isOverdue)}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <BodyText className="font-medium">{payment.number}</BodyText>
+        {paymentData.length === 0 ? (
+          <div className="p-12 text-center">
+            <CreditCard className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <BodyText className="text-muted-foreground text-lg mb-2">No invoices found</BodyText>
+            <CaptionText className="text-muted-foreground">Create your first invoice to start tracking payments</CaptionText>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Paid</TableHead>
+                  <TableHead className="text-right">Remaining</TableHead>
+                  <TableHead className="text-right w-[280px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paymentData.map((payment) => (
+                  <TableRow key={payment.id} className="hover:bg-muted/30">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(payment.status, payment.isOverdue)}
                         {getStatusBadge(payment.status, payment.isOverdue)}
                       </div>
-                      <CaptionText>{payment.clientName}</CaptionText>
-                      <CaptionText>Due: {new Date(payment.dueDate).toLocaleDateString()}</CaptionText>
-                    </div>
-                    <div className="text-right">
+                    </TableCell>
+                    <TableCell>
+                      <BodyText className="font-medium">{payment.number}</BodyText>
+                    </TableCell>
+                    <TableCell>
+                      <BodyText>{payment.clientName}</BodyText>
+                    </TableCell>
+                    <TableCell>
+                      <CaptionText className={payment.isOverdue ? "text-red-600 font-medium" : ""}>
+                        {new Date(payment.dueDate).toLocaleDateString()}
+                      </CaptionText>
+                    </TableCell>
+                    <TableCell className="text-right">
                       <BodyText className="font-semibold">₹{formatNumber(payment.total)}</BodyText>
-                      {payment.paidAmount > 0 && payment.status !== 'paid' && (
-                        <CaptionText className="text-blue-600">
-                          Paid: ₹{formatNumber(payment.paidAmount)}
-                        </CaptionText>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <BodyText className={payment.paidAmount > 0 ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                        ₹{formatNumber(payment.paidAmount)}
+                      </BodyText>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <BodyText className={payment.remainingAmount > 0 ? "font-medium" : "text-muted-foreground"}>
+                        ₹{formatNumber(payment.remainingAmount)}
+                      </BodyText>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {payment.status !== 'paid' ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Enter amount"
+                            className="w-24 h-9 text-sm"
+                            value={partialPayments[payment.id] || ''}
+                            onChange={(e) => handlePartialPayment(payment.id, parseFloat(e.target.value) || 0)}
+                            max={payment.remainingAmount}
+                            min={0}
+                            step="0.01"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => applyPartialPayment(payment.id)}
+                            disabled={updatingPayments.has(payment.id) || !partialPayments[payment.id]}
+                            className="h-9 px-3"
+                          >
+                            Update
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleMarkAsPaid(payment.id)}
+                            disabled={updatingPayments.has(payment.id)}
+                            className="h-9 px-3"
+                          >
+                            Mark Paid
+                          </Button>
+                        </div>
+                      ) : (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Completed
+                        </Badge>
                       )}
-                      {payment.status !== 'paid' && (
-                        <CaptionText>Remaining: ₹{formatNumber(payment.remainingAmount)}</CaptionText>
-                      )}
-                    </div>
-                  </div>
-
-                  {payment.status !== 'paid' && (
-                    <div className="flex items-center gap-2 ml-4">
-                      <Input
-                        type="number"
-                        placeholder="Amount"
-                        className="w-24 h-8"
-                        value={partialPayments[payment.id] || ''}
-                        onChange={(e) => handlePartialPayment(payment.id, parseFloat(e.target.value) || 0)}
-                        max={payment.remainingAmount}
-                        min={0}
-                        step="0.01"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => applyPartialPayment(payment.id)}
-                        disabled={updatingPayments.has(payment.id) || !partialPayments[payment.id]}
-                      >
-                        Update
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleMarkAsPaid(payment.id)}
-                        disabled={updatingPayments.has(payment.id)}
-                      >
-                        Mark Paid
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </ModernCard>
     </div>
   );
