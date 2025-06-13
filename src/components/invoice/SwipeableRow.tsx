@@ -55,12 +55,9 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
         setSwipeOffset(offset);
       }
     },
-    onSwipeStart: () => {
-      // Prevent any animations during swipe
-    },
     preventScrollOnSwipe: true,
-    trackMouse: false, // Only track touch events
-    delta: 10, // Minimum distance to trigger swipe
+    trackMouse: false,
+    delta: 10,
   });
 
   const handleActionClick = (action: () => void, event: React.MouseEvent) => {
@@ -98,20 +95,19 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   }, [isOpen]);
 
   return (
-    <div 
-      className="relative overflow-hidden"
-      data-swipeable-row
-      {...handlers}
-    >
-      {/* Action buttons - positioned absolutely behind the content */}
+    <>
+      {/* Action buttons positioned behind the table */}
       <div 
-        className="absolute inset-y-0 right-0 flex items-stretch z-0"
-        style={{ width: `${maxSwipeDistance}px` }}
+        className="fixed inset-y-0 right-0 flex items-stretch pointer-events-none z-0"
+        style={{ 
+          width: `${maxSwipeDistance}px`,
+          display: swipeOffset > 0 ? 'flex' : 'none'
+        }}
       >
         {/* Convert button (if enabled) */}
         {showConvert && onConvert && (
           <div 
-            className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors flex-1"
+            className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors flex-1 pointer-events-auto"
             onClick={(e) => handleActionClick(onConvert, e)}
           >
             <FileText className="h-5 w-5 text-white" />
@@ -121,7 +117,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
         {/* Delete button */}
         {onDelete && (
           <div 
-            className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors flex-1"
+            className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors flex-1 pointer-events-auto"
             onClick={(e) => handleActionClick(onDelete, e)}
           >
             <Trash2 className="h-5 w-5 text-white" />
@@ -129,19 +125,21 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
         )}
       </div>
 
-      {/* Swipeable content - the actual table row */}
+      {/* Table row content */}
       <div
         className={cn(
-          "relative z-10 bg-white transition-transform duration-200 ease-out w-full",
+          "relative transition-transform duration-200 ease-out",
           className
         )}
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
         }}
+        data-swipeable-row
+        {...handlers}
       >
         {children}
       </div>
-    </div>
+    </>
   );
 };
 
