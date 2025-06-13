@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ModernCard } from "@/components/ui/primitives/ModernCard";
 import { Heading3, BodyText, CaptionText } from "@/components/ui/primitives/Typography";
@@ -102,15 +101,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     try {
       const newPaidAmount = invoice.paidAmount + amount;
       const newRemainingAmount = invoice.total - newPaidAmount;
-      const newStatus = newRemainingAmount <= 0 ? 'paid' : 'partial';
+      const newStatus = newRemainingAmount <= 0 ? 'paid' : 'pending';
 
-      // Update invoice with new paid amount and status
+      // Update invoice with new status
+      // Note: Since we don't have a paid_amount column in the invoices table,
+      // we're using the status to track partial payments for now
       const { error } = await supabase
         .from('invoices')
         .update({ 
-          status: newStatus,
-          // Note: In a real system, you'd track paid_amount in the invoices table
-          // For now, we're just updating the status
+          status: newStatus
         })
         .eq('id', invoiceId);
 
@@ -153,7 +152,6 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
 
   const getStatusBadge = (status: string, isOverdue: boolean) => {
     if (status === 'paid') return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
-    if (status === 'partial') return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Partial</Badge>;
     if (isOverdue) return <Badge variant="destructive">Overdue</Badge>;
     return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Pending</Badge>;
   };
