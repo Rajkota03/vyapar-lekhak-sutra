@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
 import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
+
 type Quotation = {
   id: string;
   invoice_code: string | null;
@@ -23,17 +25,15 @@ type Quotation = {
     name: string;
   } | null;
 };
+
 type FilterStatus = "all" | "sent" | "paid" | "draft";
 type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
 type SortDirection = 'asc' | 'desc' | null;
+
 const Quotations = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
@@ -42,17 +42,14 @@ const Quotations = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Fetch user's companies
-  const {
-    data: companies,
-    isLoading: isLoadingCompanies
-  } = useQuery({
+  const { data: companies, isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companies', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const {
-        data,
-        error
-      } = await supabase.from('companies').select('*').eq('owner_id', user.id);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('owner_id', user.id);
       if (error) throw error;
       return data || [];
     },
@@ -66,14 +63,13 @@ const Quotations = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch quotations (using invoices table with proper filtering)
-  const {
-    data: quotations,
-    isLoading: isLoadingQuotations
-  } = useQuery({
+  // Fetch quotations with improved filtering
+  const { data: quotations, isLoading: isLoadingQuotations } = useQuery({
     queryKey: ['quotations', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
+      
+      console.log('Fetching quotations for company:', selectedCompanyId);
       
       let query = supabase
         .from('invoices')
@@ -86,8 +82,11 @@ const Quotations = () => {
           status,
           clients ( name )
         `)
-        .eq('company_id', selectedCompanyId)
-        .or('number.like.QUO-%,invoice_code.like.QUO-%'); // Match quotation documents
+        .eq('company_id', selectedCompanyId);
+
+      // Enhanced filtering for quotations - look for QUO- prefix in both number and invoice_code fields
+      // This ensures we catch documents copied from other types that become quotations
+      query = query.or('number.like.QUO-%,invoice_code.like.QUO-%,number.like.QUOT-%,invoice_code.like.QUOT-%');
 
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
@@ -96,13 +95,19 @@ const Quotations = () => {
       query = query.order('created_at', { ascending: false });
       
       const { data: quotationData, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching quotations:', error);
+        throw error;
+      }
+
+      console.log('Quotations fetched:', quotationData?.length || 0, quotationData);
       return quotationData as Quotation[] || [];
     },
     enabled: !!selectedCompanyId && !!user,
-    staleTime: 30000, // 30 seconds
+    staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: true,
-    refetchOnMount: true
+    refetchOnMount: true,
+    refetchInterval: 5000, // Refetch every 5 seconds to catch new documents
   });
 
   // Sort quotations
@@ -154,6 +159,15 @@ const Quotations = () => {
       setSortDirection('asc');
     }
   };
+
+  // Force refresh when component mounts or when coming back to this page
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [queryClient]);
+
   if (isLoadingCompanies) {
     return <DashboardLayout>
         <div className="flex justify-center items-center h-[50vh]">
@@ -161,6 +175,7 @@ const Quotations = () => {
         </div>
       </DashboardLayout>;
   }
+
   if (!user) {
     return <DashboardLayout>
         <div className="text-center py-8">
@@ -168,6 +183,7 @@ const Quotations = () => {
         </div>
       </DashboardLayout>;
   }
+
   if (!companies || companies.length === 0) {
     return <DashboardLayout>
         <div className="text-center py-8">
@@ -178,28 +194,40 @@ const Quotations = () => {
         </div>
       </DashboardLayout>;
   }
+
   const handleQuotationClick = (quotationId: string) => {
     navigate(`/quotations/${quotationId}`);
   };
+
   const handleCreateQuotation = () => {
     queryClient.removeQueries({ queryKey: ['invoice'] });
     navigate('/quotations/new');
   };
+
   const floatingActions = [{
     label: "New Quotation",
     onClick: handleCreateQuotation,
     variant: "primary" as const,
     icon: <Plus className="h-6 w-6" />
   }];
+
   return <DashboardLayout>
       <div className="space-y-6 bg-white px-0 py-[8px] my-[8px]">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight px-[8px]">Quotations</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['quotations'] })}
+            className="mr-2"
+          >
+            Refresh
+          </Button>
         </div>
 
         {/* Company Selector */}
-        {companies && companies.length > 1 && <div className="flex items-center space-x-2">
+        {companies && companies.length > 1 && <div className="flex items-center space-x-2 px-[8px]">
             <label className="text-sm font-medium">Company:</label>
             <select value={selectedCompanyId || ''} onChange={e => setSelectedCompanyId(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               {companies.map(company => <option key={company.id} value={company.id}>
@@ -209,7 +237,7 @@ const Quotations = () => {
           </div>}
 
         {/* Filter and Sort Controls */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-[8px]">
           <div className="flex items-center space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -247,10 +275,15 @@ const Quotations = () => {
             </div>}
         </div>
 
+        {/* Debug info - remove in production */}
+        <div className="px-[8px] text-xs text-gray-500">
+          Documents found: {quotations?.length || 0}
+        </div>
+
         {/* Quotations Table */}
         {isLoadingQuotations ? <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div> : sortedQuotations && sortedQuotations.length > 0 ? <InvoiceTable invoices={sortedQuotations} onInvoiceClick={handleQuotationClick} sortField={sortField} sortDirection={sortDirection} onSort={!isMobile ? handleSort : undefined} /> : <div className="text-center py-12 border rounded-md">
+          </div> : sortedQuotations && sortedQuotations.length > 0 ? <InvoiceTable invoices={sortedQuotations} onInvoiceClick={handleQuotationClick} sortField={sortField} sortDirection={sortDirection} onSort={!isMobile ? handleSort : undefined} /> : <div className="text-center py-12 border rounded-md mx-[8px]">
             <p className="text-muted-foreground mb-4">No quotations found</p>
             <Button variant="outline" onClick={handleCreateQuotation}>
               <Plus className="mr-2 h-4 w-4" />
@@ -263,4 +296,5 @@ const Quotations = () => {
       </div>
     </DashboardLayout>;
 };
+
 export default Quotations;

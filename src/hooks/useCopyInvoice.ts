@@ -24,7 +24,11 @@ export const useCopyInvoice = () => {
         throw new Error('No company selected');
       }
 
-      console.log('Copying invoice:', sourceInvoiceId, 'to type:', targetType, 'custom type:', customTypeId);
+      console.log('=== COPY OPERATION START ===');
+      console.log('Source Invoice ID:', sourceInvoiceId);
+      console.log('Target Type:', targetType);
+      console.log('Custom Type ID:', customTypeId);
+      console.log('Company ID:', currentCompany.id);
 
       // Fetch the source invoice
       const { data: sourceInvoice, error: fetchError } = await supabase
@@ -38,6 +42,8 @@ export const useCopyInvoice = () => {
         throw fetchError;
       }
 
+      console.log('Source invoice fetched:', sourceInvoice.number || sourceInvoice.invoice_code);
+
       // Fetch the source invoice line items
       const { data: sourceLineItems, error: lineItemsError } = await supabase
         .from('invoice_lines')
@@ -48,6 +54,8 @@ export const useCopyInvoice = () => {
         console.error('Error fetching line items:', lineItemsError);
         throw lineItemsError;
       }
+
+      console.log('Line items fetched:', sourceLineItems?.length || 0);
 
       // Generate new document number based on target type
       let newDocumentNumber;
@@ -68,17 +76,20 @@ export const useCopyInvoice = () => {
         newDocumentNumber = generatedNumber;
         documentPrefix = generatedNumber;
       } else {
-        // Map target types to proper prefixes that match filtering logic
+        // Use the correct document type for RPC call
         const docTypeMap = {
           'invoice': 'invoice',
           'proforma': 'proforma', 
           'quote': 'quote'
         };
 
+        const rpcDocType = docTypeMap[targetType as keyof typeof docTypeMap] || targetType;
+        console.log('RPC document type:', rpcDocType);
+
         const { data: generatedNumber, error: numberError } = await supabase
           .rpc('next_doc_number', { 
             p_company_id: currentCompany.id,
-            p_doc_type: docTypeMap[targetType as keyof typeof docTypeMap] || targetType
+            p_doc_type: rpcDocType
           });
 
         if (numberError) {
@@ -86,17 +97,22 @@ export const useCopyInvoice = () => {
           throw numberError;
         }
         
-        newDocumentNumber = generatedNumber;
+        console.log('Generated number from RPC:', generatedNumber);
         
-        // Set appropriate prefix based on target type
+        // For quotations, ensure we always use QUO- prefix
         if (targetType === 'quote') {
-          documentPrefix = `QUO-${generatedNumber}`;
+          // The RPC should return QUO-X format, but let's ensure it
+          documentPrefix = generatedNumber.startsWith('QUO-') ? generatedNumber : `QUO-${generatedNumber}`;
         } else if (targetType === 'proforma') {
-          documentPrefix = `PRO-${generatedNumber}`;
+          documentPrefix = generatedNumber.startsWith('PF-') ? generatedNumber : `PF-${generatedNumber}`;
         } else {
-          documentPrefix = `INV-${generatedNumber}`;
+          documentPrefix = generatedNumber.startsWith('INV-') ? generatedNumber : `INV-${generatedNumber}`;
         }
+        
+        newDocumentNumber = documentPrefix;
       }
+
+      console.log('Final document prefix/number:', documentPrefix);
 
       // Create the new invoice
       const newInvoiceData = {
@@ -135,6 +151,8 @@ export const useCopyInvoice = () => {
         throw createError;
       }
 
+      console.log('New invoice created:', newInvoice.id, newInvoice.number);
+
       // Copy line items
       if (sourceLineItems && sourceLineItems.length > 0) {
         const newLineItems = sourceLineItems.map(item => ({
@@ -158,12 +176,16 @@ export const useCopyInvoice = () => {
           console.error('Error copying line items:', lineItemsInsertError);
           throw lineItemsInsertError;
         }
+
+        console.log('Line items copied:', newLineItems.length);
       }
+
+      console.log('=== COPY OPERATION SUCCESS ===');
 
       return { newInvoice, targetType, customTypeId };
     },
     onSuccess: ({ newInvoice, targetType, customTypeId }) => {
-      console.log('Invoice copied successfully:', newInvoice);
+      console.log('Copy operation completed successfully');
       
       // Comprehensive query invalidation
       queryClient.removeQueries({ queryKey: ['invoices'] });
@@ -171,7 +193,7 @@ export const useCopyInvoice = () => {
       queryClient.removeQueries({ queryKey: ['quotations'] });
       queryClient.removeQueries({ queryKey: ['custom-documents'] });
       
-      // Force immediate refetch with aggressive cache clearing
+      // Force immediate refetch
       queryClient.invalidateQueries({ 
         queryKey: ['invoices'], 
         refetchType: 'all',
@@ -216,16 +238,19 @@ export const useCopyInvoice = () => {
       // Show success message immediately
       toast({
         title: "Copy Successful!",
-        description: `${docTypeName} ${newInvoice.number} has been created successfully`,
+        description: `${docTypeName} ${newInvoice.number} has been created successfully. Redirecting...`,
         duration: 4000,
       });
+
+      console.log('Navigating to:', navigationPath);
 
       // Navigate after a delay to allow queries to refresh
       setTimeout(() => {
         navigate(navigationPath);
-      }, 1000); // Increased delay to ensure queries have time to refresh
+      }, 2000); // 2 second delay to ensure queries refresh
     },
     onError: (error) => {
+      console.error('=== COPY OPERATION FAILED ===');
       console.error('Error copying invoice:', error);
       toast({
         variant: "destructive",
