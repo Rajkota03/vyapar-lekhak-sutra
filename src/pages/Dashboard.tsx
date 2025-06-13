@@ -1,15 +1,28 @@
-import React from "react";
+
+import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useCompany } from "@/context/CompanyContext";
+import { useAnalytics, AnalyticsFilters } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
 import { Card } from "@/components/ui/primitives/Card";
+import { PaymentSummaryWidget } from "@/components/dashboard/PaymentSummaryWidget";
+
 const Dashboard: React.FC = () => {
-  const {
-    user
-  } = useAuth();
-  return <DashboardLayout>
+  const { user } = useAuth();
+  const { currentCompany } = useCompany();
+  const [filters] = useState<AnalyticsFilters>({
+    period: 'monthly',
+    selectedMonth: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short' }),
+    selectedYear: new Date().getFullYear()
+  });
+  
+  const { analytics, loading } = useAnalytics(currentCompany?.id, filters);
+
+  return (
+    <DashboardLayout>
       <main className="safe-h-screen bg-gray-50">
         <div className="space-y-3 py-[8px]">
           <div className="flex items-center justify-between py-[12px]">
@@ -64,8 +77,19 @@ const Dashboard: React.FC = () => {
               </div>
             </Card>
           </div>
+
+          {/* Payment Summary Widget */}
+          {currentCompany && analytics?.paymentTracking && (
+            <div className="mt-6">
+              <PaymentSummaryWidget 
+                paymentData={analytics.paymentTracking} 
+              />
+            </div>
+          )}
         </div>
       </main>
-    </DashboardLayout>;
+    </DashboardLayout>
+  );
 };
+
 export default Dashboard;
