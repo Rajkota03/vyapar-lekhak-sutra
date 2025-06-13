@@ -99,22 +99,23 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
 
   return (
     <div 
-      className="relative w-full overflow-hidden"
+      className="relative w-full overflow-hidden bg-white"
       data-swipeable-row
       {...handlers}
     >
       {/* Swipeable content */}
       <div
         className={cn(
-          "transition-transform duration-200 ease-out relative z-10 bg-white w-full",
-          // Remove horizontal padding from table cells inside swipeable rows
-          "[&_td]:!pr-0 [&_td:last-child]:!pr-4",
+          "transition-transform duration-200 ease-out relative z-10 bg-white",
+          // Override table cell styling to eliminate padding issues
+          "[&_td]:!p-0 [&_td]:!pr-0",
+          "[&_td>*]:px-4 [&_td>*]:py-4",
+          "[&_td:last-child>*]:pr-4",
           className
         )}
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
-          // Ensure the background extends beyond the visible area
-          width: `calc(100% + ${maxSwipeDistance}px)`,
+          minWidth: '100%',
         }}
       >
         {children}

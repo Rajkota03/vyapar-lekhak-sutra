@@ -156,9 +156,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
   };
 
   return (
-    <div className="w-full overflow-hidden rounded-md border">
-      <div className="w-full overflow-x-auto">
-        <Table className="w-full">
+    <div className="w-full rounded-md border">
+      <div className="w-full overflow-hidden">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
               <TableHead 
@@ -180,13 +180,13 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                 Date {getSortIcon('date')}
               </TableHead>
               <TableHead 
-                className={`text-right ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                className={`text-right w-[120px] ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
                 onClick={() => handleHeaderClick('amount')}
               >
                 Amount {getSortIcon('amount')}
               </TableHead>
               <TableHead 
-                className={`hidden sm:table-cell text-center ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                className={`hidden sm:table-cell text-center w-[100px] ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
                 onClick={() => handleHeaderClick('status')}
               >
                 Status {getSortIcon('status')}
