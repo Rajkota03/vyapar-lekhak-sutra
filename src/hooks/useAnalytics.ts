@@ -33,9 +33,38 @@ export interface AnalyticsData {
     quarter: string;
     totalTax: number;
   }>;
+  paymentTracking: Array<{
+    id: string;
+    number: string;
+    clientName: string;
+    total: number;
+    paidAmount: number;
+    remainingAmount: number;
+    status: string;
+    dueDate: string;
+    isOverdue: boolean;
+  }>;
+  monthlyTaxBreakdown: Array<{
+    month: string;
+    cgst: number;
+    sgst: number;
+    igst: number;
+    totalTax: number;
+  }>;
 }
 
-export const useAnalytics = (companyId?: string) => {
+export type FilterPeriod = 'monthly' | 'quarterly' | 'yearly' | 'custom';
+
+export interface AnalyticsFilters {
+  period: FilterPeriod;
+  startDate?: Date;
+  endDate?: Date;
+  selectedMonth?: string;
+  selectedQuarter?: string;
+  selectedYear?: number;
+}
+
+export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +80,29 @@ export const useAnalytics = (companyId?: string) => {
         setLoading(true);
         setError(null);
 
-        // Fetch basic invoice data
+        // Build date filter based on filters
+        let dateFilter = '';
+        if (filters) {
+          const currentYear = new Date().getFullYear();
+          
+          if (filters.period === 'custom' && filters.startDate && filters.endDate) {
+            dateFilter = `AND issue_date >= '${filters.startDate.toISOString().split('T')[0]}' AND issue_date <= '${filters.endDate.toISOString().split('T')[0]}'`;
+          } else if (filters.period === 'yearly' && filters.selectedYear) {
+            dateFilter = `AND EXTRACT(YEAR FROM issue_date) = ${filters.selectedYear}`;
+          } else if (filters.period === 'quarterly' && filters.selectedQuarter) {
+            const [quarter, year] = filters.selectedQuarter.split(' ');
+            const quarterNum = parseInt(quarter.replace('Q', ''));
+            const startMonth = (quarterNum - 1) * 3 + 1;
+            const endMonth = quarterNum * 3;
+            dateFilter = `AND EXTRACT(YEAR FROM issue_date) = ${year} AND EXTRACT(MONTH FROM issue_date) BETWEEN ${startMonth} AND ${endMonth}`;
+          } else if (filters.period === 'monthly' && filters.selectedMonth) {
+            const [monthName, year] = filters.selectedMonth.split(' ');
+            const monthNum = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
+            dateFilter = `AND EXTRACT(YEAR FROM issue_date) = ${year} AND EXTRACT(MONTH FROM issue_date) = ${monthNum}`;
+          }
+        }
+
+        // Fetch basic invoice data with date filtering
         const { data: invoices, error: invoicesError } = await supabase
           .from('invoices')
           .select(`
@@ -74,24 +125,67 @@ export const useAnalytics = (companyId?: string) => {
             topClients: [],
             cashFlow: [],
             taxBreakdown: { cgst: 0, sgst: 0, igst: 0 },
-            quarterlyTax: []
+            quarterlyTax: [],
+            paymentTracking: [],
+            monthlyTaxBreakdown: []
           });
           return;
         }
 
+        // Apply client-side filtering if needed
+        let filteredInvoices = invoices;
+        if (filters && dateFilter) {
+          filteredInvoices = invoices.filter(inv => {
+            const issueDate = new Date(inv.issue_date);
+            
+            if (filters.period === 'custom' && filters.startDate && filters.endDate) {
+              return issueDate >= filters.startDate && issueDate <= filters.endDate;
+            } else if (filters.period === 'yearly' && filters.selectedYear) {
+              return issueDate.getFullYear() === filters.selectedYear;
+            } else if (filters.period === 'quarterly' && filters.selectedQuarter) {
+              const [quarter, year] = filters.selectedQuarter.split(' ');
+              const quarterNum = parseInt(quarter.replace('Q', ''));
+              const startMonth = (quarterNum - 1) * 3;
+              const endMonth = quarterNum * 3 - 1;
+              return issueDate.getFullYear() === parseInt(year) && 
+                     issueDate.getMonth() >= startMonth && 
+                     issueDate.getMonth() <= endMonth;
+            } else if (filters.period === 'monthly' && filters.selectedMonth) {
+              const [monthName, year] = filters.selectedMonth.split(' ');
+              const monthNum = new Date(`${monthName} 1, ${year}`).getMonth();
+              return issueDate.getFullYear() === parseInt(year) && 
+                     issueDate.getMonth() === monthNum;
+            }
+            return true;
+          });
+        }
+
         // Calculate metrics
-        const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.status === 'paid' ? inv.total : 0), 0);
-        const outstandingAmount = invoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? inv.total : 0), 0);
-        const overdueAmount = invoices.reduce((sum, inv) => {
+        const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + (inv.status === 'paid' ? inv.total : 0), 0);
+        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? inv.total : 0), 0);
+        const overdueAmount = filteredInvoices.reduce((sum, inv) => {
           const isOverdue = new Date(inv.due_date) < new Date() && inv.status !== 'paid';
           return sum + (isOverdue ? inv.total : 0);
         }, 0);
-        const paidInvoices = invoices.filter(inv => inv.status === 'paid').length;
-        const avgInvoiceValue = invoices.length > 0 ? invoices.reduce((sum, inv) => sum + inv.total, 0) / invoices.length : 0;
+        const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid').length;
+        const avgInvoiceValue = filteredInvoices.length > 0 ? filteredInvoices.reduce((sum, inv) => sum + inv.total, 0) / filteredInvoices.length : 0;
+
+        // Payment tracking data
+        const paymentTracking = filteredInvoices.map(inv => ({
+          id: inv.id,
+          number: inv.number,
+          clientName: inv.clients?.name || 'Unknown Client',
+          total: inv.total,
+          paidAmount: inv.status === 'paid' ? inv.total : 0,
+          remainingAmount: inv.status === 'paid' ? 0 : inv.total,
+          status: inv.status,
+          dueDate: inv.due_date,
+          isOverdue: new Date(inv.due_date) < new Date() && inv.status !== 'paid'
+        }));
 
         // Monthly revenue
         const monthlyData = new Map();
-        invoices.forEach(inv => {
+        filteredInvoices.forEach(inv => {
           const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short' 
@@ -112,9 +206,33 @@ export const useAnalytics = (companyId?: string) => {
           invoiceCount: data.invoiceCount
         }));
 
+        // Monthly tax breakdown
+        const monthlyTaxData = new Map();
+        filteredInvoices.forEach(inv => {
+          const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short' 
+          });
+          if (!monthlyTaxData.has(month)) {
+            monthlyTaxData.set(month, { cgst: 0, sgst: 0, igst: 0 });
+          }
+          const data = monthlyTaxData.get(month);
+          data.cgst += inv.cgst || 0;
+          data.sgst += inv.sgst || 0;
+          data.igst += inv.igst || 0;
+        });
+
+        const monthlyTaxBreakdown = Array.from(monthlyTaxData.entries()).map(([month, data]) => ({
+          month,
+          cgst: data.cgst,
+          sgst: data.sgst,
+          igst: data.igst,
+          totalTax: data.cgst + data.sgst + data.igst
+        }));
+
         // Top clients
         const clientData = new Map();
-        invoices.forEach(inv => {
+        filteredInvoices.forEach(inv => {
           const clientName = inv.clients?.name || 'Unknown Client';
           if (!clientData.has(clientName)) {
             clientData.set(clientName, { totalAmount: 0, invoiceCount: 0 });
@@ -135,7 +253,7 @@ export const useAnalytics = (companyId?: string) => {
 
         // Cash flow data
         const cashFlowData = new Map();
-        invoices.forEach(inv => {
+        filteredInvoices.forEach(inv => {
           const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short' 
@@ -158,7 +276,7 @@ export const useAnalytics = (companyId?: string) => {
         }));
 
         // Tax breakdown
-        const taxBreakdown = invoices.reduce((acc, inv) => ({
+        const taxBreakdown = filteredInvoices.reduce((acc, inv) => ({
           cgst: acc.cgst + (inv.cgst || 0),
           sgst: acc.sgst + (inv.sgst || 0),
           igst: acc.igst + (inv.igst || 0)
@@ -166,7 +284,7 @@ export const useAnalytics = (companyId?: string) => {
 
         // Quarterly tax
         const quarterlyData = new Map();
-        invoices.forEach(inv => {
+        filteredInvoices.forEach(inv => {
           const date = new Date(inv.issue_date);
           const quarter = `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
           if (!quarterlyData.has(quarter)) {
@@ -185,13 +303,15 @@ export const useAnalytics = (companyId?: string) => {
           monthlyRevenue,
           outstandingAmount,
           overdueAmount,
-          totalInvoices: invoices.length,
+          totalInvoices: filteredInvoices.length,
           paidInvoices,
           avgInvoiceValue,
           topClients,
           cashFlow,
           taxBreakdown,
-          quarterlyTax
+          quarterlyTax,
+          paymentTracking,
+          monthlyTaxBreakdown
         });
 
       } catch (err) {
@@ -203,7 +323,7 @@ export const useAnalytics = (companyId?: string) => {
     };
 
     fetchAnalytics();
-  }, [companyId]);
+  }, [companyId, filters]);
 
   return { analytics, loading, error };
 };
