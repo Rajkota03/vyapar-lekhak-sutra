@@ -73,11 +73,11 @@ export const SwipeableTableRow: React.FC<SwipeableTableRowProps> = ({
   };
 
   return (
-    <div className="relative w-full" ref={rowRef}>
-      {/* Main row content - this is the only element that affects layout */}
+    <div className="relative w-full overflow-hidden" ref={rowRef}>
+      {/* Main row content - fills container width and slides left to reveal actions */}
       <div
         {...handlers}
-        className={`relative bg-white transition-transform duration-200 ease-out ${className}`}
+        className={`relative w-full bg-white transition-transform duration-200 ease-out ${className}`}
         style={{
           transform: `translateX(-${swipeOffset}px)`,
           cursor: isSwipeOpen ? 'default' : 'pointer'
@@ -86,10 +86,10 @@ export const SwipeableTableRow: React.FC<SwipeableTableRowProps> = ({
         {children}
       </div>
       
-      {/* Action buttons - absolutely positioned overlay, no layout impact */}
+      {/* Action buttons - absolutely positioned overlay */}
       {swipeOffset > 0 && (
         <div 
-          className="absolute top-0 right-0 bottom-0 flex items-center bg-gray-50 pointer-events-auto"
+          className="absolute inset-y-0 right-0 flex items-center bg-gray-50 pointer-events-auto"
           style={{ 
             width: MAX_SWIPE,
             transform: `translateX(${MAX_SWIPE - swipeOffset}px)`,
