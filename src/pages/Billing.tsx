@@ -70,11 +70,13 @@ const Billing = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch invoices with refetch on focus
+  // Fetch invoices with refetch on focus and better cache management
   const { data: invoices, isLoading: isLoadingInvoices, refetch: refetchInvoices } = useQuery({
     queryKey: ['invoices', selectedCompanyId, user?.id, sortDirection],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
+      
+      console.log('Fetching invoices for company:', selectedCompanyId);
       
       const { data: invoicesData, error } = await supabase
         .from('invoices')
@@ -95,17 +97,21 @@ const Billing = () => {
         .order('created_at', { ascending: sortDirection === 'asc' });
 
       if (error) throw error;
+      console.log('Invoices fetched:', invoicesData?.length || 0);
       return invoicesData as Invoice[] || [];
     },
     enabled: !!selectedCompanyId && !!user,
-    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
 
-  // Fetch pro formas with refetch on focus
+  // Fetch pro formas with refetch on focus and better cache management
   const { data: proformas, isLoading: isLoadingProFormas, refetch: refetchProformas } = useQuery({
     queryKey: ['proformas', selectedCompanyId, user?.id, sortDirection],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
+      
+      console.log('Fetching proformas for company:', selectedCompanyId);
       
       const { data: proformaData, error } = await supabase
         .from('invoices')
@@ -124,11 +130,41 @@ const Billing = () => {
         .order('created_at', { ascending: sortDirection === 'asc' });
 
       if (error) throw error;
+      console.log('Proformas fetched:', proformaData?.length || 0);
       return proformaData as Invoice[] || [];
     },
     enabled: !!selectedCompanyId && !!user,
-    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
+
+  // Listen for navigation events and refetch data
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Window focused, refetching data...');
+      if (activeTab === 'invoices') {
+        refetchInvoices();
+      } else if (activeTab === 'proformas') {
+        refetchProformas();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    // Also refetch when coming back to this page
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        handleFocus();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeTab, refetchInvoices, refetchProformas]);
 
   // Filter data based on search
   const getFilteredData = (data: Invoice[]) => {

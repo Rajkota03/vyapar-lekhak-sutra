@@ -109,7 +109,6 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
       });
     }
     
-    // Replace the existing duplicate action with the copy action
     actions.push({
       icon: <Copy className="h-4 w-4" />,
       label: "Copy",
@@ -134,7 +133,7 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
         {/* Mobile List View */}
         <div className="sm:hidden">
           {invoices.map((invoice, index) => (
-            <React.Fragment key={invoice.id}>
+            <div key={invoice.id}>
               <SwipeableTableRow
                 actions={getSwipeActions(invoice)}
                 onRowClick={() => onInvoiceClick(invoice.id)}
@@ -162,7 +161,7 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
               {index < invoices.length - 1 && (
                 <Separator className="bg-gray-100" />
               )}
-            </React.Fragment>
+            </div>
           ))}
         </div>
 

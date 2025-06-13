@@ -145,21 +145,17 @@ export const useCopyInvoice = () => {
     onSuccess: ({ newInvoice, targetType, customTypeId }) => {
       console.log('Invoice copied successfully:', newInvoice);
       
-      // Invalidate ALL relevant queries to ensure data is refreshed
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['proformas'] });
-      queryClient.invalidateQueries({ queryKey: ['quotations'] });
-      queryClient.invalidateQueries({ queryKey: ['custom-documents'] });
+      // Clear and invalidate ALL relevant query cache patterns
+      queryClient.removeQueries({ queryKey: ['invoices'] });
+      queryClient.removeQueries({ queryKey: ['proformas'] });
+      queryClient.removeQueries({ queryKey: ['quotations'] });
+      queryClient.removeQueries({ queryKey: ['custom-documents'] });
       
-      // Also invalidate specific company queries
-      if (currentCompany?.id) {
-        queryClient.invalidateQueries({ queryKey: ['invoices', currentCompany.id] });
-        queryClient.invalidateQueries({ queryKey: ['proformas', currentCompany.id] });
-        queryClient.invalidateQueries({ queryKey: ['quotations', currentCompany.id] });
-        if (customTypeId) {
-          queryClient.invalidateQueries({ queryKey: ['custom-documents', customTypeId, currentCompany.id] });
-        }
-      }
+      // Force immediate refetch of all current queries
+      queryClient.invalidateQueries({ queryKey: ['invoices'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['proformas'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['quotations'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['custom-documents'], refetchType: 'all' });
 
       // Determine the document type name for the toast
       let docTypeName = 'Document';
@@ -175,17 +171,19 @@ export const useCopyInvoice = () => {
         description: `${docTypeName} ${newInvoice.number} created successfully`,
       });
 
-      // Navigate to the new document
-      let navigationPath = '';
-      if (customTypeId) {
-        navigationPath = `/custom/${customTypeId}/${newInvoice.id}`;
-      } else {
-        const basePath = targetType === 'proforma' ? '/proforma' : 
-                        targetType === 'quote' ? '/quotations' : '/invoices';
-        navigationPath = `${basePath}/${newInvoice.id}`;
-      }
-      
-      navigate(navigationPath);
+      // Navigate to the new document after a short delay to allow queries to refetch
+      setTimeout(() => {
+        let navigationPath = '';
+        if (customTypeId) {
+          navigationPath = `/custom/${customTypeId}/${newInvoice.id}`;
+        } else {
+          const basePath = targetType === 'proforma' ? '/proforma' : 
+                          targetType === 'quote' ? '/quotations' : '/invoices';
+          navigationPath = `${basePath}/${newInvoice.id}`;
+        }
+        
+        navigate(navigationPath);
+      }, 500);
     },
     onError: (error) => {
       console.error('Error copying invoice:', error);
