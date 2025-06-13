@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
 import Invoices from "./pages/Invoices";
 import InvoiceList from "./pages/InvoiceList";
 import InvoiceEdit from "./pages/InvoiceEdit";
