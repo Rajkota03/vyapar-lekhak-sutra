@@ -114,8 +114,7 @@ export const useCopyInvoice = () => {
 
       console.log('Final document prefix/number:', documentPrefix);
 
-      // Create the new invoice with BOTH number and invoice_code set to the same value
-      // This ensures the document will be picked up by the filtering logic
+      // Create the new invoice with proper document_type
       const newInvoiceData = {
         company_id: sourceInvoice.company_id,
         client_id: sourceInvoice.client_id,
@@ -134,9 +133,10 @@ export const useCopyInvoice = () => {
         require_client_signature: sourceInvoice.require_client_signature,
         notes: sourceInvoice.notes,
         document_type_id: customTypeId || null,
+        document_type: customTypeId ? 'custom' : targetType, // Set document_type correctly
         status: 'draft',
         number: documentPrefix,
-        invoice_code: documentPrefix // CRITICAL: Set both fields to ensure filtering works
+        invoice_code: documentPrefix
       };
 
       console.log('Creating new invoice with data:', newInvoiceData);
@@ -156,6 +156,7 @@ export const useCopyInvoice = () => {
       console.log('- ID:', newInvoice.id);
       console.log('- Number:', newInvoice.number);
       console.log('- Invoice Code:', newInvoice.invoice_code);
+      console.log('- Document Type:', newInvoice.document_type);
       console.log('- Target Type:', targetType);
 
       // Copy line items
@@ -183,19 +184,6 @@ export const useCopyInvoice = () => {
         }
 
         console.log('Line items copied:', newLineItems.length);
-      }
-
-      // Verify the document was created correctly by fetching it back
-      const { data: verifyDoc, error: verifyError } = await supabase
-        .from('invoices')
-        .select('id, number, invoice_code, status, company_id')
-        .eq('id', newInvoice.id)
-        .single();
-
-      if (verifyError) {
-        console.error('Error verifying created document:', verifyError);
-      } else {
-        console.log('Document verification:', verifyDoc);
       }
 
       console.log('=== COPY OPERATION SUCCESS ===');
@@ -255,10 +243,10 @@ export const useCopyInvoice = () => {
 
       console.log('Navigating to:', navigationPath);
 
-      // Navigate after a longer delay to ensure queries refresh
+      // Navigate after a delay to allow queries to refresh
       setTimeout(() => {
         navigate(navigationPath);
-      }, 3000); // Increased to 3 seconds
+      }, 2000);
     },
     onError: (error) => {
       console.error('=== COPY OPERATION FAILED ===');

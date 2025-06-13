@@ -63,7 +63,7 @@ const Quotations = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch quotations with improved filtering and debugging
+  // Fetch quotations using the new document_type field
   const { data: quotations, isLoading: isLoadingQuotations } = useQuery({
     queryKey: ['quotations', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
@@ -84,12 +84,8 @@ const Quotations = () => {
           status,
           clients ( name )
         `)
-        .eq('company_id', selectedCompanyId);
-
-      // Enhanced filtering for quotations - look for QUO- prefix in both number and invoice_code fields
-      // This should catch all quotations regardless of how they were created
-      console.log('Applying quotation filter...');
-      query = query.or('number.like.QUO-%,invoice_code.like.QUO-%,number.like.QUOT-%,invoice_code.like.QUOT-%');
+        .eq('company_id', selectedCompanyId)
+        .eq('document_type', 'quote'); // Use the new document_type field
 
       if (filterStatus !== 'all') {
         console.log('Applying status filter:', filterStatus);
@@ -105,11 +101,11 @@ const Quotations = () => {
       }
 
       console.log('=== QUOTATIONS QUERY RESULT ===');
-      console.log('Total documents found:', quotationData?.length || 0);
+      console.log('Total quotations found:', quotationData?.length || 0);
       
       // Log each document for debugging
       quotationData?.forEach((doc, index) => {
-        console.log(`Document ${index + 1}:`, {
+        console.log(`Quotation ${index + 1}:`, {
           id: doc.id,
           number: doc.number,
           invoice_code: doc.invoice_code,
@@ -124,7 +120,6 @@ const Quotations = () => {
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 3000, // Refetch every 3 seconds to catch new documents
   });
 
   // Sort quotations
@@ -309,10 +304,10 @@ const Quotations = () => {
             </div>}
         </div>
 
-        {/* Debug info - Enhanced debugging */}
+        {/* Debug info - Updated for new filtering approach */}
         <div className="px-[8px] text-xs text-gray-500 space-y-1">
           <div>Company: {selectedCompanyId}</div>
-          <div>Documents found: {quotations?.length || 0}</div>
+          <div>Quotations found: {quotations?.length || 0}</div>
           <div>Filter: {filterStatus}</div>
           <div>Loading: {isLoadingQuotations ? 'Yes' : 'No'}</div>
         </div>
