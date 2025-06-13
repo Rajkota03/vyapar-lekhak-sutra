@@ -2,7 +2,7 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Users, FileText, Settings, Menu, X, Package, ChevronDown, ChevronRight, Plus, HelpCircle } from "lucide-react";
+import { Home, Users, FileText, Settings, Menu, X, Package, ChevronDown, ChevronRight, Plus, HelpCircle, BarChart3 } from "lucide-react";
 import { useCustomDocumentTypes } from "@/hooks/useCustomDocumentTypes";
 import { DulyLogo } from "@/components/ui/DulyLogo";
 
@@ -35,6 +35,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     name: "Dashboard",
     href: "/dashboard",
     icon: Home
+  }, {
+    name: "Analytics",
+    href: "/analytics", 
+    icon: BarChart3
   }, {
     name: "Clients",
     href: "/clients",
