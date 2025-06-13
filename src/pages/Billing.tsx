@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
 import DraggableInvoiceTable from "@/components/invoice/DraggableInvoiceTable";
-import { convertProFormaToInvoice } from "@/utils/proformaConversion";
 
 type Invoice = {
   id: string;
@@ -215,80 +215,6 @@ const Billing = () => {
     navigate('/proforma/new');
   };
 
-  // Handle deletion
-  const handleDelete = async (documentId: string) => {
-    try {
-      console.log('Deleting document:', documentId);
-      
-      // Delete line items first
-      const { error: lineItemsError } = await supabase
-        .from('invoice_lines')
-        .delete()
-        .eq('invoice_id', documentId);
-
-      if (lineItemsError) {
-        throw new Error('Failed to delete document items');
-      }
-
-      // Delete the document
-      const { error: documentError } = await supabase
-        .from('invoices')
-        .delete()
-        .eq('id', documentId);
-
-      if (documentError) {
-        throw new Error('Failed to delete document');
-      }
-
-      toast({
-        title: "Success",
-        description: "Document deleted successfully",
-      });
-
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['proformas'] });
-
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast({
-        variant: "destructive",
-        title: "Delete Failed",
-        description: error instanceof Error ? error.message : "Failed to delete document",
-      });
-    }
-  };
-
-  // Handle Pro Forma to Invoice conversion
-  const handleConvertProForma = async (proformaId: string) => {
-    if (!selectedCompanyId) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No company selected",
-      });
-      return;
-    }
-
-    try {
-      await convertProFormaToInvoice({
-        proformaId,
-        companyId: selectedCompanyId,
-        onSuccess: (newInvoiceId) => {
-          // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ['invoices'] });
-          queryClient.invalidateQueries({ queryKey: ['proformas'] });
-          
-          // Navigate to the new invoice
-          navigate(`/invoices/${newInvoiceId}`);
-        }
-      });
-    } catch (error) {
-      // Error handling is done in the conversion function
-      console.error('Conversion failed:', error);
-    }
-  };
-
   // Loading state
   if (isLoadingCompanies) {
     return (
@@ -398,9 +324,7 @@ const Billing = () => {
                 invoices={currentData}
                 onInvoiceClick={handleClick}
                 onReorder={handleReorder}
-                onDelete={handleDelete}
                 searchQuery={searchQuery}
-                documentType="invoice"
               />
             ) : (
               <div className="text-center py-12 border rounded-md mx-[8px]">
@@ -427,10 +351,7 @@ const Billing = () => {
                 invoices={currentData}
                 onInvoiceClick={handleClick}
                 onReorder={handleReorder}
-                onDelete={handleDelete}
-                onConvert={handleConvertProForma}
                 searchQuery={searchQuery}
-                documentType="proforma"
               />
             ) : (
               <div className="text-center py-12 border rounded-md mx-[8px]">

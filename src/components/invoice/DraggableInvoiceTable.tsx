@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format } from "date-fns";
 import { GripVertical } from "lucide-react";
@@ -29,8 +30,6 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import SwipeableRow from "./SwipeableRow";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 type Invoice = {
   id: string;
@@ -48,30 +47,20 @@ interface DraggableInvoiceTableProps {
   invoices: Invoice[];
   onInvoiceClick: (invoiceId: string) => void;
   onReorder: (invoices: Invoice[]) => void;
-  onDelete?: (invoiceId: string) => void;
-  onConvert?: (invoiceId: string) => void;
   searchQuery: string;
-  documentType?: 'invoice' | 'proforma';
 }
 
 interface SortableRowProps {
   invoice: Invoice;
   onInvoiceClick: (invoiceId: string) => void;
-  onDelete?: (invoiceId: string) => void;
-  onConvert?: (invoiceId: string) => void;
   isDraggingDisabled: boolean;
-  documentType?: 'invoice' | 'proforma';
 }
 
 const SortableRow: React.FC<SortableRowProps> = ({ 
   invoice, 
   onInvoiceClick, 
-  onDelete,
-  onConvert,
-  isDraggingDisabled,
-  documentType = 'invoice'
+  isDraggingDisabled 
 }) => {
-  const isMobile = useIsMobile();
   const {
     attributes,
     listeners,
@@ -106,15 +95,7 @@ const SortableRow: React.FC<SortableRowProps> = ({
     );
   };
 
-  const handleDelete = onDelete ? () => onDelete(invoice.id) : undefined;
-  const handleConvert = onConvert ? () => onConvert(invoice.id) : undefined;
-
-  // Show convert action only for proformas on mobile when onConvert function is provided
-  const showConvert = isMobile && documentType === 'proforma' && !!onConvert;
-  // Show delete action on mobile when onDelete function is provided
-  const showDelete = isMobile && !!onDelete;
-
-  const tableRow = (
+  return (
     <TableRow 
       ref={setNodeRef}
       style={style}
@@ -158,32 +139,13 @@ const SortableRow: React.FC<SortableRowProps> = ({
       </TableCell>
     </TableRow>
   );
-
-  // Wrap with SwipeableRow only on mobile and when actions are available
-  if (isMobile && (showDelete || showConvert)) {
-    return (
-      <SwipeableRow
-        onDelete={handleDelete}
-        onConvert={handleConvert}
-        showConvert={showConvert}
-        isDisabled={isDraggingDisabled}
-      >
-        {tableRow}
-      </SwipeableRow>
-    );
-  }
-
-  return tableRow;
 };
 
 const DraggableInvoiceTable: React.FC<DraggableInvoiceTableProps> = ({
   invoices,
   onInvoiceClick,
   onReorder,
-  onDelete,
-  onConvert,
-  searchQuery,
-  documentType = 'invoice'
+  searchQuery
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -238,10 +200,7 @@ const DraggableInvoiceTable: React.FC<DraggableInvoiceTableProps> = ({
                   key={invoice.id}
                   invoice={invoice}
                   onInvoiceClick={onInvoiceClick}
-                  onDelete={onDelete}
-                  onConvert={onConvert}
                   isDraggingDisabled={isDraggingDisabled}
-                  documentType={documentType}
                 />
               ))}
             </SortableContext>
