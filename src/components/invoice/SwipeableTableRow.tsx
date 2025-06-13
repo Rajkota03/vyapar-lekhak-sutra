@@ -72,18 +72,28 @@ export const SwipeableTableRow: React.FC<SwipeableTableRowProps> = ({
     setSwipeOffset(0);
   };
 
-  // Only show actions when there's actual swipe offset or when open
-  const showActions = swipeOffset > 0 || isSwipeOpen;
-
   return (
-    <div className="relative overflow-hidden w-full" ref={rowRef}>
-      {/* Action buttons - only rendered when needed */}
-      {showActions && (
+    <div className="relative w-full" ref={rowRef}>
+      {/* Main row content - this is the only element that affects layout */}
+      <div
+        {...handlers}
+        className={`relative bg-white transition-transform duration-200 ease-out ${className}`}
+        style={{
+          transform: `translateX(-${swipeOffset}px)`,
+          cursor: isSwipeOpen ? 'default' : 'pointer'
+        }}
+      >
+        {children}
+      </div>
+      
+      {/* Action buttons - absolutely positioned overlay, no layout impact */}
+      {swipeOffset > 0 && (
         <div 
-          className="absolute right-0 top-0 bottom-0 flex items-center bg-gray-50 z-10"
+          className="absolute top-0 right-0 bottom-0 flex items-center bg-gray-50 pointer-events-auto"
           style={{ 
             width: MAX_SWIPE,
-            transform: `translateX(${MAX_SWIPE - swipeOffset}px)`
+            transform: `translateX(${MAX_SWIPE - swipeOffset}px)`,
+            zIndex: 5
           }}
         >
           {actions.map((action, index) => (
@@ -101,18 +111,6 @@ export const SwipeableTableRow: React.FC<SwipeableTableRowProps> = ({
           ))}
         </div>
       )}
-      
-      {/* Main row content */}
-      <div
-        {...handlers}
-        className={`relative bg-white transition-transform duration-200 ease-out ${className}`}
-        style={{
-          transform: `translateX(-${swipeOffset}px)`,
-          cursor: isSwipeOpen ? 'default' : 'pointer'
-        }}
-      >
-        {children}
-      </div>
     </div>
   );
 };
