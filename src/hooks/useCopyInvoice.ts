@@ -145,11 +145,21 @@ export const useCopyInvoice = () => {
     onSuccess: ({ newInvoice, targetType, customTypeId }) => {
       console.log('Invoice copied successfully:', newInvoice);
       
-      // Invalidate relevant queries
+      // Invalidate ALL relevant queries to ensure data is refreshed
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['proformas'] });
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
       queryClient.invalidateQueries({ queryKey: ['custom-documents'] });
+      
+      // Also invalidate specific company queries
+      if (currentCompany?.id) {
+        queryClient.invalidateQueries({ queryKey: ['invoices', currentCompany.id] });
+        queryClient.invalidateQueries({ queryKey: ['proformas', currentCompany.id] });
+        queryClient.invalidateQueries({ queryKey: ['quotations', currentCompany.id] });
+        if (customTypeId) {
+          queryClient.invalidateQueries({ queryKey: ['custom-documents', customTypeId, currentCompany.id] });
+        }
+      }
 
       // Determine the document type name for the toast
       let docTypeName = 'Document';

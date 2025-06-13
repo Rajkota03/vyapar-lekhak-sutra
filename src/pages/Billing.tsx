@@ -70,9 +70,9 @@ const Billing = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch invoices
-  const { data: invoices, isLoading: isLoadingInvoices } = useQuery({
-    queryKey: ['invoices', selectedCompanyId, user?.id],
+  // Fetch invoices with refetch on focus
+  const { data: invoices, isLoading: isLoadingInvoices, refetch: refetchInvoices } = useQuery({
+    queryKey: ['invoices', selectedCompanyId, user?.id, sortDirection],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
       
@@ -97,12 +97,13 @@ const Billing = () => {
       if (error) throw error;
       return invoicesData as Invoice[] || [];
     },
-    enabled: !!selectedCompanyId && !!user
+    enabled: !!selectedCompanyId && !!user,
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 
-  // Fetch pro formas
-  const { data: proformas, isLoading: isLoadingProFormas } = useQuery({
-    queryKey: ['proformas', selectedCompanyId, user?.id],
+  // Fetch pro formas with refetch on focus
+  const { data: proformas, isLoading: isLoadingProFormas, refetch: refetchProformas } = useQuery({
+    queryKey: ['proformas', selectedCompanyId, user?.id, sortDirection],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
       
@@ -125,7 +126,8 @@ const Billing = () => {
       if (error) throw error;
       return proformaData as Invoice[] || [];
     },
-    enabled: !!selectedCompanyId && !!user
+    enabled: !!selectedCompanyId && !!user,
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 
   // Filter data based on search
@@ -197,9 +199,12 @@ const Billing = () => {
         description: "Document deleted successfully",
       });
 
-      // Refetch data
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['proformas'] });
+      // Refetch data after deletion
+      if (activeTab === 'invoices') {
+        refetchInvoices();
+      } else {
+        refetchProformas();
+      }
     } catch (error) {
       console.error('Error deleting document:', error);
       toast({
