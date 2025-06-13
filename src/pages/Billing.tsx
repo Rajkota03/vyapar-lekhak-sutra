@@ -1,19 +1,18 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import InvoiceTable from "@/components/invoice/InvoiceTable";
-import MobileSortDropdown from "@/components/invoice/MobileSortDropdown";
 import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
+import DraggableInvoiceTable from "@/components/invoice/DraggableInvoiceTable";
 
 type Invoice = {
   id: string;
@@ -27,10 +26,6 @@ type Invoice = {
   } | null;
 };
 
-type FilterStatus = "all" | "sent" | "paid" | "draft";
-type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
-type SortDirection = 'asc' | 'desc' | null;
-
 const Billing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -42,14 +37,15 @@ const Billing = () => {
   // Get active tab from URL params, default to 'invoices'
   const activeTab = searchParams.get('tab') || 'invoices';
   
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [invoiceOrder, setInvoiceOrder] = useState<string[]>([]);
+  const [proformaOrder, setProformaOrder] = useState<string[]>([]);
 
   // Handle tab change
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
+    setSearchQuery(""); // Clear search when switching tabs
   };
 
   // Fetch user's companies
@@ -76,11 +72,11 @@ const Billing = () => {
 
   // Fetch invoices
   const { data: invoices, isLoading: isLoadingInvoices } = useQuery({
-    queryKey: ['invoices', selectedCompanyId, filterStatus, user?.id],
+    queryKey: ['invoices', selectedCompanyId, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
       
-      let query = supabase
+      const { data: invoicesData, error } = await supabase
         .from('invoices')
         .select(`
           id,
@@ -94,15 +90,10 @@ const Billing = () => {
         .eq('company_id', selectedCompanyId)
         .is('document_type_id', null)
         .not('number', 'like', 'PF-%')
-        .not('number', 'like', 'QUO-%');
+        .not('number', 'like', 'QUO-%')
+        .order('issue_date', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus);
-      }
-      
-      query = query.order('created_at', { ascending: false });
-      
-      const { data: invoicesData, error } = await query;
       if (error) throw error;
       return invoicesData as Invoice[] || [];
     },
@@ -111,11 +102,11 @@ const Billing = () => {
 
   // Fetch pro formas
   const { data: proformas, isLoading: isLoadingProFormas } = useQuery({
-    queryKey: ['proformas', selectedCompanyId, filterStatus, user?.id],
+    queryKey: ['proformas', selectedCompanyId, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
       
-      let query = supabase
+      const { data: proformaData, error } = await supabase
         .from('invoices')
         .select(`
           id,
@@ -127,74 +118,81 @@ const Billing = () => {
           clients ( name )
         `)
         .eq('company_id', selectedCompanyId)
-        .like('number', 'PF-%');
+        .like('number', 'PF-%')
+        .order('issue_date', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus);
-      }
-      
-      query = query.order('created_at', { ascending: false });
-      
-      const { data: proformaData, error } = await query;
       if (error) throw error;
       return proformaData as Invoice[] || [];
     },
     enabled: !!selectedCompanyId && !!user
   });
 
-  // Sort function
-  const sortDocuments = (documents: Invoice[]) => {
-    if (!documents || !sortField || !sortDirection) return documents || [];
+  // Initialize orders when data loads
+  useEffect(() => {
+    if (invoices && invoiceOrder.length === 0) {
+      setInvoiceOrder(invoices.map(inv => inv.id));
+    }
+  }, [invoices, invoiceOrder.length]);
+
+  useEffect(() => {
+    if (proformas && proformaOrder.length === 0) {
+      setProformaOrder(proformas.map(pf => pf.id));
+    }
+  }, [proformas, proformaOrder.length]);
+
+  // Filter and sort data based on search and drag order
+  const getFilteredAndOrderedData = (data: Invoice[], order: string[]) => {
+    if (!data) return [];
     
-    return [...documents].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+    // Filter by search query
+    const filtered = searchQuery.trim() 
+      ? data.filter(item => 
+          item.clients?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.invoice_code?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : data;
+
+    // Apply custom order if search is empty
+    if (!searchQuery.trim() && order.length > 0) {
+      const ordered = [];
+      const dataMap = new Map(filtered.map(item => [item.id, item]));
       
-      switch (sortField) {
-        case 'number':
-          aValue = a.invoice_code || a.number || '';
-          bValue = b.invoice_code || b.number || '';
-          break;
-        case 'client':
-          aValue = a.clients?.name || '';
-          bValue = b.clients?.name || '';
-          break;
-        case 'date':
-          aValue = a.issue_date ? new Date(a.issue_date).getTime() : 0;
-          bValue = b.issue_date ? new Date(b.issue_date).getTime() : 0;
-          break;
-        case 'amount':
-          aValue = a.total;
-          bValue = b.total;
-          break;
-        case 'status':
-          aValue = a.status || '';
-          bValue = b.status || '';
-          break;
-        default:
-          return 0;
+      // Add items in custom order
+      for (const id of order) {
+        const item = dataMap.get(id);
+        if (item) {
+          ordered.push(item);
+          dataMap.delete(id);
+        }
       }
       
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+      // Add any remaining items (new ones not in order)
+      ordered.push(...Array.from(dataMap.values()));
+      return ordered;
+    }
+    
+    return filtered;
   };
 
-  const sortedInvoices = sortDocuments(invoices || []);
-  const sortedProFormas = sortDocuments(proformas || []);
+  const filteredInvoices = useMemo(() => 
+    getFilteredAndOrderedData(invoices || [], invoiceOrder), 
+    [invoices, invoiceOrder, searchQuery]
+  );
 
-  // Handle sorting
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortDirection('asc');
-      }
+  const filteredProFormas = useMemo(() => 
+    getFilteredAndOrderedData(proformas || [], proformaOrder), 
+    [proformas, proformaOrder, searchQuery]
+  );
+
+  // Handle reordering
+  const handleReorder = (items: Invoice[]) => {
+    const newOrder = items.map(item => item.id);
+    if (activeTab === 'invoices') {
+      setInvoiceOrder(newOrder);
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      setProformaOrder(newOrder);
     }
   };
 
@@ -251,7 +249,7 @@ const Billing = () => {
     );
   }
 
-  const currentData = activeTab === 'invoices' ? sortedInvoices : sortedProFormas;
+  const currentData = activeTab === 'invoices' ? filteredInvoices : filteredProFormas;
   const isLoading = activeTab === 'invoices' ? isLoadingInvoices : isLoadingProFormas;
   const handleClick = activeTab === 'invoices' ? handleInvoiceClick : handleProFormaClick;
   const handleCreate = activeTab === 'invoices' ? handleCreateInvoice : handleCreateProForma;
@@ -305,146 +303,67 @@ const Billing = () => {
             </TabsTrigger>
           </TabsList>
 
+          {/* Search Bar */}
+          <div className="relative mb-4 px-[8px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search by client name or document number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
           <TabsContent value="invoices" className="space-y-4">
-            {/* Filter and Sort Controls */}
-            <div className="flex items-center justify-between px-[8px]">
-              <div className="flex items-center space-x-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      Filter: {filterStatus === 'all' ? 'All' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setFilterStatus('all')}>All</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFilterStatus('draft')}>Draft</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFilterStatus('sent')}>Sent</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFilterStatus('paid')}>Paid</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              {/* Sort Dropdown */}
-              {isMobile ? (
-                <MobileSortDropdown
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline">
-                        Sort by: {sortField ? sortField.charAt(0).toUpperCase() + sortField.slice(1) : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}
-                        <ChevronDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleSort('number')}>Invoice #</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('client')}>Client</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('date')}>Date</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('amount')}>Amount</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('status')}>Status</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
-            </div>
-
-            {/* Invoices Table */}
             {isLoading ? (
               <div className="flex justify-center p-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : currentData && currentData.length > 0 ? (
-              <InvoiceTable
+              <DraggableInvoiceTable
                 invoices={currentData}
                 onInvoiceClick={handleClick}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={!isMobile ? handleSort : undefined}
+                onReorder={handleReorder}
+                searchQuery={searchQuery}
               />
             ) : (
               <div className="text-center py-12 border rounded-md mx-[8px]">
-                <p className="text-muted-foreground mb-4">{emptyMessage}</p>
-                <Button variant="outline" onClick={handleCreate}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {createFirstMessage}
-                </Button>
+                <p className="text-muted-foreground mb-4">
+                  {searchQuery ? `No invoices found matching "${searchQuery}"` : emptyMessage}
+                </p>
+                {!searchQuery && (
+                  <Button variant="outline" onClick={handleCreate}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {createFirstMessage}
+                  </Button>
+                )}
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="proformas" className="space-y-4">
-            {/* Filter and Sort Controls - Same as invoices */}
-            <div className="flex items-center justify-between px-[8px]">
-              <div className="flex items-center space-x-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      Filter: {filterStatus === 'all' ? 'All' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setFilterStatus('all')}>All</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFilterStatus('draft')}>Draft</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFilterStatus('sent')}>Sent</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFilterStatus('paid')}>Paid</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              {/* Sort Dropdown */}
-              {isMobile ? (
-                <MobileSortDropdown
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline">
-                        Sort by: {sortField ? sortField.charAt(0).toUpperCase() + sortField.slice(1) : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}
-                        <ChevronDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleSort('number')}>Pro Forma #</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('client')}>Client</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('date')}>Date</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('amount')}>Amount</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSort('status')}>Status</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
-            </div>
-
-            {/* Pro Formas Table */}
             {isLoading ? (
               <div className="flex justify-center p-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : currentData && currentData.length > 0 ? (
-              <InvoiceTable
+              <DraggableInvoiceTable
                 invoices={currentData}
                 onInvoiceClick={handleClick}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={!isMobile ? handleSort : undefined}
+                onReorder={handleReorder}
+                searchQuery={searchQuery}
               />
             ) : (
               <div className="text-center py-12 border rounded-md mx-[8px]">
-                <p className="text-muted-foreground mb-4">{emptyMessage}</p>
-                <Button variant="outline" onClick={handleCreate}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {createFirstMessage}
-                </Button>
+                <p className="text-muted-foreground mb-4">
+                  {searchQuery ? `No pro formas found matching "${searchQuery}"` : emptyMessage}
+                </p>
+                {!searchQuery && (
+                  <Button variant="outline" onClick={handleCreate}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {createFirstMessage}
+                  </Button>
+                )}
               </div>
             )}
           </TabsContent>
