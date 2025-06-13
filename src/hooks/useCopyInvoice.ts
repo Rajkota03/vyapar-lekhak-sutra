@@ -57,7 +57,7 @@ export const useCopyInvoice = () => {
 
       console.log('Line items fetched:', sourceLineItems?.length || 0);
 
-      // Generate new document number based on target type
+      // Generate new document number and determine document type
       let newDocumentNumber;
       let finalDocumentType;
       
@@ -77,13 +77,28 @@ export const useCopyInvoice = () => {
         newDocumentNumber = generatedNumber;
         finalDocumentType = 'custom';
       } else {
-        // Handle built-in document types
-        console.log('Generating number for target type:', targetType);
+        // Handle built-in document types - map to correct RPC parameter
+        let rpcDocType = targetType;
+        if (targetType === 'credit') {
+          rpcDocType = 'credit';
+          finalDocumentType = 'credit';
+        } else if (targetType === 'quote') {
+          rpcDocType = 'quote';
+          finalDocumentType = 'quote';
+        } else if (targetType === 'proforma') {
+          rpcDocType = 'proforma';
+          finalDocumentType = 'proforma';
+        } else {
+          rpcDocType = 'invoice';
+          finalDocumentType = 'invoice';
+        }
+        
+        console.log('Generating number for RPC doc type:', rpcDocType);
 
         const { data: generatedNumber, error: numberError } = await supabase
           .rpc('next_doc_number', { 
             p_company_id: currentCompany.id,
-            p_doc_type: targetType
+            p_doc_type: rpcDocType
           });
 
         if (numberError) {
@@ -93,13 +108,12 @@ export const useCopyInvoice = () => {
         
         console.log('Generated number from RPC:', generatedNumber);
         newDocumentNumber = generatedNumber;
-        finalDocumentType = targetType;
       }
 
       console.log('Final document number:', newDocumentNumber);
       console.log('Final document type:', finalDocumentType);
 
-      // Create the new invoice with proper document_type
+      // Create the new invoice with the correct document_type
       const newInvoiceData = {
         company_id: sourceInvoice.company_id,
         client_id: sourceInvoice.client_id,
@@ -118,7 +132,7 @@ export const useCopyInvoice = () => {
         require_client_signature: sourceInvoice.require_client_signature,
         notes: sourceInvoice.notes,
         document_type_id: customTypeId || null,
-        document_type: finalDocumentType,
+        document_type: finalDocumentType, // This is the key fix - always set the correct document_type
         status: 'draft',
         number: newDocumentNumber,
         invoice_code: newDocumentNumber
