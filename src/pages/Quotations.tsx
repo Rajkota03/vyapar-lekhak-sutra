@@ -66,7 +66,7 @@ const Quotations = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch quotations (using invoices table with type filter)
+  // Fetch quotations (using invoices table with proper filtering)
   const {
     data: quotations,
     isLoading: isLoadingQuotations
@@ -74,7 +74,10 @@ const Quotations = () => {
     queryKey: ['quotations', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
-      let query = supabase.from('invoices').select(`
+      
+      let query = supabase
+        .from('invoices')
+        .select(`
           id,
           invoice_code,
           number,
@@ -82,22 +85,24 @@ const Quotations = () => {
           total,
           status,
           clients ( name )
-        `).eq('company_id', selectedCompanyId).like('number', 'QUO-%'); // Filter for quotation documents
+        `)
+        .eq('company_id', selectedCompanyId)
+        .or('number.like.QUO-%,invoice_code.like.QUO-%'); // Match quotation documents
 
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
       }
-      query = query.order('created_at', {
-        ascending: false
-      });
-      const {
-        data: quotationData,
-        error
-      } = await query;
+      
+      query = query.order('created_at', { ascending: false });
+      
+      const { data: quotationData, error } = await query;
       if (error) throw error;
       return quotationData as Quotation[] || [];
     },
-    enabled: !!selectedCompanyId && !!user
+    enabled: !!selectedCompanyId && !!user,
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: true,
+    refetchOnMount: true
   });
 
   // Sort quotations
@@ -177,9 +182,7 @@ const Quotations = () => {
     navigate(`/quotations/${quotationId}`);
   };
   const handleCreateQuotation = () => {
-    queryClient.removeQueries({
-      queryKey: ['invoice']
-    });
+    queryClient.removeQueries({ queryKey: ['invoice'] });
     navigate('/quotations/new');
   };
   const floatingActions = [{

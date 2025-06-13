@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FileText, Copy, Quote, Receipt } from "lucide-react";
@@ -38,7 +39,7 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
       id: "invoice",
       name: "Invoice",
       icon: <Receipt className="h-5 w-5" />,
-      description: "Create a new invoice",
+      description: "Create a new invoice with today's date",
     },
     {
       id: "proforma",
@@ -78,8 +79,11 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
-            Copy {sourceDocumentNumber} to
+            Copy {sourceDocumentNumber}
           </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Select the document type to copy to. The new document will be created with today's date and a draft status.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-2 py-4">
@@ -87,11 +91,11 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
             <Button
               key={option.id}
               variant="ghost"
-              className="w-full justify-start h-auto p-4 hover:bg-gray-50"
+              className="w-full justify-start h-auto p-4 hover:bg-gray-50 border border-transparent hover:border-gray-200"
               onClick={() => handleCopyTo(option)}
             >
               <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0 text-gray-600">
+                <div className="flex-shrink-0 text-primary">
                   {option.icon}
                 </div>
                 <div className="flex-1 text-left">
