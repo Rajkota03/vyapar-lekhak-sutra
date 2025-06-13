@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -275,10 +274,9 @@ const InvoiceEdit = () => {
             onSave={handleSaveInvoice}
             onPreview={existingInvoice?.id ? handlePreview : undefined}
             invoiceId={existingInvoice?.id || invoiceId}
-            invoiceCode={exist
-ingInvoice?.invoice_code}
+            invoiceCode={existingInvoice?.invoice_code}
             isGeneratingPreview={isGeneratingPreview}
-            documentType={customDocumentType ? 'invoice' : documentType} // Use 'invoice' for custom types
+            documentType={customDocumentType ? 'invoice' : documentType}
             customDocumentTypeName={customDocumentType?.name}
           />
 
