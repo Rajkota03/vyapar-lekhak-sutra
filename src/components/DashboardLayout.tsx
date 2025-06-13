@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -37,29 +36,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     href: "/dashboard",
     icon: Home
   }, {
-    name: "Analytics",
-    href: "/analytics", 
-    icon: BarChart3
-  }, {
-    name: "Payments",
-    href: "/payments",
-    icon: CreditCard
-  }, {
-    name: "Clients",
-    href: "/clients",
-    icon: Users
-  }, {
-    name: "Items",
-    href: "/items",
-    icon: Package
-  }, {
     name: "Billing",
     href: "/billing",
     icon: FileText,
     submenu: [{
-      name: "All Documents",
-      href: "/billing"
-    }, {
       name: "Invoices",
       href: "/billing?tab=invoices"
     }, {
@@ -80,13 +60,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       isManagement: true
     } as SubmenuItem] as SubmenuItem[]
   }, {
-    name: "Support Us",
-    href: "/support",
-    icon: HelpCircle
+    name: "Payments",
+    href: "/payments",
+    icon: CreditCard
+  }, {
+    name: "Clients",
+    href: "/clients",
+    icon: Users
+  }, {
+    name: "Items",
+    href: "/items",
+    icon: Package
   }, {
     name: "Settings",
     href: "/settings",
     icon: Settings
+  }, {
+    name: "Support",
+    href: "/support",
+    icon: HelpCircle
   }];
 
   const toggleMobileMenu = () => {
