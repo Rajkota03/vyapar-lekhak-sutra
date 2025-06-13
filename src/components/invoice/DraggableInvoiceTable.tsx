@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format } from "date-fns";
 import { GripVertical } from "lucide-react";
@@ -110,9 +109,10 @@ const SortableRow: React.FC<SortableRowProps> = ({
   const handleDelete = onDelete ? () => onDelete(invoice.id) : undefined;
   const handleConvert = onConvert ? () => onConvert(invoice.id) : undefined;
 
-  // Show convert action only for proformas on mobile
-  const showConvert = isMobile && documentType === 'proforma' && onConvert;
-  const showDelete = isMobile && onDelete;
+  // Show convert action only for proformas on mobile when onConvert function is provided
+  const showConvert = isMobile && documentType === 'proforma' && !!onConvert;
+  // Show delete action on mobile when onDelete function is provided
+  const showDelete = isMobile && !!onDelete;
 
   const tableRow = (
     <TableRow 
