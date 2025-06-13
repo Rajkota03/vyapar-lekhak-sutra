@@ -114,7 +114,8 @@ export const useCopyInvoice = () => {
 
       console.log('Final document prefix/number:', documentPrefix);
 
-      // Create the new invoice
+      // Create the new invoice with BOTH number and invoice_code set to the same value
+      // This ensures the document will be picked up by the filtering logic
       const newInvoiceData = {
         company_id: sourceInvoice.company_id,
         client_id: sourceInvoice.client_id,
@@ -135,7 +136,7 @@ export const useCopyInvoice = () => {
         document_type_id: customTypeId || null,
         status: 'draft',
         number: documentPrefix,
-        invoice_code: documentPrefix
+        invoice_code: documentPrefix // CRITICAL: Set both fields to ensure filtering works
       };
 
       console.log('Creating new invoice with data:', newInvoiceData);
@@ -151,7 +152,11 @@ export const useCopyInvoice = () => {
         throw createError;
       }
 
-      console.log('New invoice created:', newInvoice.id, newInvoice.number);
+      console.log('New invoice created successfully:');
+      console.log('- ID:', newInvoice.id);
+      console.log('- Number:', newInvoice.number);
+      console.log('- Invoice Code:', newInvoice.invoice_code);
+      console.log('- Target Type:', targetType);
 
       // Copy line items
       if (sourceLineItems && sourceLineItems.length > 0) {
@@ -180,37 +185,43 @@ export const useCopyInvoice = () => {
         console.log('Line items copied:', newLineItems.length);
       }
 
+      // Verify the document was created correctly by fetching it back
+      const { data: verifyDoc, error: verifyError } = await supabase
+        .from('invoices')
+        .select('id, number, invoice_code, status, company_id')
+        .eq('id', newInvoice.id)
+        .single();
+
+      if (verifyError) {
+        console.error('Error verifying created document:', verifyError);
+      } else {
+        console.log('Document verification:', verifyDoc);
+      }
+
       console.log('=== COPY OPERATION SUCCESS ===');
 
       return { newInvoice, targetType, customTypeId };
     },
     onSuccess: ({ newInvoice, targetType, customTypeId }) => {
       console.log('Copy operation completed successfully');
+      console.log('Invalidating queries and refreshing data...');
       
-      // Comprehensive query invalidation
+      // More aggressive cache invalidation
       queryClient.removeQueries({ queryKey: ['invoices'] });
       queryClient.removeQueries({ queryKey: ['proformas'] });
       queryClient.removeQueries({ queryKey: ['quotations'] });
       queryClient.removeQueries({ queryKey: ['custom-documents'] });
       
-      // Force immediate refetch
-      queryClient.invalidateQueries({ 
-        queryKey: ['invoices'], 
-        refetchType: 'all',
-        exact: false 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['proformas'], 
-        refetchType: 'all',
-        exact: false 
-      });
+      // Force immediate refetch with more specific invalidation
       queryClient.invalidateQueries({ 
         queryKey: ['quotations'], 
         refetchType: 'all',
         exact: false 
       });
+      
+      // Additional invalidation for the specific company
       queryClient.invalidateQueries({ 
-        queryKey: ['custom-documents'], 
+        queryKey: ['quotations', currentCompany?.id], 
         refetchType: 'all',
         exact: false 
       });
@@ -244,10 +255,10 @@ export const useCopyInvoice = () => {
 
       console.log('Navigating to:', navigationPath);
 
-      // Navigate after a delay to allow queries to refresh
+      // Navigate after a longer delay to ensure queries refresh
       setTimeout(() => {
         navigate(navigationPath);
-      }, 2000); // 2 second delay to ensure queries refresh
+      }, 3000); // Increased to 3 seconds
     },
     onError: (error) => {
       console.error('=== COPY OPERATION FAILED ===');

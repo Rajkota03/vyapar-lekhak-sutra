@@ -63,13 +63,15 @@ const Quotations = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch quotations with improved filtering
+  // Fetch quotations with improved filtering and debugging
   const { data: quotations, isLoading: isLoadingQuotations } = useQuery({
     queryKey: ['quotations', selectedCompanyId, filterStatus, user?.id],
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
       
-      console.log('Fetching quotations for company:', selectedCompanyId);
+      console.log('=== FETCHING QUOTATIONS ===');
+      console.log('Company ID:', selectedCompanyId);
+      console.log('Filter Status:', filterStatus);
       
       let query = supabase
         .from('invoices')
@@ -85,10 +87,12 @@ const Quotations = () => {
         .eq('company_id', selectedCompanyId);
 
       // Enhanced filtering for quotations - look for QUO- prefix in both number and invoice_code fields
-      // This ensures we catch documents copied from other types that become quotations
+      // This should catch all quotations regardless of how they were created
+      console.log('Applying quotation filter...');
       query = query.or('number.like.QUO-%,invoice_code.like.QUO-%,number.like.QUOT-%,invoice_code.like.QUOT-%');
 
       if (filterStatus !== 'all') {
+        console.log('Applying status filter:', filterStatus);
         query = query.eq('status', filterStatus);
       }
       
@@ -100,14 +104,27 @@ const Quotations = () => {
         throw error;
       }
 
-      console.log('Quotations fetched:', quotationData?.length || 0, quotationData);
+      console.log('=== QUOTATIONS QUERY RESULT ===');
+      console.log('Total documents found:', quotationData?.length || 0);
+      
+      // Log each document for debugging
+      quotationData?.forEach((doc, index) => {
+        console.log(`Document ${index + 1}:`, {
+          id: doc.id,
+          number: doc.number,
+          invoice_code: doc.invoice_code,
+          status: doc.status,
+          client: doc.clients?.name
+        });
+      });
+
       return quotationData as Quotation[] || [];
     },
     enabled: !!selectedCompanyId && !!user,
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000, // Refetch every 5 seconds to catch new documents
+    refetchInterval: 3000, // Refetch every 3 seconds to catch new documents
   });
 
   // Sort quotations
@@ -163,10 +180,16 @@ const Quotations = () => {
   // Force refresh when component mounts or when coming back to this page
   useEffect(() => {
     const timer = setTimeout(() => {
+      console.log('Force refreshing quotations...');
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
     }, 1000);
     return () => clearTimeout(timer);
   }, [queryClient]);
+
+  // Debug effect to log when quotations change
+  useEffect(() => {
+    console.log('Quotations state updated:', quotations?.length || 0, 'documents');
+  }, [quotations]);
 
   if (isLoadingCompanies) {
     return <DashboardLayout>
@@ -204,6 +227,17 @@ const Quotations = () => {
     navigate('/quotations/new');
   };
 
+  const handleManualRefresh = () => {
+    console.log('Manual refresh triggered');
+    queryClient.removeQueries({ queryKey: ['quotations'] });
+    queryClient.invalidateQueries({ queryKey: ['quotations'] });
+    toast({
+      title: "Refreshing...",
+      description: "Updating quotations list",
+      duration: 2000,
+    });
+  };
+
   const floatingActions = [{
     label: "New Quotation",
     onClick: handleCreateQuotation,
@@ -219,7 +253,7 @@ const Quotations = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['quotations'] })}
+            onClick={handleManualRefresh}
             className="mr-2"
           >
             Refresh
@@ -275,9 +309,12 @@ const Quotations = () => {
             </div>}
         </div>
 
-        {/* Debug info - remove in production */}
-        <div className="px-[8px] text-xs text-gray-500">
-          Documents found: {quotations?.length || 0}
+        {/* Debug info - Enhanced debugging */}
+        <div className="px-[8px] text-xs text-gray-500 space-y-1">
+          <div>Company: {selectedCompanyId}</div>
+          <div>Documents found: {quotations?.length || 0}</div>
+          <div>Filter: {filterStatus}</div>
+          <div>Loading: {isLoadingQuotations ? 'Yes' : 'No'}</div>
         </div>
 
         {/* Quotations Table */}
