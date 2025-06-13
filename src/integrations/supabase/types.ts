@@ -302,6 +302,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           number: string
+          paid_amount: number
           pdf_url: string | null
           require_client_signature: boolean | null
           sgst: number | null
@@ -327,6 +328,7 @@ export type Database = {
           issue_date: string
           notes?: string | null
           number: string
+          paid_amount?: number
           pdf_url?: string | null
           require_client_signature?: boolean | null
           sgst?: number | null
@@ -352,6 +354,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           number?: string
+          paid_amount?: number
           pdf_url?: string | null
           require_client_signature?: boolean | null
           sgst?: number | null

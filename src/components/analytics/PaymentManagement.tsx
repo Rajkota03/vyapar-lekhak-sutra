@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { ModernCard } from "@/components/ui/primitives/ModernCard";
 import { Heading3, BodyText, CaptionText } from "@/components/ui/primitives/Typography";
@@ -38,9 +39,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     setUpdatingPayments(prev => new Set(prev).add(invoiceId));
     
     try {
+      const invoice = paymentData.find(p => p.id === invoiceId);
+      if (!invoice) return;
+
       const { error } = await supabase
         .from('invoices')
-        .update({ status: 'paid' })
+        .update({ 
+          status: 'paid',
+          paid_amount: invoice.total
+        })
         .eq('id', invoiceId);
 
       if (error) throw error;
@@ -103,13 +110,11 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
       const newRemainingAmount = invoice.total - newPaidAmount;
       const newStatus = newRemainingAmount <= 0 ? 'paid' : 'pending';
 
-      // Update invoice with new status
-      // Note: Since we don't have a paid_amount column in the invoices table,
-      // we're using the status to track partial payments for now
       const { error } = await supabase
         .from('invoices')
         .update({ 
-          status: newStatus
+          status: newStatus,
+          paid_amount: newPaidAmount
         })
         .eq('id', invoiceId);
 
@@ -240,6 +245,11 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                     </div>
                     <div className="text-right">
                       <BodyText className="font-semibold">₹{formatNumber(payment.total)}</BodyText>
+                      {payment.paidAmount > 0 && payment.status !== 'paid' && (
+                        <CaptionText className="text-blue-600">
+                          Paid: ₹{formatNumber(payment.paidAmount)}
+                        </CaptionText>
+                      )}
                       {payment.status !== 'paid' && (
                         <CaptionText>Remaining: ₹{formatNumber(payment.remainingAmount)}</CaptionText>
                       )}

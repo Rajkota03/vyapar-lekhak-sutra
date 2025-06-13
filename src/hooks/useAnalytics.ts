@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -80,28 +79,6 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
         setLoading(true);
         setError(null);
 
-        // Build date filter based on filters
-        let dateFilter = '';
-        if (filters) {
-          const currentYear = new Date().getFullYear();
-          
-          if (filters.period === 'custom' && filters.startDate && filters.endDate) {
-            dateFilter = `AND issue_date >= '${filters.startDate.toISOString().split('T')[0]}' AND issue_date <= '${filters.endDate.toISOString().split('T')[0]}'`;
-          } else if (filters.period === 'yearly' && filters.selectedYear) {
-            dateFilter = `AND EXTRACT(YEAR FROM issue_date) = ${filters.selectedYear}`;
-          } else if (filters.period === 'quarterly' && filters.selectedQuarter) {
-            const [quarter, year] = filters.selectedQuarter.split(' ');
-            const quarterNum = parseInt(quarter.replace('Q', ''));
-            const startMonth = (quarterNum - 1) * 3 + 1;
-            const endMonth = quarterNum * 3;
-            dateFilter = `AND EXTRACT(YEAR FROM issue_date) = ${year} AND EXTRACT(MONTH FROM issue_date) BETWEEN ${startMonth} AND ${endMonth}`;
-          } else if (filters.period === 'monthly' && filters.selectedMonth) {
-            const [monthName, year] = filters.selectedMonth.split(' ');
-            const monthNum = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
-            dateFilter = `AND EXTRACT(YEAR FROM issue_date) = ${year} AND EXTRACT(MONTH FROM issue_date) = ${monthNum}`;
-          }
-        }
-
         // Fetch basic invoice data with date filtering
         const { data: invoices, error: invoicesError } = await supabase
           .from('invoices')
@@ -134,7 +111,7 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
 
         // Apply client-side filtering if needed
         let filteredInvoices = invoices;
-        if (filters && dateFilter) {
+        if (filters) {
           filteredInvoices = invoices.filter(inv => {
             const issueDate = new Date(inv.issue_date);
             
@@ -160,30 +137,30 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           });
         }
 
-        // Calculate metrics
-        const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + (inv.status === 'paid' ? inv.total : 0), 0);
-        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? inv.total : 0), 0);
+        // Calculate metrics using the new paid_amount column
+        const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0);
+        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.total - (inv.paid_amount || 0)), 0);
         const overdueAmount = filteredInvoices.reduce((sum, inv) => {
           const isOverdue = new Date(inv.due_date) < new Date() && inv.status !== 'paid';
-          return sum + (isOverdue ? inv.total : 0);
+          return sum + (isOverdue ? (inv.total - (inv.paid_amount || 0)) : 0);
         }, 0);
         const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid').length;
         const avgInvoiceValue = filteredInvoices.length > 0 ? filteredInvoices.reduce((sum, inv) => sum + inv.total, 0) / filteredInvoices.length : 0;
 
-        // Payment tracking data
+        // Payment tracking data with accurate paid amounts
         const paymentTracking = filteredInvoices.map(inv => ({
           id: inv.id,
           number: inv.number,
           clientName: inv.clients?.name || 'Unknown Client',
           total: inv.total,
-          paidAmount: inv.status === 'paid' ? inv.total : 0,
-          remainingAmount: inv.status === 'paid' ? 0 : inv.total,
+          paidAmount: inv.paid_amount || 0,
+          remainingAmount: inv.total - (inv.paid_amount || 0),
           status: inv.status,
           dueDate: inv.due_date,
           isOverdue: new Date(inv.due_date) < new Date() && inv.status !== 'paid'
         }));
 
-        // Monthly revenue
+        // Monthly revenue using actual paid amounts
         const monthlyData = new Map();
         filteredInvoices.forEach(inv => {
           const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
@@ -194,9 +171,7 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
             monthlyData.set(month, { revenue: 0, invoiceCount: 0 });
           }
           const data = monthlyData.get(month);
-          if (inv.status === 'paid') {
-            data.revenue += inv.total;
-          }
+          data.revenue += inv.paid_amount || 0;
           data.invoiceCount += 1;
         });
 
@@ -251,7 +226,7 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           .sort((a, b) => b.totalAmount - a.totalAmount)
           .slice(0, 5);
 
-        // Cash flow data
+        // Cash flow data using actual paid amounts
         const cashFlowData = new Map();
         filteredInvoices.forEach(inv => {
           const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
@@ -262,11 +237,8 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
             cashFlowData.set(month, { paid: 0, outstanding: 0 });
           }
           const data = cashFlowData.get(month);
-          if (inv.status === 'paid') {
-            data.paid += inv.total;
-          } else {
-            data.outstanding += inv.total;
-          }
+          data.paid += inv.paid_amount || 0;
+          data.outstanding += inv.total - (inv.paid_amount || 0);
         });
 
         const cashFlow = Array.from(cashFlowData.entries()).map(([month, data]) => ({
