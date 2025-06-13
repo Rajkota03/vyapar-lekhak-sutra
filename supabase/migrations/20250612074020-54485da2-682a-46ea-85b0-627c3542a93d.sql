@@ -1,6 +1,6 @@
 
 -- Update the next_doc_number function to generate correct prefixes for each document type
-CREATE OR REPLACE FUNCTION public.next_doc_number(p_company_id uuid, p_doc_type text)
+CREATE OR REPLACE FUNCTION public.next_doc_number(p_company_id uuid, p_doc_type text, p_custom_type_id uuid DEFAULT NULL::uuid)
  RETURNS text
  LANGUAGE plpgsql
 AS $function$
@@ -9,7 +9,17 @@ DECLARE
     prefix_val text;
     result_number text;
 BEGIN
-    IF p_doc_type = 'invoice' THEN
+    -- Handle custom document types
+    IF p_custom_type_id IS NOT NULL THEN
+        UPDATE custom_document_types
+        SET next_sequence = next_sequence + 1
+        WHERE id = p_custom_type_id AND company_id = p_company_id
+        RETURNING next_sequence, code_prefix INTO next_seq, prefix_val;
+        
+        result_number := prefix_val || '-' || next_seq::text;
+        
+    -- Handle built-in document types
+    ELSIF p_doc_type = 'invoice' THEN
         UPDATE company_settings
         SET next_invoice_seq = next_invoice_seq + 1
         WHERE company_id = p_company_id

@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/context/CompanyContext";
 import { toast } from "@/hooks/use-toast";
@@ -38,24 +39,35 @@ interface Item {
 
 // Helper function to determine document type from URL
 const getDocumentType = (pathname: string): 'invoice' | 'proforma' | 'quote' => {
-  if (pathname.includes('/proforma')) return 'proforma';
-  if (pathname.includes('/quotations')) return 'quote';
+  console.log('=== DOCUMENT TYPE DETECTION ===');
+  console.log('Current pathname:', pathname);
+  
+  if (pathname.includes('/proforma')) {
+    console.log('Detected document type: proforma');
+    return 'proforma';
+  }
+  if (pathname.includes('/quotations')) {
+    console.log('Detected document type: quote');
+    return 'quote';
+  }
+  console.log('Detected document type: invoice (default)');
   return 'invoice';
 };
 
 export const useInvoiceData = () => {
   const params = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { currentCompany } = useCompany();
 
-  // Extract invoice ID from params - handle both /invoices/:id and /invoices/:companyId/:invoiceId patterns
+  // Extract invoice ID from params - handle multiple route patterns
   const invoiceId = params.id || params.invoiceId || (params["*"] && params["*"].includes("/") ? params["*"].split("/")[1] : params["*"]);
   const selectedCompanyId = params.companyId || currentCompany?.id || null;
   const documentTypeId = params.documentTypeId; // For custom document types
   
   // Determine document type from current path
-  const documentType = getDocumentType(window.location.pathname);
+  const documentType = getDocumentType(location.pathname);
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -95,11 +107,11 @@ export const useInvoiceData = () => {
     console.log('params["*"]:', params["*"]);
     console.log('Extracted Invoice ID:', invoiceId);
     console.log('Document Type ID:', documentTypeId);
-    console.log('URL pathname:', window.location.pathname);
+    console.log('URL pathname:', location.pathname);
     console.log('Selected Company ID:', selectedCompanyId);
     console.log('Document Type:', documentType);
     console.log('Custom Document Type:', customDocumentType);
-  }, [params, invoiceId, documentTypeId, selectedCompanyId, documentType, customDocumentType]);
+  }, [params, invoiceId, documentTypeId, selectedCompanyId, documentType, customDocumentType, location.pathname]);
 
   const { data: clients, isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients', selectedCompanyId],
@@ -284,7 +296,8 @@ export const useInvoiceData = () => {
         show_my_signature: showMySignature,
         require_client_signature: requireClientSignature,
         notes: notes || null,
-        document_type_id: customDocumentTypeId || null
+        document_type_id: customDocumentTypeId || null,
+        status: 'draft'
       };
 
       console.log('Final invoice data to save:', invoiceData);

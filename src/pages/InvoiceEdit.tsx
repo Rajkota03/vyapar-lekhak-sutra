@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,6 +56,7 @@ type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 const InvoiceEdit = () => {
   const navigate = useNavigate();
   const params = useParams();
+  const location = useLocation();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [showNotesSection, setShowNotesSection] = useState(false);
@@ -88,10 +89,11 @@ const InvoiceEdit = () => {
   // Get custom document type info
   const customDocumentType = documentTypeId ? customDocumentTypes.find(dt => dt.id === documentTypeId) : null;
 
-  // Log invoice ID extraction
+  // Log invoice ID extraction and document type detection
   useEffect(() => {
     console.log('=== INVOICE EDIT DEBUG ===');
     console.log('URL params:', params);
+    console.log('Location pathname:', location.pathname);
     console.log('params.id:', params.id);
     console.log('params.invoiceId:', params.invoiceId);
     console.log('params.documentTypeId:', params.documentTypeId);
@@ -100,7 +102,7 @@ const InvoiceEdit = () => {
     console.log('Custom document type:', customDocumentType);
     console.log('Existing invoice from hook:', existingInvoice);
     console.log('Document type from hook:', documentType);
-  }, [params, invoiceId, documentTypeId, customDocumentType, existingInvoice, documentType]);
+  }, [params, invoiceId, documentTypeId, customDocumentType, existingInvoice, documentType, location.pathname]);
 
   // Initialize form with defaults or existing invoice data
   const form = useForm<InvoiceFormValues>({
@@ -152,17 +154,24 @@ const InvoiceEdit = () => {
           const sequence = customDocumentType.next_sequence.toString().padStart(3, '0');
           return `${customDocumentType.code_prefix}-${sequence}`;
         } else {
-          // Default invoice number generation
+          // Default document number generation based on type
           const now = new Date();
           const year = now.getFullYear().toString().slice(2);
           const month = (now.getMonth() + 1).toString().padStart(2, '0');
           const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-          return `INV-${year}${month}-${random}`;
+          
+          if (documentType === 'proforma') {
+            return `PF-${year}${month}-${random}`;
+          } else if (documentType === 'quote') {
+            return `QUO-${year}${month}-${random}`;
+          } else {
+            return `INV-${year}${month}-${random}`;
+          }
         }
       };
       setInvoiceNumber(generateInvoiceNumber());
     }
-  }, [isEditing, existingInvoice, customDocumentType]);
+  }, [isEditing, existingInvoice, customDocumentType, documentType]);
 
   const taxConfig = form.watch('taxConfig') as TaxConfig;
   const notes = form.watch('notes');
@@ -198,10 +207,17 @@ const InvoiceEdit = () => {
   // Handle form submission including tax config and signatures
   const handleSaveInvoice = () => {
     if (!selectedClient || lineItems.length === 0) {
+      console.log('Cannot save: missing client or line items');
+      console.log('Selected client:', selectedClient);
+      console.log('Line items:', lineItems);
       return;
     }
     
     const formValues = form.getValues();
+    
+    console.log('=== SAVING INVOICE ===');
+    console.log('Document type:', documentType);
+    console.log('Form values:', formValues);
     
     saveInvoiceMutation.mutate({
       navigate,
@@ -259,7 +275,8 @@ const InvoiceEdit = () => {
             onSave={handleSaveInvoice}
             onPreview={existingInvoice?.id ? handlePreview : undefined}
             invoiceId={existingInvoice?.id || invoiceId}
-            invoiceCode={existingInvoice?.invoice_code}
+            invoiceCode={exist
+ingInvoice?.invoice_code}
             isGeneratingPreview={isGeneratingPreview}
             documentType={customDocumentType ? 'invoice' : documentType} // Use 'invoice' for custom types
             customDocumentTypeName={customDocumentType?.name}
