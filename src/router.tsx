@@ -4,6 +4,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Payments from "./pages/Payments";
+import Billing from "./pages/Billing";
 import Invoices from "./pages/Invoices";
 import InvoiceList from "./pages/InvoiceList";
 import InvoiceEdit from "./pages/InvoiceEdit";
@@ -80,6 +81,10 @@ export const router = createBrowserRouter([
   {
     path: "/items",
     element: <ProtectedRoute><ItemList /></ProtectedRoute>,
+  },
+  {
+    path: "/billing",
+    element: <ProtectedRoute><Billing /></ProtectedRoute>,
   },
   {
     path: "/invoices",

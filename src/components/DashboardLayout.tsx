@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -53,14 +54,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     icon: Package
   }, {
     name: "Billing",
-    href: "/invoices",
+    href: "/billing",
     icon: FileText,
     submenu: [{
-      name: "Invoices",
-      href: "/invoices"
+      name: "All Documents",
+      href: "/billing"
     }, {
-      name: "Pro Forma",
-      href: "/proforma"
+      name: "Invoices",
+      href: "/billing?tab=invoices"
+    }, {
+      name: "Pro Formas",
+      href: "/billing?tab=proformas"
     }, {
       name: "Quotations",
       href: "/quotations"
@@ -91,7 +95,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const toggleBillingMenu = () => {
     setBillingExpanded(!billingExpanded);
   };
-  const isBillingActive = location.pathname.startsWith('/invoices') || location.pathname.startsWith('/proforma') || location.pathname.startsWith('/quotations') || location.pathname.startsWith('/custom/');
+  const isBillingActive = location.pathname.startsWith('/billing') || location.pathname.startsWith('/invoices')|| location.pathname.startsWith('/proforma') || location.pathname.startsWith('/quotations') || location.pathname.startsWith('/custom/');
   React.useEffect(() => {
     if (isBillingActive) {
       setBillingExpanded(true);
@@ -127,7 +131,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       </button>
                       {billingExpanded && <div className="ml-6 mt-1 space-y-1">
                           {item.submenu.map(subItem => {
-                      const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/');
+                      const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/') || (subItem.href.includes('?') && location.pathname + location.search === subItem.href);
                       if (subItem.isManagement) {
                         return <Link key={subItem.name} to={subItem.href} className="group flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-50">
                                   <Plus className="h-4 w-4 mr-2" />
@@ -172,7 +176,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       </button>
                       {billingExpanded && <div className="ml-6 mt-1 space-y-1">
                           {item.submenu.map(subItem => {
-                    const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/');
+                    const isSubActive = location.pathname === subItem.href || location.pathname.startsWith(subItem.href + '/') || (subItem.href.includes('?') && location.pathname + location.search === subItem.href);
                     if (subItem.isManagement) {
                       return <Link key={subItem.name} to={subItem.href} className="group flex items-center px-4 py-2 text-base font-medium rounded-md text-gray-500 hover:bg-gray-50" onClick={toggleMobileMenu}>
                                   <Plus className="h-4 w-4 mr-2" />
