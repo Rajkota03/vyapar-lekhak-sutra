@@ -77,6 +77,9 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
           onInvoiceClick={onInvoiceClick}
           sortDirection={sortDirection}
           onSort={onSort}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onCopy={handleCopyClick}
         />
       </div>
 
