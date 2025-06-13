@@ -1,7 +1,6 @@
 
 import React, { useState, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
-import { Edit, Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface SwipeAction {
@@ -28,7 +27,7 @@ export const SwipeableTableRow: React.FC<SwipeableTableRowProps> = ({
   const [swipeOffset, setSwipeOffset] = useState(0);
   const rowRef = useRef<HTMLDivElement>(null);
   
-  const SWIPE_THRESHOLD = 80;
+  const SWIPE_THRESHOLD = 60;
   const ACTION_WIDTH = 80;
   const MAX_SWIPE = actions.length * ACTION_WIDTH;
 
@@ -73,13 +72,19 @@ export const SwipeableTableRow: React.FC<SwipeableTableRowProps> = ({
     setSwipeOffset(0);
   };
 
+  // Only show actions when there's actual swipe offset or when open
+  const showActions = swipeOffset > 0 || isSwipeOpen;
+
   return (
-    <div className="relative overflow-hidden" ref={rowRef}>
-      {/* Action buttons - positioned behind the row */}
-      {swipeOffset > 0 && (
+    <div className="relative overflow-hidden w-full" ref={rowRef}>
+      {/* Action buttons - only rendered when needed */}
+      {showActions && (
         <div 
-          className="absolute right-0 top-0 bottom-0 flex items-center bg-gray-100"
-          style={{ width: MAX_SWIPE }}
+          className="absolute right-0 top-0 bottom-0 flex items-center bg-gray-50 z-10"
+          style={{ 
+            width: MAX_SWIPE,
+            transform: `translateX(${MAX_SWIPE - swipeOffset}px)`
+          }}
         >
           {actions.map((action, index) => (
             <Button
@@ -100,7 +105,7 @@ export const SwipeableTableRow: React.FC<SwipeableTableRowProps> = ({
       {/* Main row content */}
       <div
         {...handlers}
-        className={`relative transition-transform duration-200 ease-out ${className}`}
+        className={`relative bg-white transition-transform duration-200 ease-out ${className}`}
         style={{
           transform: `translateX(-${swipeOffset}px)`,
           cursor: isSwipeOpen ? 'default' : 'pointer'
