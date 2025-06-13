@@ -1,4 +1,6 @@
-import React, { useRef, useState, useEffect } from "react";
+
+import React, { useState, useEffect } from "react";
+import { useSwipeable } from "react-swipeable";
 import { Trash2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,57 +22,58 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   isDisabled = false
 }) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const rowRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Calculate max swipe distance based on available actions
   const maxSwipeDistance = showConvert ? 160 : 80; // 80px per action
-  const triggerDistance = maxSwipeDistance / 3; // Lower threshold for easier trigger
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (isDisabled) return;
-    setStartX(e.touches[0].clientX);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || isDisabled) return;
-    
-    const currentX = e.touches[0].clientX;
-    const diff = startX - currentX;
-    
-    // Only allow left swipe (positive diff)
-    if (diff > 0) {
-      setSwipeOffset(Math.min(diff, maxSwipeDistance));
-    } else if (diff < 0 && swipeOffset > 0) {
-      // Allow right swipe to close
-      setSwipeOffset(Math.max(0, swipeOffset + diff));
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (isDisabled) return;
-    setIsDragging(false);
-    
-    if (swipeOffset > triggerDistance) {
-      // Keep swiped state - user can tap actions
-      setSwipeOffset(maxSwipeDistance);
-    } else {
-      // Snap back
-      setSwipeOffset(0);
-    }
-  };
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (!isDisabled) {
+        setIsOpen(true);
+        setSwipeOffset(maxSwipeDistance);
+      }
+    },
+    onSwipedRight: () => {
+      if (!isDisabled && isOpen) {
+        setIsOpen(false);
+        setSwipeOffset(0);
+      }
+    },
+    onSwiping: (eventData) => {
+      if (isDisabled) return;
+      
+      const { deltaX } = eventData;
+      
+      if (deltaX < 0) {
+        // Swiping left - open actions
+        const offset = Math.min(Math.abs(deltaX), maxSwipeDistance);
+        setSwipeOffset(offset);
+      } else if (deltaX > 0 && isOpen) {
+        // Swiping right when open - close actions
+        const offset = Math.max(0, maxSwipeDistance - deltaX);
+        setSwipeOffset(offset);
+      }
+    },
+    onSwipeStart: () => {
+      // Prevent any animations during swipe
+    },
+    preventScrollOnSwipe: true,
+    trackMouse: false, // Only track touch events
+    delta: 10, // Minimum distance to trigger swipe
+  });
 
   const handleActionClick = (action: () => void, event: React.MouseEvent) => {
     event.stopPropagation();
     action();
-    setSwipeOffset(0); // Close swipe after action
+    setIsOpen(false);
+    setSwipeOffset(0);
   };
 
   // Close swipe when disabled
   useEffect(() => {
     if (isDisabled) {
+      setIsOpen(false);
       setSwipeOffset(0);
     }
   }, [isDisabled]);
@@ -78,25 +81,30 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   // Close swipe when clicking elsewhere
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (rowRef.current && !rowRef.current.contains(event.target as Node) && swipeOffset > 0) {
+      const target = event.target as HTMLElement;
+      if (isOpen && !target.closest('[data-swipeable-row]')) {
+        setIsOpen(false);
         setSwipeOffset(0);
       }
     };
 
-    if (swipeOffset > 0) {
+    if (isOpen) {
       document.addEventListener('click', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [swipeOffset]);
+  }, [isOpen]);
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div 
+      className="relative w-full overflow-hidden"
+      data-swipeable-row
+      {...handlers}
+    >
       {/* Swipeable content */}
       <div
-        ref={rowRef}
         className={cn(
           "transition-transform duration-200 ease-out relative z-10 bg-white w-full",
           className
@@ -104,9 +112,6 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {children}
       </div>
