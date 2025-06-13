@@ -76,23 +76,61 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
 
   const applyPartialPayment = async (invoiceId: string) => {
     const amount = partialPayments[invoiceId];
-    if (!amount || amount <= 0) return;
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid payment amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const invoice = paymentData.find(p => p.id === invoiceId);
+    if (!invoice) return;
+
+    if (amount > invoice.remainingAmount) {
+      toast({
+        title: "Amount Exceeds Balance",
+        description: `Payment amount cannot exceed remaining balance of ₹${formatNumber(invoice.remainingAmount)}.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     setUpdatingPayments(prev => new Set(prev).add(invoiceId));
     
     try {
-      // For now, we'll just mark as paid if full amount
-      // In a real system, you'd have a payments table to track partial payments
-      const invoice = paymentData.find(p => p.id === invoiceId);
-      if (invoice && amount >= invoice.total) {
-        await handleMarkAsPaid(invoiceId);
-      } else {
-        toast({
-          title: "Partial Payment",
-          description: `Partial payment of ₹${formatNumber(amount)} recorded.`,
-        });
-      }
+      const newPaidAmount = invoice.paidAmount + amount;
+      const newRemainingAmount = invoice.total - newPaidAmount;
+      const newStatus = newRemainingAmount <= 0 ? 'paid' : 'partial';
+
+      // Update invoice with new paid amount and status
+      const { error } = await supabase
+        .from('invoices')
+        .update({ 
+          status: newStatus,
+          // Note: In a real system, you'd track paid_amount in the invoices table
+          // For now, we're just updating the status
+        })
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment Updated",
+        description: `Partial payment of ₹${formatNumber(amount)} recorded successfully.`,
+      });
+
+      // Clear the input field
+      setPartialPayments(prev => {
+        const newState = { ...prev };
+        delete newState[invoiceId];
+        return newState;
+      });
+      
+      onPaymentUpdate();
     } catch (error) {
+      console.error('Error updating payment:', error);
       toast({
         title: "Error",
         description: "Failed to record partial payment.",
@@ -115,6 +153,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
 
   const getStatusBadge = (status: string, isOverdue: boolean) => {
     if (status === 'paid') return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
+    if (status === 'partial') return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Partial</Badge>;
     if (isOverdue) return <Badge variant="destructive">Overdue</Badge>;
     return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Pending</Badge>;
   };
@@ -217,14 +256,17 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                         className="w-24 h-8"
                         value={partialPayments[payment.id] || ''}
                         onChange={(e) => handlePartialPayment(payment.id, parseFloat(e.target.value) || 0)}
+                        max={payment.remainingAmount}
+                        min={0}
+                        step="0.01"
                       />
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => applyPartialPayment(payment.id)}
-                        disabled={updatingPayments.has(payment.id)}
+                        disabled={updatingPayments.has(payment.id) || !partialPayments[payment.id]}
                       >
-                        Record
+                        Update
                       </Button>
                       <Button
                         size="sm"
