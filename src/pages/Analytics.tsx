@@ -1,22 +1,39 @@
 
-import React from "react";
+import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { ModernCard } from "@/components/ui/primitives/ModernCard";
 import { Section, Stack } from "@/components/ui/primitives/Spacing";
 import { Heading2, Heading3, BodyText } from "@/components/ui/primitives/Typography";
 import { useCompany } from "@/context/CompanyContext";
-import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAnalytics, AnalyticsFilters } from "@/hooks/useAnalytics";
+import { AnalyticsFiltersComponent } from "@/components/analytics/AnalyticsFilters";
+import { PaymentManagement } from "@/components/analytics/PaymentManagement";
 import { RevenueChart } from "@/components/analytics/RevenueChart";
 import { CashFlowChart } from "@/components/analytics/CashFlowChart";
 import { KpiCards } from "@/components/analytics/KpiCards";
 import { TopClientsTable } from "@/components/analytics/TopClientsTable";
 import { TaxComplianceCard } from "@/components/analytics/TaxComplianceCard";
-import { BarChart3, TrendingUp, Users, FileText, AlertCircle, Calendar } from "lucide-react";
+import { BarChart3, TrendingUp, Users, FileText, AlertCircle, Calendar, CreditCard } from "lucide-react";
 
 const Analytics = () => {
   const { currentCompany } = useCompany();
-  const { analytics, loading, error } = useAnalytics(currentCompany?.id);
+  const [filters, setFilters] = useState<AnalyticsFilters>({
+    period: 'monthly',
+    selectedMonth: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short' }),
+    selectedYear: new Date().getFullYear()
+  });
+  
+  const { analytics, loading, error } = useAnalytics(currentCompany?.id, filters);
+
+  const handleFiltersChange = (newFilters: AnalyticsFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handlePaymentUpdate = () => {
+    // Force refetch of analytics data after payment update
+    window.location.reload();
+  };
 
   if (!currentCompany) {
     return (
@@ -38,6 +55,12 @@ const Analytics = () => {
       <AppHeader title="Analytics" showBack backPath="/dashboard" />
       
       <div className="p-6 space-y-6">
+        {/* Date Filters */}
+        <AnalyticsFiltersComponent 
+          filters={filters} 
+          onFiltersChange={handleFiltersChange} 
+        />
+
         {loading && (
           <ModernCard className="text-center py-8">
             <BodyText>Loading analytics...</BodyText>
@@ -60,6 +83,18 @@ const Analytics = () => {
                 <Heading2>Business Overview</Heading2>
               </div>
               <KpiCards analytics={analytics} />
+            </Section>
+
+            {/* Payment Management */}
+            <Section>
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <Heading2>Payment Management</Heading2>
+              </div>
+              <PaymentManagement 
+                paymentData={analytics.paymentTracking} 
+                onPaymentUpdate={handlePaymentUpdate}
+              />
             </Section>
 
             {/* Revenue Analytics */}
