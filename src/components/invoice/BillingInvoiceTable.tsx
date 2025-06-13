@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -109,33 +110,36 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
     <div className="rounded-md border">
       {/* Mobile List View */}
       <div className="sm:hidden">
-        {invoices.map((invoice) => (
-          <SwipeableTableRow
-            key={invoice.id}
-            actions={getSwipeActions(invoice)}
-            onRowClick={() => onInvoiceClick(invoice.id)}
-            className="border-b last:border-b-0"
-          >
-            <div className="p-4 bg-white">
-              <div className="flex justify-between items-start mb-2">
-                <div className="font-medium text-sm">
-                  {invoice.invoice_code || invoice.number || 'Draft'}
+        {invoices.map((invoice, index) => (
+          <React.Fragment key={invoice.id}>
+            <SwipeableTableRow
+              actions={getSwipeActions(invoice)}
+              onRowClick={() => onInvoiceClick(invoice.id)}
+            >
+              <div className="p-4 bg-white">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-medium text-sm">
+                    {invoice.invoice_code || invoice.number || 'Draft'}
+                  </div>
+                  <div className="font-medium text-sm">
+                    ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </div>
                 </div>
-                <div className="font-medium text-sm">
-                  ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <div className="text-sm text-gray-600 mb-1">
+                  {invoice.clients?.name || 'No client'}
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-muted-foreground">
+                    {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+                  </div>
+                  {getStatusBadge(invoice.status)}
                 </div>
               </div>
-              <div className="text-sm text-gray-600 mb-1">
-                {invoice.clients?.name || 'No client'}
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-muted-foreground">
-                  {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-                </div>
-                {getStatusBadge(invoice.status)}
-              </div>
-            </div>
-          </SwipeableTableRow>
+            </SwipeableTableRow>
+            {index < invoices.length - 1 && (
+              <Separator className="bg-gray-100" />
+            )}
+          </React.Fragment>
         ))}
       </div>
 
