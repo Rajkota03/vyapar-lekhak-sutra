@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -69,52 +68,69 @@ const Quotations = () => {
     queryFn: async () => {
       if (!selectedCompanyId || !user) return [];
       
-      console.log('=== FETCHING QUOTATIONS ===');
+      console.log('=== FETCHING QUOTATIONS WITH DETAILED LOGGING ===');
       console.log('Company ID:', selectedCompanyId);
       console.log('Filter Status:', filterStatus);
+      console.log('User ID:', user.id);
       
-      let query = supabase
-        .from('invoices')
-        .select(`
-          id,
-          invoice_code,
-          number,
-          issue_date,
-          total,
-          status,
-          clients ( name )
-        `)
-        .eq('company_id', selectedCompanyId)
-        .eq('document_type', 'quote'); // Use the new document_type field
+      try {
+        let query = supabase
+          .from('invoices')
+          .select(`
+            id,
+            invoice_code,
+            number,
+            issue_date,
+            total,
+            status,
+            document_type,
+            clients ( name )
+          `)
+          .eq('company_id', selectedCompanyId)
+          .eq('document_type', 'quote'); // Use the new document_type field
 
-      if (filterStatus !== 'all') {
-        console.log('Applying status filter:', filterStatus);
-        query = query.eq('status', filterStatus);
-      }
-      
-      query = query.order('created_at', { ascending: false });
-      
-      const { data: quotationData, error } = await query;
-      if (error) {
-        console.error('Error fetching quotations:', error);
-        throw error;
-      }
-
-      console.log('=== QUOTATIONS QUERY RESULT ===');
-      console.log('Total quotations found:', quotationData?.length || 0);
-      
-      // Log each document for debugging
-      quotationData?.forEach((doc, index) => {
-        console.log(`Quotation ${index + 1}:`, {
-          id: doc.id,
-          number: doc.number,
-          invoice_code: doc.invoice_code,
-          status: doc.status,
-          client: doc.clients?.name
+        if (filterStatus !== 'all') {
+          console.log('Applying status filter:', filterStatus);
+          query = query.eq('status', filterStatus);
+        }
+        
+        query = query.order('created_at', { ascending: false });
+        
+        const { data: quotationData, error } = await query;
+        
+        console.log('❓ Quotations fetch →', {
+          data: quotationData,
+          error: error,
+          dataLength: quotationData?.length || 0,
+          query: 'invoices table with document_type = quote'
         });
-      });
 
-      return quotationData as Quotation[] || [];
+        if (error) {
+          console.error('🛑 Supabase query error:', error);
+          throw error;
+        }
+
+        console.log('=== QUOTATIONS QUERY RESULT ===');
+        console.log('Total quotations found:', quotationData?.length || 0);
+        console.log('Raw data from Supabase:', JSON.stringify(quotationData, null, 2));
+        
+        // Log each document for debugging
+        quotationData?.forEach((doc, index) => {
+          console.log(`Quotation ${index + 1}:`, {
+            id: doc.id,
+            number: doc.number,
+            invoice_code: doc.invoice_code,
+            document_type: doc.document_type,
+            status: doc.status,
+            client: doc.clients?.name
+          });
+        });
+
+        return quotationData as Quotation[] || [];
+      } catch (e) {
+        console.error('🛑 Unexpected error fetching quotations:', e);
+        throw e;
+      }
     },
     enabled: !!selectedCompanyId && !!user,
     staleTime: 0, // Always fetch fresh data
@@ -184,6 +200,9 @@ const Quotations = () => {
   // Debug effect to log when quotations change
   useEffect(() => {
     console.log('Quotations state updated:', quotations?.length || 0, 'documents');
+    if (quotations && quotations.length > 0) {
+      console.log('First quotation in state:', JSON.stringify(quotations[0], null, 2));
+    }
   }, [quotations]);
 
   if (isLoadingCompanies) {
