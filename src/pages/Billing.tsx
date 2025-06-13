@@ -11,7 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FloatingActionBar } from "@/components/layout/FloatingActionBar";
-import DraggableInvoiceTable from "@/components/invoice/DraggableInvoiceTable";
+import InvoiceTable from "@/components/invoice/InvoiceTable";
 import { convertProFormaToInvoice } from "@/utils/proformaConversion";
 
 type Invoice = {
@@ -39,8 +39,6 @@ const Billing = () => {
   
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [invoiceOrder, setInvoiceOrder] = useState<string[]>([]);
-  const [proformaOrder, setProformaOrder] = useState<string[]>([]);
 
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -70,7 +68,7 @@ const Billing = () => {
     }
   }, [companies, selectedCompanyId]);
 
-  // Fetch invoices
+  // Fetch invoices (sorted by date)
   const { data: invoices, isLoading: isLoadingInvoices } = useQuery({
     queryKey: ['invoices', selectedCompanyId, user?.id],
     queryFn: async () => {
@@ -100,7 +98,7 @@ const Billing = () => {
     enabled: !!selectedCompanyId && !!user
   });
 
-  // Fetch pro formas
+  // Fetch pro formas (sorted by date)
   const { data: proformas, isLoading: isLoadingProFormas } = useQuery({
     queryKey: ['proformas', selectedCompanyId, user?.id],
     queryFn: async () => {
@@ -128,73 +126,29 @@ const Billing = () => {
     enabled: !!selectedCompanyId && !!user
   });
 
-  // Initialize orders when data loads
-  useEffect(() => {
-    if (invoices && invoiceOrder.length === 0) {
-      setInvoiceOrder(invoices.map(inv => inv.id));
-    }
-  }, [invoices, invoiceOrder.length]);
-
-  useEffect(() => {
-    if (proformas && proformaOrder.length === 0) {
-      setProformaOrder(proformas.map(pf => pf.id));
-    }
-  }, [proformas, proformaOrder.length]);
-
-  // Filter and sort data based on search and drag order
-  const getFilteredAndOrderedData = (data: Invoice[], order: string[]) => {
+  // Filter data based on search
+  const getFilteredData = (data: Invoice[]) => {
     if (!data) return [];
     
     // Filter by search query
-    const filtered = searchQuery.trim() 
+    return searchQuery.trim() 
       ? data.filter(item => 
           item.clients?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.invoice_code?.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : data;
-
-    // Apply custom order if search is empty
-    if (!searchQuery.trim() && order.length > 0) {
-      const ordered = [];
-      const dataMap = new Map(filtered.map(item => [item.id, item]));
-      
-      // Add items in custom order
-      for (const id of order) {
-        const item = dataMap.get(id);
-        if (item) {
-          ordered.push(item);
-          dataMap.delete(id);
-        }
-      }
-      
-      // Add any remaining items (new ones not in order)
-      ordered.push(...Array.from(dataMap.values()));
-      return ordered;
-    }
-    
-    return filtered;
   };
 
   const filteredInvoices = useMemo(() => 
-    getFilteredAndOrderedData(invoices || [], invoiceOrder), 
-    [invoices, invoiceOrder, searchQuery]
+    getFilteredData(invoices || []), 
+    [invoices, searchQuery]
   );
 
   const filteredProFormas = useMemo(() => 
-    getFilteredAndOrderedData(proformas || [], proformaOrder), 
-    [proformas, proformaOrder, searchQuery]
+    getFilteredData(proformas || []), 
+    [proformas, searchQuery]
   );
-
-  // Handle reordering
-  const handleReorder = (items: Invoice[]) => {
-    const newOrder = items.map(item => item.id);
-    if (activeTab === 'invoices') {
-      setInvoiceOrder(newOrder);
-    } else {
-      setProformaOrder(newOrder);
-    }
-  };
 
   // Handle clicks
   const handleInvoiceClick = (invoiceId: string) => {
@@ -394,10 +348,9 @@ const Billing = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : currentData && currentData.length > 0 ? (
-              <DraggableInvoiceTable
+              <InvoiceTable
                 invoices={currentData}
                 onInvoiceClick={handleClick}
-                onReorder={handleReorder}
                 onDelete={handleDelete}
                 searchQuery={searchQuery}
                 documentType="invoice"
@@ -423,10 +376,9 @@ const Billing = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : currentData && currentData.length > 0 ? (
-              <DraggableInvoiceTable
+              <InvoiceTable
                 invoices={currentData}
                 onInvoiceClick={handleClick}
-                onReorder={handleReorder}
                 onDelete={handleDelete}
                 onConvert={handleConvertProForma}
                 searchQuery={searchQuery}

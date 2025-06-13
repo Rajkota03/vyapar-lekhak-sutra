@@ -1,8 +1,6 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -12,6 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import SwipeableRow from "./SwipeableRow";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Invoice = {
   id: string;
@@ -25,24 +25,32 @@ type Invoice = {
   } | null;
 };
 
-type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
-type SortDirection = 'asc' | 'desc' | null;
-
 interface InvoiceTableProps {
   invoices: Invoice[];
   onInvoiceClick: (invoiceId: string) => void;
-  sortField?: SortField;
-  sortDirection?: SortDirection;
-  onSort?: (field: SortField) => void;
+  onDelete?: (invoiceId: string) => void;
+  onConvert?: (invoiceId: string) => void;
+  searchQuery: string;
+  documentType?: 'invoice' | 'proforma';
 }
 
-const InvoiceTable: React.FC<InvoiceTableProps> = ({
-  invoices,
-  onInvoiceClick,
-  sortField,
-  sortDirection,
-  onSort
+interface InvoiceRowProps {
+  invoice: Invoice;
+  onInvoiceClick: (invoiceId: string) => void;
+  onDelete?: (invoiceId: string) => void;
+  onConvert?: (invoiceId: string) => void;
+  documentType?: 'invoice' | 'proforma';
+}
+
+const InvoiceRow: React.FC<InvoiceRowProps> = ({ 
+  invoice, 
+  onInvoiceClick, 
+  onDelete,
+  onConvert,
+  documentType = 'invoice'
 }) => {
+  const isMobile = useIsMobile();
+
   const getStatusBadge = (status: string | null) => {
     if (!status) return null;
     
@@ -62,114 +70,91 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   };
 
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
-    }
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="ml-1 h-3 w-3" /> : 
-      <ArrowDown className="ml-1 h-3 w-3" />;
-  };
+  const handleDelete = onDelete ? () => onDelete(invoice.id) : undefined;
+  const handleConvert = onConvert ? () => onConvert(invoice.id) : undefined;
 
-  const handleSort = (field: SortField) => {
-    if (onSort) {
-      onSort(field);
-    }
-  };
+  // Show convert action only for proformas on mobile when onConvert function is provided
+  const showConvert = isMobile && documentType === 'proforma' && !!onConvert;
+  // Show delete action on mobile when onDelete function is provided
+  const showDelete = isMobile && !!onDelete;
 
+  const tableRow = (
+    <TableRow 
+      className="cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={() => onInvoiceClick(invoice.id)}
+    >
+      <TableCell className="font-medium">
+        {invoice.invoice_code || invoice.number || 'Draft'}
+      </TableCell>
+      <TableCell>
+        <div className="space-y-1">
+          <div>{invoice.clients?.name || 'No client'}</div>
+          <div className="sm:hidden text-xs text-muted-foreground">
+            {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+          </div>
+          <div className="sm:hidden">
+            {getStatusBadge(invoice.status)}
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="hidden sm:table-cell">
+        {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+      </TableCell>
+      <TableCell className="hidden sm:table-cell text-center">
+        {getStatusBadge(invoice.status)}
+      </TableCell>
+    </TableRow>
+  );
+
+  // Wrap with SwipeableRow only on mobile and when actions are available
+  if (isMobile && (showDelete || showConvert)) {
+    return (
+      <SwipeableRow
+        onDelete={handleDelete}
+        onConvert={handleConvert}
+        showConvert={showConvert}
+      >
+        {tableRow}
+      </SwipeableRow>
+    );
+  }
+
+  return tableRow;
+};
+
+const InvoiceTable: React.FC<InvoiceTableProps> = ({
+  invoices,
+  onInvoiceClick,
+  onDelete,
+  onConvert,
+  searchQuery,
+  documentType = 'invoice'
+}) => {
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[150px]">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => handleSort('number')}
-              >
-                Invoice #
-                {getSortIcon('number')}
-              </Button>
-            </TableHead>
-            <TableHead>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => handleSort('client')}
-              >
-                Client
-                {getSortIcon('client')}
-              </Button>
-            </TableHead>
-            <TableHead className="hidden sm:table-cell">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => handleSort('date')}
-              >
-                Date
-                {getSortIcon('date')}
-              </Button>
-            </TableHead>
-            <TableHead className="text-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => handleSort('amount')}
-              >
-                Amount
-                {getSortIcon('amount')}
-              </Button>
-            </TableHead>
-            <TableHead className="hidden sm:table-cell text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => handleSort('status')}
-              >
-                Status
-                {getSortIcon('status')}
-              </Button>
-            </TableHead>
+            <TableHead className="w-[150px]">Document #</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead className="hidden sm:table-cell">Date</TableHead>
+            <TableHead className="text-right">Amount</TableHead>
+            <TableHead className="hidden sm:table-cell text-center">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {invoices.map((invoice) => (
-            <TableRow 
+            <InvoiceRow
               key={invoice.id}
-              className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => onInvoiceClick(invoice.id)}
-            >
-              <TableCell className="font-medium">
-                {invoice.invoice_code || invoice.number || 'Draft'}
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div>{invoice.clients?.name || 'No client'}</div>
-                  <div className="sm:hidden text-xs text-muted-foreground">
-                    {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-                  </div>
-                  <div className="sm:hidden">
-                    {getStatusBadge(invoice.status)}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-              </TableCell>
-              <TableCell className="text-right font-medium">
-                ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-center">
-                {getStatusBadge(invoice.status)}
-              </TableCell>
-            </TableRow>
+              invoice={invoice}
+              onInvoiceClick={onInvoiceClick}
+              onDelete={onDelete}
+              onConvert={onConvert}
+              documentType={documentType}
+            />
           ))}
         </TableBody>
       </Table>
