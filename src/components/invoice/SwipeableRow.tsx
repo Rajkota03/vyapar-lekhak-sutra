@@ -107,10 +107,14 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
       <div
         className={cn(
           "transition-transform duration-200 ease-out relative z-10 bg-white w-full",
+          // Remove horizontal padding from table cells inside swipeable rows
+          "[&_td]:!pr-0 [&_td:last-child]:!pr-4",
           className
         )}
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
+          // Ensure the background extends beyond the visible area
+          width: `calc(100% + ${maxSwipeDistance}px)`,
         }}
       >
         {children}
