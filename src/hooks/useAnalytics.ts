@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -42,6 +43,7 @@ export interface AnalyticsData {
     status: string;
     dueDate: string;
     isOverdue: boolean;
+    documentType: 'invoice' | 'proforma';
   }>;
   monthlyTaxBreakdown: Array<{
     month: string;
@@ -63,6 +65,19 @@ export interface AnalyticsFilters {
   selectedYear?: number;
 }
 
+// Helper function to determine document type based on number prefix
+const getDocumentType = (number: string): 'invoice' | 'proforma' | 'quotation' | 'credit' => {
+  if (number.startsWith('PF-')) return 'proforma';
+  if (number.startsWith('QUO-')) return 'quotation';
+  if (number.startsWith('CR-')) return 'credit';
+  return 'invoice';
+};
+
+// Helper function to check if document should be included in payment tracking
+const isPaymentRelevant = (documentType: 'invoice' | 'proforma' | 'quotation' | 'credit'): boolean => {
+  return documentType === 'invoice' || documentType === 'proforma';
+};
+
 export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,8 +94,8 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
         setLoading(true);
         setError(null);
 
-        // Fetch basic invoice data with date filtering
-        const { data: invoices, error: invoicesError } = await supabase
+        // Fetch all document data with date filtering
+        const { data: allDocuments, error: documentsError } = await supabase
           .from('invoices')
           .select(`
             *,
@@ -88,9 +103,9 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           `)
           .eq('company_id', companyId);
 
-        if (invoicesError) throw invoicesError;
+        if (documentsError) throw documentsError;
 
-        if (!invoices) {
+        if (!allDocuments) {
           setAnalytics({
             totalRevenue: 0,
             monthlyRevenue: [],
@@ -110,10 +125,10 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
         }
 
         // Apply client-side filtering if needed
-        let filteredInvoices = invoices;
+        let filteredDocuments = allDocuments;
         if (filters) {
-          filteredInvoices = invoices.filter(inv => {
-            const issueDate = new Date(inv.issue_date);
+          filteredDocuments = allDocuments.filter(doc => {
+            const issueDate = new Date(doc.issue_date);
             
             if (filters.period === 'custom' && filters.startDate && filters.endDate) {
               return issueDate >= filters.startDate && issueDate <= filters.endDate;
@@ -137,33 +152,46 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           });
         }
 
-        // Calculate metrics using the new paid_amount column
-        const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0);
-        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.total - (inv.paid_amount || 0)), 0);
-        const overdueAmount = filteredInvoices.reduce((sum, inv) => {
-          const isOverdue = new Date(inv.due_date) < new Date() && inv.status !== 'paid';
-          return sum + (isOverdue ? (inv.total - (inv.paid_amount || 0)) : 0);
+        // Separate documents by type
+        const invoicesAndProformas = filteredDocuments.filter(doc => {
+          const docType = getDocumentType(doc.number);
+          return isPaymentRelevant(docType);
+        });
+
+        const quotations = filteredDocuments.filter(doc => getDocumentType(doc.number) === 'quotation');
+        const creditNotes = filteredDocuments.filter(doc => getDocumentType(doc.number) === 'credit');
+
+        // Calculate metrics using only payment-relevant documents (invoices and proformas)
+        const totalRevenue = invoicesAndProformas.reduce((sum, doc) => sum + (doc.paid_amount || 0), 0);
+        const outstandingAmount = invoicesAndProformas.reduce((sum, doc) => sum + (doc.total - (doc.paid_amount || 0)), 0);
+        const overdueAmount = invoicesAndProformas.reduce((sum, doc) => {
+          const isOverdue = new Date(doc.due_date) < new Date() && doc.status !== 'paid';
+          return sum + (isOverdue ? (doc.total - (doc.paid_amount || 0)) : 0);
         }, 0);
-        const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid').length;
-        const avgInvoiceValue = filteredInvoices.length > 0 ? filteredInvoices.reduce((sum, inv) => sum + inv.total, 0) / filteredInvoices.length : 0;
+        const paidInvoices = invoicesAndProformas.filter(doc => doc.status === 'paid').length;
+        const avgInvoiceValue = invoicesAndProformas.length > 0 ? invoicesAndProformas.reduce((sum, doc) => sum + doc.total, 0) / invoicesAndProformas.length : 0;
 
-        // Payment tracking data with accurate paid amounts
-        const paymentTracking = filteredInvoices.map(inv => ({
-          id: inv.id,
-          number: inv.number,
-          clientName: inv.clients?.name || 'Unknown Client',
-          total: inv.total,
-          paidAmount: inv.paid_amount || 0,
-          remainingAmount: inv.total - (inv.paid_amount || 0),
-          status: inv.status,
-          dueDate: inv.due_date,
-          isOverdue: new Date(inv.due_date) < new Date() && inv.status !== 'paid'
-        }));
+        // Payment tracking data with document type classification - only payment-relevant documents
+        const paymentTracking = invoicesAndProformas.map(doc => {
+          const docType = getDocumentType(doc.number);
+          return {
+            id: doc.id,
+            number: doc.number,
+            clientName: doc.clients?.name || 'Unknown Client',
+            total: doc.total,
+            paidAmount: doc.paid_amount || 0,
+            remainingAmount: doc.total - (doc.paid_amount || 0),
+            status: doc.status,
+            dueDate: doc.due_date,
+            isOverdue: new Date(doc.due_date) < new Date() && doc.status !== 'paid',
+            documentType: docType as 'invoice' | 'proforma'
+          };
+        });
 
-        // Monthly revenue using actual paid amounts
+        // Monthly revenue using actual paid amounts from payment-relevant documents only
         const monthlyData = new Map();
-        filteredInvoices.forEach(inv => {
-          const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
+        invoicesAndProformas.forEach(doc => {
+          const month = new Date(doc.issue_date).toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short' 
           });
@@ -171,7 +199,7 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
             monthlyData.set(month, { revenue: 0, invoiceCount: 0 });
           }
           const data = monthlyData.get(month);
-          data.revenue += inv.paid_amount || 0;
+          data.revenue += doc.paid_amount || 0;
           data.invoiceCount += 1;
         });
 
@@ -181,10 +209,10 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           invoiceCount: data.invoiceCount
         }));
 
-        // Monthly tax breakdown
+        // Monthly tax breakdown - use all documents for tax calculations
         const monthlyTaxData = new Map();
-        filteredInvoices.forEach(inv => {
-          const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
+        filteredDocuments.forEach(doc => {
+          const month = new Date(doc.issue_date).toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short' 
           });
@@ -192,9 +220,9 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
             monthlyTaxData.set(month, { cgst: 0, sgst: 0, igst: 0 });
           }
           const data = monthlyTaxData.get(month);
-          data.cgst += inv.cgst || 0;
-          data.sgst += inv.sgst || 0;
-          data.igst += inv.igst || 0;
+          data.cgst += doc.cgst || 0;
+          data.sgst += doc.sgst || 0;
+          data.igst += doc.igst || 0;
         });
 
         const monthlyTaxBreakdown = Array.from(monthlyTaxData.entries()).map(([month, data]) => ({
@@ -205,15 +233,15 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           totalTax: data.cgst + data.sgst + data.igst
         }));
 
-        // Top clients
+        // Top clients - use payment-relevant documents only
         const clientData = new Map();
-        filteredInvoices.forEach(inv => {
-          const clientName = inv.clients?.name || 'Unknown Client';
+        invoicesAndProformas.forEach(doc => {
+          const clientName = doc.clients?.name || 'Unknown Client';
           if (!clientData.has(clientName)) {
             clientData.set(clientName, { totalAmount: 0, invoiceCount: 0 });
           }
           const data = clientData.get(clientName);
-          data.totalAmount += inv.total;
+          data.totalAmount += doc.total;
           data.invoiceCount += 1;
         });
 
@@ -226,10 +254,10 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           .sort((a, b) => b.totalAmount - a.totalAmount)
           .slice(0, 5);
 
-        // Cash flow data using actual paid amounts
+        // Cash flow data using payment-relevant documents only
         const cashFlowData = new Map();
-        filteredInvoices.forEach(inv => {
-          const month = new Date(inv.issue_date).toLocaleDateString('en-US', { 
+        invoicesAndProformas.forEach(doc => {
+          const month = new Date(doc.issue_date).toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short' 
           });
@@ -237,8 +265,8 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
             cashFlowData.set(month, { paid: 0, outstanding: 0 });
           }
           const data = cashFlowData.get(month);
-          data.paid += inv.paid_amount || 0;
-          data.outstanding += inv.total - (inv.paid_amount || 0);
+          data.paid += doc.paid_amount || 0;
+          data.outstanding += doc.total - (doc.paid_amount || 0);
         });
 
         const cashFlow = Array.from(cashFlowData.entries()).map(([month, data]) => ({
@@ -247,22 +275,22 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           outstanding: data.outstanding
         }));
 
-        // Tax breakdown
-        const taxBreakdown = filteredInvoices.reduce((acc, inv) => ({
-          cgst: acc.cgst + (inv.cgst || 0),
-          sgst: acc.sgst + (inv.sgst || 0),
-          igst: acc.igst + (inv.igst || 0)
+        // Tax breakdown - use all documents
+        const taxBreakdown = filteredDocuments.reduce((acc, doc) => ({
+          cgst: acc.cgst + (doc.cgst || 0),
+          sgst: acc.sgst + (doc.sgst || 0),
+          igst: acc.igst + (doc.igst || 0)
         }), { cgst: 0, sgst: 0, igst: 0 });
 
-        // Quarterly tax
+        // Quarterly tax - use all documents
         const quarterlyData = new Map();
-        filteredInvoices.forEach(inv => {
-          const date = new Date(inv.issue_date);
+        filteredDocuments.forEach(doc => {
+          const date = new Date(doc.issue_date);
           const quarter = `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
           if (!quarterlyData.has(quarter)) {
             quarterlyData.set(quarter, 0);
           }
-          quarterlyData.set(quarter, quarterlyData.get(quarter) + (inv.cgst || 0) + (inv.sgst || 0) + (inv.igst || 0));
+          quarterlyData.set(quarter, quarterlyData.get(quarter) + (doc.cgst || 0) + (doc.sgst || 0) + (doc.igst || 0));
         });
 
         const quarterlyTax = Array.from(quarterlyData.entries()).map(([quarter, totalTax]) => ({
@@ -275,7 +303,7 @@ export const useAnalytics = (companyId?: string, filters?: AnalyticsFilters) => 
           monthlyRevenue,
           outstandingAmount,
           overdueAmount,
-          totalInvoices: filteredInvoices.length,
+          totalInvoices: invoicesAndProformas.length,
           paidInvoices,
           avgInvoiceValue,
           topClients,

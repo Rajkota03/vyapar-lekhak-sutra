@@ -15,6 +15,7 @@ import ProForma from "./pages/ProForma";
 import Quotations from "./pages/Quotations";
 import CustomDocumentList from "./pages/CustomDocumentList";
 import ItemList from "./pages/ItemList";
+import Clients from "./pages/Clients";
 
 // Settings sub-pages
 import GeneralSettings from "./pages/settings/GeneralSettings";
@@ -74,7 +75,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/clients",
-    element: <ProtectedRoute><div>Clients Page (Coming Soon)</div></ProtectedRoute>,
+    element: <ProtectedRoute><Clients /></ProtectedRoute>,
   },
   {
     path: "/items",
