@@ -99,13 +99,13 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
 
   return (
     <div 
-      className="relative w-full overflow-hidden"
+      className="relative overflow-hidden"
       data-swipeable-row
       {...handlers}
     >
       {/* Action buttons - positioned absolutely behind the content */}
       <div 
-        className="absolute inset-y-0 right-0 flex items-stretch"
+        className="absolute inset-y-0 right-0 flex items-stretch z-0"
         style={{ width: `${maxSwipeDistance}px` }}
       >
         {/* Convert button (if enabled) */}
@@ -129,10 +129,10 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
         )}
       </div>
 
-      {/* Swipeable content - covers the action buttons completely */}
+      {/* Swipeable content - the actual table row */}
       <div
         className={cn(
-          "relative z-10 bg-white transition-transform duration-200 ease-out",
+          "relative z-10 bg-white transition-transform duration-200 ease-out w-full",
           className
         )}
         style={{ 

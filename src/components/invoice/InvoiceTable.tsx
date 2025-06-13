@@ -157,8 +157,8 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
 
   return (
     <div className="w-full rounded-md border">
-      <div className="w-full overflow-hidden">
-        <Table className="w-full table-fixed">
+      <div className="w-full overflow-x-auto">
+        <Table className="w-full">
           <TableHeader>
             <TableRow>
               <TableHead 
