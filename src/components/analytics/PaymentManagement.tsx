@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ModernCard } from "@/components/ui/primitives/ModernCard";
 import { Heading3, BodyText, CaptionText } from "@/components/ui/primitives/Typography";
@@ -50,7 +49,10 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         })
         .eq('id', invoiceId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking as paid:', error);
+        throw error;
+      }
 
       toast({
         title: "Payment Updated",
@@ -59,6 +61,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
       
       onPaymentUpdate();
     } catch (error) {
+      console.error('Error updating payment:', error);
       toast({
         title: "Error",
         description: "Failed to update payment status.",
@@ -108,17 +111,31 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     try {
       const newPaidAmount = invoice.paidAmount + amount;
       const newRemainingAmount = invoice.total - newPaidAmount;
-      const newStatus = newRemainingAmount <= 0 ? 'paid' : 'pending';
+      
+      // Use only valid status values - keeping current status if not fully paid
+      const newStatus = newRemainingAmount <= 0 ? 'paid' : invoice.status;
+
+      console.log('Updating invoice with:', {
+        invoiceId,
+        currentPaidAmount: invoice.paidAmount,
+        paymentAmount: amount,
+        newPaidAmount,
+        newRemainingAmount,
+        currentStatus: invoice.status,
+        newStatus
+      });
 
       const { error } = await supabase
         .from('invoices')
         .update({ 
-          status: newStatus,
           paid_amount: newPaidAmount
         })
         .eq('id', invoiceId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating payment:', error);
+        throw error;
+      }
 
       toast({
         title: "Payment Updated",
