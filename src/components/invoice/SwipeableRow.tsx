@@ -26,7 +26,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
 
   // Calculate max swipe distance based on available actions
   const maxSwipeDistance = showConvert ? 160 : 80; // 80px per action
-  const triggerDistance = maxSwipeDistance / 2;
+  const triggerDistance = maxSwipeDistance / 3; // Lower threshold for easier trigger
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isDisabled) return;
@@ -43,6 +43,9 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
     // Only allow left swipe (positive diff)
     if (diff > 0) {
       setSwipeOffset(Math.min(diff, maxSwipeDistance));
+    } else if (diff < 0 && swipeOffset > 0) {
+      // Allow right swipe to close
+      setSwipeOffset(Math.max(0, swipeOffset + diff));
     }
   };
 
@@ -59,50 +62,11 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isDisabled) return;
-    setStartX(e.clientX);
-    setIsDragging(true);
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging || isDisabled) return;
-    
-    const currentX = e.clientX;
-    const diff = startX - currentX;
-    
-    if (diff > 0) {
-      setSwipeOffset(Math.min(diff, maxSwipeDistance));
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (isDisabled) return;
-    setIsDragging(false);
-    
-    if (swipeOffset > triggerDistance) {
-      setSwipeOffset(maxSwipeDistance);
-    } else {
-      setSwipeOffset(0);
-    }
-  };
-
-  const handleActionClick = (action: () => void) => {
+  const handleActionClick = (action: () => void, event: React.MouseEvent) => {
+    event.stopPropagation();
     action();
     setSwipeOffset(0); // Close swipe after action
   };
-
-  useEffect(() => {
-    if (isDragging && !isDisabled) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, startX, isDisabled]);
 
   // Close swipe when disabled
   useEffect(() => {
@@ -111,57 +75,72 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
     }
   }, [isDisabled]);
 
+  // Close swipe when clicking elsewhere
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (rowRef.current && !rowRef.current.contains(event.target as Node) && swipeOffset > 0) {
+        setSwipeOffset(0);
+      }
+    };
+
+    if (swipeOffset > 0) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [swipeOffset]);
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Action buttons background */}
-      <div 
-        className={cn(
-          "absolute inset-y-0 right-0 flex items-center transition-all duration-200",
-          swipeOffset > 0 ? "opacity-100" : "opacity-0"
-        )}
-        style={{ width: `${swipeOffset}px` }}
-      >
-        {/* Convert button (if enabled) */}
-        {showConvert && onConvert && (
-          <div 
-            className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
-            style={{ width: '80px' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleActionClick(onConvert);
-            }}
-          >
-            <FileText className="h-5 w-5 text-white" />
-          </div>
-        )}
-        
-        {/* Delete button */}
-        {onDelete && (
-          <div 
-            className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors"
-            style={{ width: '80px' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleActionClick(onDelete);
-            }}
-          >
-            <Trash2 className="h-5 w-5 text-white" />
-          </div>
-        )}
-      </div>
-      
+    <div className="relative" style={{ overflow: 'hidden' }}>
       {/* Swipeable content */}
       <div
         ref={rowRef}
-        className={cn("transition-transform duration-200", className)}
-        style={{ transform: `translateX(-${swipeOffset}px)` }}
+        className={cn(
+          "transition-transform duration-200 ease-out relative z-10 bg-white",
+          className
+        )}
+        style={{ 
+          transform: `translateX(-${swipeOffset}px)`,
+          width: '100%'
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
       >
         {children}
       </div>
+      
+      {/* Action buttons - only render when swiping */}
+      {swipeOffset > 0 && (
+        <div 
+          className="absolute inset-y-0 right-0 flex items-center z-0"
+          style={{ width: `${swipeOffset}px` }}
+        >
+          {/* Convert button (if enabled) */}
+          {showConvert && onConvert && (
+            <div 
+              className="h-full bg-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
+              style={{ width: '80px', minWidth: '80px' }}
+              onClick={(e) => handleActionClick(onConvert, e)}
+            >
+              <FileText className="h-5 w-5 text-white" />
+            </div>
+          )}
+          
+          {/* Delete button */}
+          {onDelete && (
+            <div 
+              className="h-full bg-red-500 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors"
+              style={{ width: '80px', minWidth: '80px' }}
+              onClick={(e) => handleActionClick(onDelete, e)}
+            >
+              <Trash2 className="h-5 w-5 text-white" />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
