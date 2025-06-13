@@ -107,12 +107,45 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
 
   return (
     <div className="rounded-md border">
-      <Table>
+      {/* Mobile List View */}
+      <div className="sm:hidden">
+        {invoices.map((invoice) => (
+          <SwipeableTableRow
+            key={invoice.id}
+            actions={getSwipeActions(invoice)}
+            onRowClick={() => onInvoiceClick(invoice.id)}
+            className="border-b last:border-b-0"
+          >
+            <div className="p-4 bg-white">
+              <div className="flex justify-between items-start mb-2">
+                <div className="font-medium text-sm">
+                  {invoice.invoice_code || invoice.number || 'Draft'}
+                </div>
+                <div className="font-medium text-sm">
+                  ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div className="text-sm text-gray-600 mb-1">
+                {invoice.clients?.name || 'No client'}
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="text-xs text-muted-foreground">
+                  {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+                </div>
+                {getStatusBadge(invoice.status)}
+              </div>
+            </div>
+          </SwipeableTableRow>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <Table className="hidden sm:table">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[150px]">Document #</TableHead>
             <TableHead>Client</TableHead>
-            <TableHead className="hidden sm:table-cell">
+            <TableHead>
               <Button
                 variant="ghost"
                 size="sm"
@@ -124,42 +157,32 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
               </Button>
             </TableHead>
             <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="hidden sm:table-cell text-center">Status</TableHead>
+            <TableHead className="text-center">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {invoices.map((invoice) => (
-            <SwipeableTableRow
-              key={invoice.id}
-              actions={getSwipeActions(invoice)}
-              onRowClick={() => onInvoiceClick(invoice.id)}
+            <TableRow 
+              key={invoice.id} 
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => onInvoiceClick(invoice.id)}
             >
-              <TableRow className="cursor-pointer hover:bg-muted/50 transition-colors border-0">
-                <TableCell className="font-medium">
-                  {invoice.invoice_code || invoice.number || 'Draft'}
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <div>{invoice.clients?.name || 'No client'}</div>
-                    <div className="sm:hidden text-xs text-muted-foreground">
-                      {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-                    </div>
-                    <div className="sm:hidden">
-                      {getStatusBadge(invoice.status)}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell text-center">
-                  {getStatusBadge(invoice.status)}
-                </TableCell>
-              </TableRow>
-            </SwipeableTableRow>
+              <TableCell className="font-medium">
+                {invoice.invoice_code || invoice.number || 'Draft'}
+              </TableCell>
+              <TableCell>
+                {invoice.clients?.name || 'No client'}
+              </TableCell>
+              <TableCell>
+                {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+              </TableCell>
+              <TableCell className="text-right font-medium">
+                ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </TableCell>
+              <TableCell className="text-center">
+                {getStatusBadge(invoice.status)}
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
