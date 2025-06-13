@@ -59,9 +59,10 @@ export const useCopyInvoice = () => {
 
       // Generate new document number based on target type
       let newDocumentNumber;
-      let documentPrefix;
+      let finalDocumentType;
       
       if (customTypeId) {
+        // Handle custom document types
         const { data: generatedNumber, error: numberError } = await supabase
           .rpc('next_doc_number', { 
             p_company_id: currentCompany.id,
@@ -74,22 +75,15 @@ export const useCopyInvoice = () => {
           throw numberError;
         }
         newDocumentNumber = generatedNumber;
-        documentPrefix = generatedNumber;
+        finalDocumentType = 'custom';
       } else {
-        // Use the correct document type for RPC call
-        const docTypeMap = {
-          'invoice': 'invoice',
-          'proforma': 'proforma', 
-          'quote': 'quote'
-        };
-
-        const rpcDocType = docTypeMap[targetType as keyof typeof docTypeMap] || targetType;
-        console.log('RPC document type:', rpcDocType);
+        // Handle built-in document types
+        console.log('Generating number for target type:', targetType);
 
         const { data: generatedNumber, error: numberError } = await supabase
           .rpc('next_doc_number', { 
             p_company_id: currentCompany.id,
-            p_doc_type: rpcDocType
+            p_doc_type: targetType
           });
 
         if (numberError) {
@@ -98,21 +92,12 @@ export const useCopyInvoice = () => {
         }
         
         console.log('Generated number from RPC:', generatedNumber);
-        
-        // For quotations, ensure we always use QUO- prefix
-        if (targetType === 'quote') {
-          // The RPC should return QUO-X format, but let's ensure it
-          documentPrefix = generatedNumber.startsWith('QUO-') ? generatedNumber : `QUO-${generatedNumber}`;
-        } else if (targetType === 'proforma') {
-          documentPrefix = generatedNumber.startsWith('PF-') ? generatedNumber : `PF-${generatedNumber}`;
-        } else {
-          documentPrefix = generatedNumber.startsWith('INV-') ? generatedNumber : `INV-${generatedNumber}`;
-        }
-        
-        newDocumentNumber = documentPrefix;
+        newDocumentNumber = generatedNumber;
+        finalDocumentType = targetType;
       }
 
-      console.log('Final document prefix/number:', documentPrefix);
+      console.log('Final document number:', newDocumentNumber);
+      console.log('Final document type:', finalDocumentType);
 
       // Create the new invoice with proper document_type
       const newInvoiceData = {
@@ -133,10 +118,10 @@ export const useCopyInvoice = () => {
         require_client_signature: sourceInvoice.require_client_signature,
         notes: sourceInvoice.notes,
         document_type_id: customTypeId || null,
-        document_type: customTypeId ? 'custom' : targetType, // Set document_type correctly
+        document_type: finalDocumentType,
         status: 'draft',
-        number: documentPrefix,
-        invoice_code: documentPrefix
+        number: newDocumentNumber,
+        invoice_code: newDocumentNumber
       };
 
       console.log('Creating new invoice with data:', newInvoiceData);
@@ -157,7 +142,6 @@ export const useCopyInvoice = () => {
       console.log('- Number:', newInvoice.number);
       console.log('- Invoice Code:', newInvoice.invoice_code);
       console.log('- Document Type:', newInvoice.document_type);
-      console.log('- Target Type:', targetType);
 
       // Copy line items
       if (sourceLineItems && sourceLineItems.length > 0) {
@@ -188,33 +172,25 @@ export const useCopyInvoice = () => {
 
       console.log('=== COPY OPERATION SUCCESS ===');
 
-      return { newInvoice, targetType, customTypeId };
+      return { newInvoice, targetType: finalDocumentType, customTypeId };
     },
     onSuccess: ({ newInvoice, targetType, customTypeId }) => {
       console.log('Copy operation completed successfully');
-      console.log('Invalidating queries and refreshing data...');
+      console.log('Target document type:', targetType);
       
-      // More aggressive cache invalidation
+      // Invalidate all relevant queries to refresh the lists
       queryClient.removeQueries({ queryKey: ['invoices'] });
       queryClient.removeQueries({ queryKey: ['proformas'] });
       queryClient.removeQueries({ queryKey: ['quotations'] });
       queryClient.removeQueries({ queryKey: ['custom-documents'] });
       
-      // Force immediate refetch with more specific invalidation
-      queryClient.invalidateQueries({ 
-        queryKey: ['quotations'], 
-        refetchType: 'all',
-        exact: false 
-      });
-      
-      // Additional invalidation for the specific company
-      queryClient.invalidateQueries({ 
-        queryKey: ['quotations', currentCompany?.id], 
-        refetchType: 'all',
-        exact: false 
-      });
+      // Force immediate refetch
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['proformas'] });
+      queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-documents'] });
 
-      // Determine the document type name for the toast
+      // Determine the document type name and navigation path
       let docTypeName = 'Document';
       let navigationPath = '';
       
@@ -222,19 +198,30 @@ export const useCopyInvoice = () => {
         docTypeName = 'Document';
         navigationPath = `/custom/${customTypeId}/${newInvoice.id}`;
       } else {
-        if (targetType === 'proforma') {
-          docTypeName = 'Pro Forma';
-          navigationPath = `/proforma/${newInvoice.id}`;
-        } else if (targetType === 'quote') {
-          docTypeName = 'Quotation';
-          navigationPath = `/quotations/${newInvoice.id}`;
-        } else {
-          docTypeName = 'Invoice';
-          navigationPath = `/invoices/${newInvoice.id}`;
+        switch (targetType) {
+          case 'proforma':
+            docTypeName = 'Pro Forma';
+            navigationPath = `/proforma/${newInvoice.id}`;
+            break;
+          case 'quote':
+            docTypeName = 'Quotation';
+            navigationPath = `/quotations/${newInvoice.id}`;
+            break;
+          case 'invoice':
+            docTypeName = 'Invoice';
+            navigationPath = `/invoices/${newInvoice.id}`;
+            break;
+          case 'credit':
+            docTypeName = 'Credit Note';
+            navigationPath = `/invoices/${newInvoice.id}`;
+            break;
+          default:
+            docTypeName = 'Document';
+            navigationPath = `/invoices/${newInvoice.id}`;
         }
       }
 
-      // Show success message immediately
+      // Show success message
       toast({
         title: "Copy Successful!",
         description: `${docTypeName} ${newInvoice.number} has been created successfully. Redirecting...`,
@@ -246,7 +233,7 @@ export const useCopyInvoice = () => {
       // Navigate after a delay to allow queries to refresh
       setTimeout(() => {
         navigate(navigationPath);
-      }, 2000);
+      }, 1500);
     },
     onError: (error) => {
       console.error('=== COPY OPERATION FAILED ===');
