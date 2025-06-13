@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatNumber } from "@/utils/formatNumber";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Clock, AlertTriangle, CreditCard } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, CreditCard, Calendar, User } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PaymentTrackingItem {
   id: string;
@@ -35,6 +36,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const [updatingPayments, setUpdatingPayments] = useState<Set<string>>(new Set());
   const [partialPayments, setPartialPayments] = useState<Record<string, number>>({});
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleMarkAsPaid = async (invoiceId: string) => {
     setUpdatingPayments(prev => new Set(prev).add(invoiceId));
@@ -185,6 +187,96 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const overdueInvoices = paymentData.filter(p => p.isOverdue);
   const pendingInvoices = paymentData.filter(p => p.status !== 'paid' && !p.isOverdue);
 
+  // Mobile Card Component
+  const PaymentCard = ({ payment }: { payment: PaymentTrackingItem }) => (
+    <ModernCard className="p-4 space-y-4">
+      {/* Header with status and invoice number */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {getStatusIcon(payment.status, payment.isOverdue)}
+          <BodyText className="font-semibold">{payment.number}</BodyText>
+        </div>
+        {getStatusBadge(payment.status, payment.isOverdue)}
+      </div>
+
+      {/* Client and Due Date */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <BodyText className="text-sm">{payment.clientName}</BodyText>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <CaptionText className={payment.isOverdue ? "text-red-600 font-medium" : "text-muted-foreground"}>
+            Due: {new Date(payment.dueDate).toLocaleDateString()}
+          </CaptionText>
+        </div>
+      </div>
+
+      {/* Amount Details */}
+      <div className="grid grid-cols-2 gap-4 py-3 border-t border-b">
+        <div>
+          <CaptionText className="text-muted-foreground mb-1">Total Amount</CaptionText>
+          <BodyText className="font-semibold">₹{formatNumber(payment.total)}</BodyText>
+        </div>
+        <div>
+          <CaptionText className="text-muted-foreground mb-1">Remaining</CaptionText>
+          <BodyText className={payment.remainingAmount > 0 ? "font-semibold text-red-600" : "font-semibold text-green-600"}>
+            ₹{formatNumber(payment.remainingAmount)}
+          </BodyText>
+        </div>
+      </div>
+
+      {/* Paid Amount */}
+      {payment.paidAmount > 0 && (
+        <div>
+          <CaptionText className="text-muted-foreground mb-1">Paid Amount</CaptionText>
+          <BodyText className="text-green-600 font-medium">₹{formatNumber(payment.paidAmount)}</BodyText>
+        </div>
+      )}
+
+      {/* Actions */}
+      {payment.status !== 'paid' ? (
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              placeholder="Enter amount"
+              className="flex-1"
+              value={partialPayments[payment.id] || ''}
+              onChange={(e) => handlePartialPayment(payment.id, parseFloat(e.target.value) || 0)}
+              max={payment.remainingAmount}
+              min={0}
+              step="0.01"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => applyPartialPayment(payment.id)}
+              disabled={updatingPayments.has(payment.id) || !partialPayments[payment.id]}
+            >
+              Update
+            </Button>
+          </div>
+          <Button
+            className="w-full"
+            onClick={() => handleMarkAsPaid(payment.id)}
+            disabled={updatingPayments.has(payment.id)}
+          >
+            Mark as Paid
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center py-2">
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Payment Completed
+          </Badge>
+        </div>
+      )}
+    </ModernCard>
+  );
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -235,7 +327,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         </ModernCard>
       </div>
 
-      {/* Payment Table */}
+      {/* Payment Management Section */}
       <ModernCard>
         <div className="p-6 border-b">
           <div className="flex items-center gap-3">
@@ -254,96 +346,108 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
             <CaptionText className="text-muted-foreground">Create your first invoice to start tracking payments</CaptionText>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Status</TableHead>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Paid</TableHead>
-                  <TableHead className="text-right">Remaining</TableHead>
-                  <TableHead className="text-right w-[280px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          <>
+            {/* Mobile Layout - Cards */}
+            {isMobile ? (
+              <div className="p-4 space-y-4">
                 {paymentData.map((payment) => (
-                  <TableRow key={payment.id} className="hover:bg-muted/30">
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(payment.status, payment.isOverdue)}
-                        {getStatusBadge(payment.status, payment.isOverdue)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <BodyText className="font-medium">{payment.number}</BodyText>
-                    </TableCell>
-                    <TableCell>
-                      <BodyText>{payment.clientName}</BodyText>
-                    </TableCell>
-                    <TableCell>
-                      <CaptionText className={payment.isOverdue ? "text-red-600 font-medium" : ""}>
-                        {new Date(payment.dueDate).toLocaleDateString()}
-                      </CaptionText>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <BodyText className="font-semibold">₹{formatNumber(payment.total)}</BodyText>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <BodyText className={payment.paidAmount > 0 ? "text-green-600 font-medium" : "text-muted-foreground"}>
-                        ₹{formatNumber(payment.paidAmount)}
-                      </BodyText>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <BodyText className={payment.remainingAmount > 0 ? "font-medium" : "text-muted-foreground"}>
-                        ₹{formatNumber(payment.remainingAmount)}
-                      </BodyText>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {payment.status !== 'paid' ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <Input
-                            type="number"
-                            placeholder="Enter amount"
-                            className="w-24 h-9 text-sm"
-                            value={partialPayments[payment.id] || ''}
-                            onChange={(e) => handlePartialPayment(payment.id, parseFloat(e.target.value) || 0)}
-                            max={payment.remainingAmount}
-                            min={0}
-                            step="0.01"
-                          />
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => applyPartialPayment(payment.id)}
-                            disabled={updatingPayments.has(payment.id) || !partialPayments[payment.id]}
-                            className="h-9 px-3"
-                          >
-                            Update
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleMarkAsPaid(payment.id)}
-                            disabled={updatingPayments.has(payment.id)}
-                            className="h-9 px-3"
-                          >
-                            Mark Paid
-                          </Button>
-                        </div>
-                      ) : (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Completed
-                        </Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
+                  <PaymentCard key={payment.id} payment={payment} />
                 ))}
-              </TableBody>
-            </Table>
-          </div>
+              </div>
+            ) : (
+              /* Desktop Layout - Table */
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Status</TableHead>
+                      <TableHead>Invoice</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Paid</TableHead>
+                      <TableHead className="text-right">Remaining</TableHead>
+                      <TableHead className="text-right w-[280px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paymentData.map((payment) => (
+                      <TableRow key={payment.id} className="hover:bg-muted/30">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(payment.status, payment.isOverdue)}
+                            {getStatusBadge(payment.status, payment.isOverdue)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <BodyText className="font-medium">{payment.number}</BodyText>
+                        </TableCell>
+                        <TableCell>
+                          <BodyText>{payment.clientName}</BodyText>
+                        </TableCell>
+                        <TableCell>
+                          <CaptionText className={payment.isOverdue ? "text-red-600 font-medium" : ""}>
+                            {new Date(payment.dueDate).toLocaleDateString()}
+                          </CaptionText>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <BodyText className="font-semibold">₹{formatNumber(payment.total)}</BodyText>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <BodyText className={payment.paidAmount > 0 ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                            ₹{formatNumber(payment.paidAmount)}
+                          </BodyText>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <BodyText className={payment.remainingAmount > 0 ? "font-medium" : "text-muted-foreground"}>
+                            ₹{formatNumber(payment.remainingAmount)}
+                          </BodyText>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {payment.status !== 'paid' ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <Input
+                                type="number"
+                                placeholder="Enter amount"
+                                className="w-24 h-9 text-sm"
+                                value={partialPayments[payment.id] || ''}
+                                onChange={(e) => handlePartialPayment(payment.id, parseFloat(e.target.value) || 0)}
+                                max={payment.remainingAmount}
+                                min={0}
+                                step="0.01"
+                              />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => applyPartialPayment(payment.id)}
+                                disabled={updatingPayments.has(payment.id) || !partialPayments[payment.id]}
+                                className="h-9 px-3"
+                              >
+                                Update
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleMarkAsPaid(payment.id)}
+                                disabled={updatingPayments.has(payment.id)}
+                                className="h-9 px-3"
+                              >
+                                Mark Paid
+                              </Button>
+                            </div>
+                          ) : (
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Completed
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </>
         )}
       </ModernCard>
     </div>
