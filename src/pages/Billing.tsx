@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -176,6 +175,111 @@ const Billing = () => {
     navigate('/proforma/new');
   };
 
+  // New action handlers for swipe functionality
+  const handleEdit = (invoiceId: string) => {
+    const basePath = activeTab === 'invoices' ? '/invoices' : '/proforma';
+    navigate(`${basePath}/${invoiceId}`);
+  };
+
+  const handleDelete = async (invoiceId: string) => {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+      });
+
+      // Refetch data
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['proformas'] });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete document",
+      });
+    }
+  };
+
+  const handleDuplicate = async (invoiceId: string) => {
+    try {
+      // Fetch the original invoice data
+      const { data: originalInvoice, error: fetchError } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', invoiceId)
+        .single();
+
+      if (fetchError || !originalInvoice) throw fetchError;
+
+      // Create a new invoice with duplicated data
+      const { data: newInvoice, error: createError } = await supabase
+        .from('invoices')
+        .insert({
+          ...originalInvoice,
+          id: undefined,
+          number: `${originalInvoice.number}-COPY`,
+          invoice_code: null,
+          status: 'draft',
+          created_at: undefined,
+          updated_at: undefined
+        })
+        .select()
+        .single();
+
+      if (createError || !newInvoice) throw createError;
+
+      // Fetch and duplicate line items
+      const { data: lineItems, error: lineItemsError } = await supabase
+        .from('invoice_lines')
+        .select('*')
+        .eq('invoice_id', invoiceId);
+
+      if (lineItemsError) throw lineItemsError;
+
+      if (lineItems && lineItems.length > 0) {
+        const duplicatedLineItems = lineItems.map(item => ({
+          ...item,
+          id: undefined,
+          invoice_id: newInvoice.id,
+          created_at: undefined,
+          updated_at: undefined
+        }));
+
+        const { error: lineItemsInsertError } = await supabase
+          .from('invoice_lines')
+          .insert(duplicatedLineItems);
+
+        if (lineItemsInsertError) throw lineItemsInsertError;
+      }
+
+      toast({
+        title: "Success",
+        description: "Document duplicated successfully",
+      });
+
+      // Navigate to the new invoice
+      const basePath = activeTab === 'invoices' ? '/invoices' : '/proforma';
+      navigate(`${basePath}/${newInvoice.id}`);
+    } catch (error) {
+      console.error('Error duplicating document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to duplicate document",
+      });
+    }
+  };
+
   // Loading state
   if (isLoadingCompanies) {
     return (
@@ -287,6 +391,9 @@ const Billing = () => {
                 sortDirection={sortDirection}
                 onSort={handleSort}
                 searchQuery={searchQuery}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
               />
             ) : (
               <div className="text-center py-12 border rounded-md mx-[8px]">
@@ -315,6 +422,9 @@ const Billing = () => {
                 sortDirection={sortDirection}
                 onSort={handleSort}
                 searchQuery={searchQuery}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
               />
             ) : (
               <div className="text-center py-12 border rounded-md mx-[8px]">

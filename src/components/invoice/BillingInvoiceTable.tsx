@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SwipeableTableRow } from "./SwipeableTableRow";
 
 type Invoice = {
   id: string;
@@ -33,6 +34,9 @@ interface BillingInvoiceTableProps {
   sortDirection: SortDirection;
   onSort: () => void;
   searchQuery: string;
+  onEdit?: (invoiceId: string) => void;
+  onDelete?: (invoiceId: string) => void;
+  onDuplicate?: (invoiceId: string) => void;
 }
 
 const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
@@ -40,7 +44,10 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
   onInvoiceClick,
   sortDirection,
   onSort,
-  searchQuery
+  searchQuery,
+  onEdit,
+  onDelete,
+  onDuplicate
 }) => {
   const getStatusBadge = (status: string | null) => {
     if (!status) return null;
@@ -67,6 +74,37 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
       <ArrowDown className="ml-1 h-3 w-3" />;
   };
 
+  const getSwipeActions = (invoice: Invoice) => {
+    const actions = [];
+    
+    if (onEdit) {
+      actions.push({
+        icon: <Edit className="h-4 w-4" />,
+        label: "Edit",
+        onClick: () => onEdit(invoice.id)
+      });
+    }
+    
+    if (onDuplicate) {
+      actions.push({
+        icon: <Copy className="h-4 w-4" />,
+        label: "Copy",
+        onClick: () => onDuplicate(invoice.id)
+      });
+    }
+    
+    if (onDelete) {
+      actions.push({
+        icon: <Trash2 className="h-4 w-4" />,
+        label: "Delete",
+        onClick: () => onDelete(invoice.id),
+        variant: 'destructive' as const
+      });
+    }
+    
+    return actions;
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -91,35 +129,37 @@ const BillingInvoiceTable: React.FC<BillingInvoiceTableProps> = ({
         </TableHeader>
         <TableBody>
           {invoices.map((invoice) => (
-            <TableRow 
+            <SwipeableTableRow
               key={invoice.id}
-              className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => onInvoiceClick(invoice.id)}
+              actions={getSwipeActions(invoice)}
+              onRowClick={() => onInvoiceClick(invoice.id)}
             >
-              <TableCell className="font-medium">
-                {invoice.invoice_code || invoice.number || 'Draft'}
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div>{invoice.clients?.name || 'No client'}</div>
-                  <div className="sm:hidden text-xs text-muted-foreground">
-                    {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+              <TableRow className="cursor-pointer hover:bg-muted/50 transition-colors border-0">
+                <TableCell className="font-medium">
+                  {invoice.invoice_code || invoice.number || 'Draft'}
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div>{invoice.clients?.name || 'No client'}</div>
+                    <div className="sm:hidden text-xs text-muted-foreground">
+                      {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+                    </div>
+                    <div className="sm:hidden">
+                      {getStatusBadge(invoice.status)}
+                    </div>
                   </div>
-                  <div className="sm:hidden">
-                    {getStatusBadge(invoice.status)}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
-              </TableCell>
-              <TableCell className="text-right font-medium">
-                ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-center">
-                {getStatusBadge(invoice.status)}
-              </TableCell>
-            </TableRow>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy') : 'No date'}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  ₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell text-center">
+                  {getStatusBadge(invoice.status)}
+                </TableCell>
+              </TableRow>
+            </SwipeableTableRow>
           ))}
         </TableBody>
       </Table>
