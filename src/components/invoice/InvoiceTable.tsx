@@ -25,13 +25,19 @@ type Invoice = {
   } | null;
 };
 
+type SortField = 'number' | 'client' | 'date' | 'amount' | 'status';
+type SortDirection = 'asc' | 'desc' | null;
+
 interface InvoiceTableProps {
   invoices: Invoice[];
   onInvoiceClick: (invoiceId: string) => void;
   onDelete?: (invoiceId: string) => void;
   onConvert?: (invoiceId: string) => void;
-  searchQuery: string;
+  searchQuery?: string;
   documentType?: 'invoice' | 'proforma';
+  sortField?: SortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: SortField) => void;
 }
 
 interface InvoiceRowProps {
@@ -131,18 +137,59 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
   onDelete,
   onConvert,
   searchQuery,
-  documentType = 'invoice'
+  documentType = 'invoice',
+  sortField,
+  sortDirection,
+  onSort
 }) => {
+  const getSortIcon = (field: SortField) => {
+    if (sortField === field) {
+      return sortDirection === 'asc' ? '↑' : '↓';
+    }
+    return '';
+  };
+
+  const handleHeaderClick = (field: SortField) => {
+    if (onSort) {
+      onSort(field);
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[150px]">Document #</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead className="hidden sm:table-cell">Date</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="hidden sm:table-cell text-center">Status</TableHead>
+            <TableHead 
+              className={`w-[150px] ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+              onClick={() => handleHeaderClick('number')}
+            >
+              Document # {getSortIcon('number')}
+            </TableHead>
+            <TableHead 
+              className={onSort ? 'cursor-pointer hover:bg-muted/50' : ''}
+              onClick={() => handleHeaderClick('client')}
+            >
+              Client {getSortIcon('client')}
+            </TableHead>
+            <TableHead 
+              className={`hidden sm:table-cell ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+              onClick={() => handleHeaderClick('date')}
+            >
+              Date {getSortIcon('date')}
+            </TableHead>
+            <TableHead 
+              className={`text-right ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+              onClick={() => handleHeaderClick('amount')}
+            >
+              Amount {getSortIcon('amount')}
+            </TableHead>
+            <TableHead 
+              className={`hidden sm:table-cell text-center ${onSort ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+              onClick={() => handleHeaderClick('status')}
+            >
+              Status {getSortIcon('status')}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
